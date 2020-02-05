@@ -19,7 +19,6 @@
 package org.apache.flink.kubernetes.kubeclient.decorators.jobmanager;
 
 import org.apache.flink.client.cli.CliFrontend;
-import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
@@ -50,7 +49,6 @@ import java.util.Map;
 
 import static org.apache.flink.configuration.GlobalConfiguration.FLINK_CONF_FILENAME;
 import static org.apache.flink.kubernetes.utils.Constants.FLINK_CONF_VOLUME;
-import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  *
