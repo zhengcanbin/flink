@@ -20,7 +20,7 @@ package org.apache.flink.kubernetes.kubeclient.decorators.jobmanager;
 
 import org.apache.flink.client.cli.CliFrontend;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
+import org.apache.flink.kubernetes.kubeclient.conf.AbstractKubernetesComponentConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
 
 import org.apache.flink.shaded.guava18.com.google.common.io.Files;
@@ -48,6 +48,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.apache.flink.configuration.GlobalConfiguration.FLINK_CONF_FILENAME;
+import static org.apache.flink.kubernetes.utils.Constants.CONFIG_FILE_LOG4J_NAME;
+import static org.apache.flink.kubernetes.utils.Constants.CONFIG_FILE_LOGBACK_NAME;
 import static org.apache.flink.kubernetes.utils.Constants.FLINK_CONF_VOLUME;
 
 /**
@@ -55,11 +57,11 @@ import static org.apache.flink.kubernetes.utils.Constants.FLINK_CONF_VOLUME;
  */
 public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator {
 
-	private final KubernetesMasterConf kubernetesMasterConf;
+	private final AbstractKubernetesComponentConf kubernetesComponentConf;
 
-	public FlinkConfConfigMapDecorator(KubernetesMasterConf kubernetesMasterConf) {
-		super(kubernetesMasterConf.getFlinkConfiguration());
-		this.kubernetesMasterConf = kubernetesMasterConf;
+	public FlinkConfConfigMapDecorator(AbstractKubernetesComponentConf kubernetesComponentConf) {
+		super(kubernetesComponentConf.getFlinkConfiguration());
+		this.kubernetesComponentConf = kubernetesComponentConf;
 	}
 
 	@Override
@@ -101,7 +103,15 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 
 	@Override
 	public List<HasMetadata> generateAdditionalKubernetesResources() throws IOException {
-		final String clusterId = kubernetesMasterConf.getClusterId();
+		final String clusterId = kubernetesComponentConf.getClusterId();
+
+		final Map<String, String> data = new HashMap<>();
+
+		final List<File> localLogFiles = getLocalLogConfFiles();
+		for (File file : localLogFiles) {
+			data.put(file.getName(), Files.toString(file, StandardCharsets.UTF_8));
+		}
+		data.put(FLINK_CONF_FILENAME, getFlinkConfData());
 
 		final Map<String, String> flinkConfFileMap = new HashMap<>();
 		final File localFlinkConfFile = getLocalFlinkConfFile();
@@ -113,7 +123,7 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 		final ConfigMap flinkConfConfigMap = new ConfigMapBuilder()
 			.withNewMetadata()
 				.withName(getFlinkConfConfigMapName(clusterId))
-				.withLabels(kubernetesMasterConf.getCommonLabels())
+				.withLabels(kubernetesComponentConf.getCommonLabels())
 				.endMetadata()
 			.addToData(flinkConfFileMap)
 			.build();
@@ -132,6 +142,22 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 		}
 
 		return null;
+	}
+
+	private List<File> getLocalLogConfFiles() {
+		final String confDir = CliFrontend.getConfigurationDirectoryFromEnv();
+		final File logbackFile = new File(confDir, CONFIG_FILE_LOGBACK_NAME);
+		final File log4jFile = new File(confDir, CONFIG_FILE_LOG4J_NAME);
+
+		List<File> localLogFiles = new ArrayList<>();
+		if (logbackFile.exists()) {
+			localLogFiles.add(logbackFile);
+		}
+		if (log4jFile.exists()) {
+			localLogFiles.add(log4jFile);
+		}
+
+		return localLogFiles;
 	}
 
 	private String getFlinkConfConfigMapName(String prefix) {
