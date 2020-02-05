@@ -6,6 +6,7 @@ import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesTaskManagerConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.KubernetesStepDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.common.LogConfConfigMapDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.common.MountVolumesDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.jobmanager.FlinkConfConfigMapDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.jobmanager.InitJobManagerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.jobmanager.RestServiceDecorator;
@@ -42,6 +43,7 @@ public class KubernetesComponentBuilder {
 //			new LogConfConfigMapDecorator(kubernetesMasterConf),
 			new StartCommandMasterDecorator(kubernetesMasterConf),
 			new RestServiceDecorator(kubernetesMasterConf),
+			new MountVolumesDecorator(kubernetesMasterConf),
 			new FlinkConfConfigMapDecorator(kubernetesMasterConf));
 
 		for (KubernetesStepDecorator stepDecorator: stepDecorators) {
@@ -93,7 +95,8 @@ public class KubernetesComponentBuilder {
 		final List<KubernetesStepDecorator> stepDecorators = Arrays.asList(
 			new InitTaskManagerDecorator(kubernetesTaskManagerConf),
 			new LogConfConfigMapDecorator(kubernetesTaskManagerConf),
-			new StartCommandDecorator(kubernetesTaskManagerConf));
+			new StartCommandDecorator(kubernetesTaskManagerConf),
+			new MountVolumesDecorator(kubernetesTaskManagerConf));
 
 		stepDecorators.forEach(step -> step.configureFlinkPod(flinkPod));
 

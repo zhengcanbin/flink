@@ -18,14 +18,20 @@
 
 package org.apache.flink.kubernetes.kubeclient.conf;
 
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.ResourceManagerOptions;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
+import org.apache.flink.kubernetes.utils.KubernetesVolumeUtils;
 import org.apache.flink.runtime.clusterframework.ContaineredTaskManagerParameters;
+
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeMount;
 
 import java.util.Map;
 
+import static org.apache.flink.kubernetes.configuration.KubernetesConfigOptions.KUBERNETES_TASKMANAGER_VOLUMES_PREFIX;
 import static org.apache.flink.util.Preconditions.checkArgument;
 
 /**
@@ -70,6 +76,14 @@ public class KubernetesTaskManagerConf extends AbstractKubernetesComponentConf {
 	@Override
 	public Map<String, String> getEnvironments() {
 		return getPrefixedEnvironments(ResourceManagerOptions.CONTAINERIZED_TASK_MANAGER_ENV_PREFIX);
+	}
+
+	@Override
+	public Tuple2<Volume[], VolumeMount[]> getVolumes() {
+		return KubernetesVolumeUtils.constructVolumes(
+			KubernetesVolumeUtils.parseVolumesWithPrefix(
+				flinkConfig,
+				KUBERNETES_TASKMANAGER_VOLUMES_PREFIX));
 	}
 
 	public String getPodName() {

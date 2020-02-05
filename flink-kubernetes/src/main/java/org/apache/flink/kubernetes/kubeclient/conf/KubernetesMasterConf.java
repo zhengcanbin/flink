@@ -18,6 +18,7 @@
 
 package org.apache.flink.kubernetes.kubeclient.conf;
 
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.client.deployment.ClusterSpecification;
 import org.apache.flink.configuration.BlobServerOptions;
 import org.apache.flink.configuration.Configuration;
@@ -28,9 +29,14 @@ import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
+import org.apache.flink.kubernetes.utils.KubernetesVolumeUtils;
+
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeMount;
 
 import java.util.Map;
 
+import static org.apache.flink.kubernetes.configuration.KubernetesConfigOptions.KUBERNETES_JOBMANAGER_VOLUMES_PREFIX;
 import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
@@ -57,6 +63,14 @@ public class KubernetesMasterConf extends AbstractKubernetesComponentConf {
 	@Override
 	public Map<String, String> getEnvironments() {
 		return getPrefixedEnvironments(ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX);
+	}
+
+	@Override
+	public Tuple2<Volume[], VolumeMount[]> getVolumes() {
+		return KubernetesVolumeUtils.constructVolumes(
+			KubernetesVolumeUtils.parseVolumesWithPrefix(
+				flinkConfig,
+				KUBERNETES_JOBMANAGER_VOLUMES_PREFIX));
 	}
 
 	public int getJobManagerMemoryMB() {

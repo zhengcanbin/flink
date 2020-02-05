@@ -18,6 +18,11 @@
 
 package org.apache.flink.kubernetes.kubeclient.conf;
 
+import org.apache.flink.api.java.tuple.Tuple2;
+
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeMount;
+
 import java.util.Map;
 
 /**
@@ -38,6 +43,8 @@ public interface KubernetesComponentConf {
 	Map<String, String> getLabels();
 
 	Map<String, String> getEnvironments();
+
+	Tuple2<Volume[], VolumeMount[]> getVolumes();
 
 	String getInternalFlinkConfDir();
 

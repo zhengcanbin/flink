@@ -49,6 +49,20 @@ public class Constants {
 	public static final String LABEL_COMPONENT_JOB_MANAGER = "jobmanager";
 	public static final String LABEL_COMPONENT_TASK_MANAGER = "taskmanager";
 
+	//
+	public static final String KUBERNETES_VOLUMES_MOUNT_PATH_KEY = "mount.path";
+	public static final String KUBERNETES_VOLUMES_MOUNT_SUBPATH_KEY = "mount.subPath";
+	public static final String KUBERNETES_VOLUMES_MOUNT_READONLY_KEY = "mount.readOnly";
+
+	public static final String KUBERNETES_VOLUMES_HOSTPATH_TYPE = "hostPath";
+	public static final String KUBERNETES_VOLUMES_PVC_TYPE = "persistentVolumeClaim";
+	public static final String KUBERNETES_VOLUMES_EMPTYDIR_TYPE = "emptyDir";
+
+	public static final String KUBERNETES_VOLUMES_OPTIONS_PATH_KEY = "options.path";
+	public static final String KUBERNETES_VOLUMES_OPTIONS_CLAIM_NAME_KEY = "options.claimName";
+	public static final String KUBERNETES_VOLUMES_OPTIONS_MEDIUM_KEY = "options.medium";
+	public static final String KUBERNETES_VOLUMES_OPTIONS_SIZE_LIMIT_KEY = "options.sizeLimit";
+
 	// Use fixed port in kubernetes, it needs to be exposed.
 	public static final int BLOB_SERVER_PORT = 6124; // todo bug
 	public static final int TASK_MANAGER_RPC_PORT = 6122;

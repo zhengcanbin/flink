@@ -64,6 +64,25 @@ public class KubernetesUtils {
 	private static final Logger LOG = LoggerFactory.getLogger(KubernetesUtils.class);
 
 	/**
+	 * Extract and parse Flink configuration map with a given prefix and return the result as a Map.
+	 *
+	 * @param flinkConfig Flink configuration
+	 * @param prefix the given name prefix
+	 * @return a Map storing the matched key/value paris
+	 */
+	public static Map<String, String> parsePrefixedKVPairs(Configuration flinkConfig, String prefix) {
+		final Map<String, String> ret =  new HashMap<>();
+
+		flinkConfig.toMap().forEach((key, value) -> {
+			if (key.startsWith(prefix)) {
+				ret.put(key.substring(prefix.length()), value);
+			}
+		});
+
+		return ret;
+	}
+
+	/**
 	 * Read file content to string.
 	 *
 	 * @param filePath file path
