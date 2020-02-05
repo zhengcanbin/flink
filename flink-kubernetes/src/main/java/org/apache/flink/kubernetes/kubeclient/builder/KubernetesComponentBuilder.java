@@ -100,12 +100,12 @@ public class KubernetesComponentBuilder {
 			flinkPod = stepDecorator.configureFlinkPod(flinkPod);
 		}
 
-		final Pod pod = new PodBuilder(flinkPod.getPod())
+		final Pod resolvedPod = new PodBuilder(flinkPod.getPod())
 			.editOrNewSpec()
 				.addToContainers(flinkPod.getMainContainer())
 				.endSpec()
 			.build();
 
-		return new KubernetesPod(pod);
+		return new KubernetesPod(resolvedPod);
 	}
 }
