@@ -127,14 +127,16 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 		return Collections.singletonList(flinkConfConfigMap);
 	}
 
-	private String getFlinkConfData() throws IOException {
-		final Properties properties = new Properties();
-		properties.putAll(configuration.toMap());
+	private String getFlinkConfData() {
+		final StringBuilder builder = new StringBuilder();
+		configuration.toMap().forEach((k, v) -> {
+			builder.append(k);
+			builder.append(": ");
+			builder.append(v);
+			builder.append(System.getProperty("line.separator", "\n"));
+		});
 
-		final StringWriter propertiesWriter = new StringWriter();
-		properties.store(propertiesWriter, "Write flink configuration for configmap");
-
-		return propertiesWriter.toString();
+		return builder.toString();
 	}
 
 	private List<File> getLocalLogConfFiles() {
