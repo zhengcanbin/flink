@@ -57,7 +57,7 @@ public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 			kubernetesTaskManagerConf.getTaskManagerMemoryMB(),
 			kubernetesTaskManagerConf.getTaskManagerCPU());
 
-		final Container initContainer = new ContainerBuilder()
+		final Container initContainer = new ContainerBuilder(flinkPod.getMainContainer())
 			.withName(CONTAINER_NAME)
 			.withImage(kubernetesTaskManagerConf.getImage())
 			.withImagePullPolicy(kubernetesTaskManagerConf.getImagePullPolicy())
@@ -68,7 +68,7 @@ public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 			.withEnv(buildEnvForContainer())
 			.build();
 
-		final Pod initPod = new PodBuilder()
+		final Pod initPod = new PodBuilder(flinkPod.getPod())
 			.editOrNewMetadata()
 				.withName(kubernetesTaskManagerConf.getPodName())
 				.withLabels(kubernetesTaskManagerConf.getLabels())

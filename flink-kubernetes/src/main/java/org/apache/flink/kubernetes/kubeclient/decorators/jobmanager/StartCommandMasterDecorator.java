@@ -58,7 +58,7 @@ public class StartCommandMasterDecorator extends AbstractKubernetesStepDecorator
 			kubernetesMasterConf.getEntrypointMainClass(),
 			null);
 
-		final Container containerWithStartCommand = new ContainerBuilder()
+		final Container containerWithStartCommand = new ContainerBuilder(flinkPod.getMainContainer())
 			.withCommand(kubernetesMasterConf.getInternalEntrypoint())
 			.withArgs(Arrays.asList("/bin/bash", "-c", startCommand))
 			.build();

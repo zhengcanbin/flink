@@ -71,6 +71,15 @@ public abstract class AbstractKubernetesComponentConf implements KubernetesCompo
 	}
 
 	@Override
+	public Map<String, String> getCommonLabels() {
+		Map<String, String> commonLabels = new HashMap<>();
+		commonLabels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
+		commonLabels.put(Constants.LABEL_APP_KEY, getClusterId());
+
+		return commonLabels;
+	}
+
+	@Override
 	public String getInternalFlinkConfDir() {
 		return flinkConfig.getString(KubernetesConfigOptions.FLINK_CONF_DIR);
 	}
@@ -97,15 +106,6 @@ public abstract class AbstractKubernetesComponentConf implements KubernetesCompo
 		final String confDir = CliFrontend.getConfigurationDirectoryFromEnv();
 		final File log4jFile = new File(confDir, CONFIG_FILE_LOG4J_NAME);
 		return log4jFile.exists();
-	}
-
-	@Override
-	public Map<String, String> getCommonLabels() {
-		Map<String, String> commonLabels = new HashMap<>();
-		commonLabels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
-		commonLabels.put(Constants.LABEL_APP_KEY, getClusterId());
-
-		return commonLabels;
 	}
 
 	protected Map<String, String> getPrefixedEnvironments(String envPrefix) {

@@ -50,12 +50,12 @@ public class FlinkPodBuilder {
 	}
 
 	public FlinkPodBuilder withNewPod(Pod pod) {
-		this.flinkPod = new FlinkPod(pod, flinkPod.getMainContainer());
+		this.flinkPod = new FlinkPod(pod, this.flinkPod.getMainContainer());
 		return this;
 	}
 
 	public FlinkPodBuilder withNewMainContainer(Container mainContainer) {
-		this.flinkPod = new FlinkPod(flinkPod.getPod(), mainContainer);
+		this.flinkPod = new FlinkPod(this.flinkPod.getPod(), mainContainer);
 		return this;
 	}
 

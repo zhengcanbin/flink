@@ -33,6 +33,12 @@ public interface KubernetesComponentConf {
 
 	String getImagePullPolicy();
 
+	Map<String, String> getCommonLabels();
+
+	Map<String, String> getLabels();
+
+	Map<String, String> getEnvironments();
+
 	String getInternalFlinkConfDir();
 
 	String getInternalFlinkLogDir();
@@ -42,10 +48,4 @@ public interface KubernetesComponentConf {
 	boolean hasLogback();
 
 	boolean hasLog4j();
-
-	Map<String, String> getCommonLabels();
-
-	Map<String, String> getLabels();
-
-	Map<String, String> getEnvironments();
 }

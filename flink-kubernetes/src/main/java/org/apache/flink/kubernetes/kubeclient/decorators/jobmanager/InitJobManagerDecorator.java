@@ -79,7 +79,6 @@ public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 				.endMetadata()
 			.editOrNewSpec()
 				.withServiceAccountName(kubernetesMasterConf.getServiceAccount())
-				.withContainers(decoratedMainContainer)
 				.endSpec()
 			.build();
 
