@@ -93,7 +93,6 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 			.addNewVolumeMount()
 				.withName(FLINK_CONF_VOLUME)
 				.withMountPath(kubernetesMasterConf.getInternalFlinkConfDir())
-				.withSubPath(FLINK_CONF_FILENAME)
 				.endVolumeMount()
 			.build();
 
