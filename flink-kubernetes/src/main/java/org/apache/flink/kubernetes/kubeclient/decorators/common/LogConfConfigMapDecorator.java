@@ -22,7 +22,6 @@ import org.apache.flink.client.cli.CliFrontend;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.conf.AbstractKubernetesComponentConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
-import org.apache.flink.kubernetes.utils.Constants;
 
 import org.apache.flink.shaded.guava18.com.google.common.io.Files;
 
@@ -31,8 +30,6 @@ import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.KeyToPath;
-import io.fabric8.kubernetes.api.model.KeyToPathBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.Volume;
@@ -46,8 +43,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
+import static org.apache.flink.kubernetes.utils.Constants.CONFIG_FILE_LOG4J_NAME;
 import static org.apache.flink.kubernetes.utils.Constants.FLINK_LOG_CONF_VOLUME;
 
 /**
@@ -72,18 +69,18 @@ public class LogConfConfigMapDecorator extends AbstractKubernetesStepDecorator {
 			return flinkPod;
 		}
 
-		final List<KeyToPath> keyToPaths = localLogConfFiles.stream()
-			.map(file -> new KeyToPathBuilder()
-				.withKey(file.getName())
-				.withPath(file.getName())
-				.build())
-			.collect(Collectors.toList());
+//		final List<KeyToPath> keyToPaths = localLogConfFiles.stream()
+//			.map(file -> new KeyToPathBuilder()
+//				.withKey(file.getName())
+//				.withPath(file.getName())
+//				.build())
+//			.collect(Collectors.toList());
 
 		final Volume logConfVolume = new VolumeBuilder()
 			.withName(FLINK_LOG_CONF_VOLUME)
 			.withNewConfigMap()
 				.withName(getLogConfigMapName(clusterId))
-				.withItems(keyToPaths)
+//				.withItems(keyToPaths)
 				.endConfigMap()
 			.build();
 
@@ -97,6 +94,7 @@ public class LogConfConfigMapDecorator extends AbstractKubernetesStepDecorator {
 			.addNewVolumeMount()
 				.withName(FLINK_LOG_CONF_VOLUME)
 				.withMountPath(kubernetesComponentConf.getInternalFlinkConfDir())
+				.withSubPath(CONFIG_FILE_LOG4J_NAME)
 				.endVolumeMount()
 			.build();
 
@@ -127,13 +125,13 @@ public class LogConfConfigMapDecorator extends AbstractKubernetesStepDecorator {
 
 	private List<File> getLocalLogConfFiles() {
 		final String confDir = CliFrontend.getConfigurationDirectoryFromEnv();
-		final File logbackFile = new File(confDir, Constants.CONFIG_FILE_LOGBACK_NAME);
-		final File log4jFile = new File(confDir, Constants.CONFIG_FILE_LOG4J_NAME);
+//		final File logbackFile = new File(confDir, Constants.CONFIG_FILE_LOGBACK_NAME);
+		final File log4jFile = new File(confDir, CONFIG_FILE_LOG4J_NAME);
 
 		List<File> localLogFiles = new ArrayList<>();
-		if (logbackFile.exists()) {
-			localLogFiles.add(logbackFile);
-		}
+//		if (logbackFile.exists()) {
+//			localLogFiles.add(logbackFile);
+//		}
 		if (log4jFile.exists()) {
 			localLogFiles.add(log4jFile);
 		}
@@ -142,7 +140,7 @@ public class LogConfConfigMapDecorator extends AbstractKubernetesStepDecorator {
 	}
 
 	private String getLogConfigMapName(String prefix) {
-		return prefix + "-log-conf";
+		return prefix + "-log4j-conf";
 	}
 
 }

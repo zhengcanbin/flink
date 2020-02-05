@@ -40,7 +40,7 @@ public class KubernetesComponentBuilder {
 
 		final List<KubernetesStepDecorator> stepDecorators = Arrays.asList(
 			new InitJobManagerDecorator(kubernetesMasterConf),
-//			new LogConfConfigMapDecorator(kubernetesMasterConf),
+			new LogConfConfigMapDecorator(kubernetesMasterConf),
 			new StartCommandMasterDecorator(kubernetesMasterConf),
 			new RestServiceDecorator(kubernetesMasterConf),
 			new MountVolumesDecorator(kubernetesMasterConf),
