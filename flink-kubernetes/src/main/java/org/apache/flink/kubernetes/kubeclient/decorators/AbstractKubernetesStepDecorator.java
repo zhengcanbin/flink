@@ -16,22 +16,36 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.resources;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 
-import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * Represent Service resource in kubernetes.
+ *
  */
-public class KubernetesService extends KubernetesResource<Service> {
+public abstract class AbstractKubernetesStepDecorator implements KubernetesStepDecorator {
 
-	public KubernetesService(Configuration flinkConfig) {
-		super(flinkConfig, new Service());
+	protected final Configuration configuration;
+
+	public AbstractKubernetesStepDecorator(Configuration configuration) {
+		this.configuration = configuration;
 	}
 
-	public KubernetesService(Configuration flinkConfig, Service service) {
-		super(flinkConfig, service);
+	@Override
+	public FlinkPod configureFlinkPod(FlinkPod flinkPod) {
+		return flinkPod;
 	}
+
+	@Override
+	public List<HasMetadata> generateAdditionalKubernetesResources() throws IOException {
+		return Collections.emptyList();
+	}
+
 }

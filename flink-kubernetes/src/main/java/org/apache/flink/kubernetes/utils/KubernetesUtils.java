@@ -23,9 +23,6 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.CoreOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.runtime.clusterframework.BootstrapTools;
-import org.apache.flink.runtime.clusterframework.ContaineredTaskManagerParameters;
-import org.apache.flink.runtime.clusterframework.TaskExecutorProcessSpec;
-import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
 import org.apache.flink.util.FlinkRuntimeException;
 
 import io.fabric8.kubernetes.api.model.ConfigMapVolumeSourceBuilder;
@@ -128,81 +125,12 @@ public class KubernetesUtils {
 	}
 
 	/**
-	 * Generates the shell command to start a job manager for kubernetes.
 	 *
-	 * @param flinkConfig The Flink configuration.
-	 * @param jobManagerMemoryMb JobManager heap size.
-	 * @param configDirectory The configuration directory for the flink-conf.yaml
-	 * @param logDirectory The log directory.
-	 * @param hasLogback Uses logback?
-	 * @param hasLog4j Uses log4j?
-	 * @param mainClass The main class to start with.
-	 * @param mainArgs The args for main class.
-	 * @return A String containing the job manager startup command.
+	 * @param prefix
+	 * @return
 	 */
-	public static String getJobManagerStartCommand(
-			Configuration flinkConfig,
-			int jobManagerMemoryMb,
-			String configDirectory,
-			String logDirectory,
-			boolean hasLogback,
-			boolean hasLog4j,
-			String mainClass,
-			@Nullable String mainArgs) {
-		final int heapSize = BootstrapTools.calculateHeapSize(jobManagerMemoryMb, flinkConfig);
-		final String jvmMemOpts = String.format("-Xms%sm -Xmx%sm", heapSize, heapSize);
-		return getCommonStartCommand(
-			flinkConfig,
-			ClusterComponent.JOB_MANAGER,
-			jvmMemOpts,
-			configDirectory,
-			logDirectory,
-			hasLogback,
-			hasLog4j,
-			mainClass,
-			mainArgs
-		);
-	}
-
-	/**
-	 * Generates the shell command to start a task manager for kubernetes.
-	 *
-	 * @param flinkConfig The Flink configuration.
-	 * @param tmParams Parameters for the task manager.
-	 * @param configDirectory The configuration directory for the flink-conf.yaml
-	 * @param logDirectory The log directory.
-	 * @param hasLogback Uses logback?
-	 * @param hasLog4j Uses log4j?
-	 * @param mainClass The main class to start with.
-	 * @param mainArgs The args for main class.
-	 * @return A String containing the task manager startup command.
-	 */
-	public static String getTaskManagerStartCommand(
-			Configuration flinkConfig,
-			ContaineredTaskManagerParameters tmParams,
-			String configDirectory,
-			String logDirectory,
-			boolean hasLogback,
-			boolean hasLog4j,
-			String mainClass,
-			@Nullable String mainArgs) {
-		final TaskExecutorProcessSpec taskExecutorProcessSpec = tmParams.getTaskExecutorProcessSpec();
-		final String jvmMemOpts = TaskExecutorProcessUtils.generateJvmParametersStr(taskExecutorProcessSpec);
-		String args = TaskExecutorProcessUtils.generateDynamicConfigsStr(taskExecutorProcessSpec);
-		if (mainArgs != null) {
-			args += " " + mainArgs;
-		}
-		return getCommonStartCommand(
-			flinkConfig,
-			ClusterComponent.TASK_MANAGER,
-			jvmMemOpts,
-			configDirectory,
-			logDirectory,
-			hasLogback,
-			hasLog4j,
-			mainClass,
-			args
-		);
+	public static String getRestServiceName(String prefix) {
+		return prefix + Constants.FLINK_REST_SERVICE_SUFFIX;
 	}
 
 	/**
@@ -312,7 +240,7 @@ public class KubernetesUtils {
 		return logging.toString();
 	}
 
-	private static String getCommonStartCommand(
+	public static String getCommonStartCommand(
 			Configuration flinkConfig,
 			ClusterComponent mode,
 			String jvmMemOpts,
@@ -354,7 +282,10 @@ public class KubernetesUtils {
 		return BootstrapTools.getStartCommand(commandTemplate, startCommandValues);
 	}
 
-	private enum ClusterComponent {
+	/**
+	 * ClusterComponent.
+	 */
+	public enum ClusterComponent {
 		JOB_MANAGER,
 		TASK_MANAGER
 	}

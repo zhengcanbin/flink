@@ -16,18 +16,36 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.resources;
+package org.apache.flink.kubernetes.kubeclient.conf;
 
-import org.apache.flink.configuration.Configuration;
-
-import io.fabric8.kubernetes.api.model.ConfigMap;
+import java.util.Map;
 
 /**
- * Represent KubernetesConfigMap resource in kubernetes.
+ *
  */
-public class KubernetesConfigMap extends KubernetesResource<ConfigMap> {
+public interface KubernetesComponentConf {
 
-	public KubernetesConfigMap(Configuration flinkConfig) {
-		super(flinkConfig, new ConfigMap());
-	}
+	String getClusterId();
+
+	String getNamespace();
+
+	String getImage();
+
+	String getImagePullPolicy();
+
+	String getInternalFlinkConfDir();
+
+	String getInternalFlinkLogDir();
+
+	String getInternalEntrypoint();
+
+	boolean hasLogback();
+
+	boolean hasLog4j();
+
+	Map<String, String> getCommonLabels();
+
+	Map<String, String> getLabels();
+
+	Map<String, String> getEnvironments();
 }

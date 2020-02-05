@@ -18,15 +18,14 @@
 
 package org.apache.flink.kubernetes.kubeclient;
 
-import org.apache.flink.client.deployment.ClusterSpecification;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
-import org.apache.flink.kubernetes.kubeclient.resources.KubernetesService;
+
+import io.fabric8.kubernetes.api.model.Service;
 
 import javax.annotation.Nullable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * The client to talk with kubernetes.
@@ -34,40 +33,16 @@ import java.util.concurrent.CompletableFuture;
 public interface FlinkKubeClient extends AutoCloseable {
 
 	/**
-	 * Create kubernetes config map, include flink-conf.yaml, log4j.properties.
+	 * Create flink master component.
+	 *
 	 */
-	void createConfigMap() throws Exception;
+	void createFlinkMasterComponent(KubernetesMasterSpecification spec);
 
 	/**
-	 * Create kubernetes service for internal use. This will be set to jobmanager rpc address.
-	 * It is the owner of all resources. After deletion, all other resource will be deleted by gc.
 	 *
-	 * @param clusterId cluster id
-	 * @return A CompletableFuture is returned and could be used to wait for service ready.
+	 * @param pod
 	 */
-	CompletableFuture<KubernetesService> createInternalService(String clusterId) throws Exception;
-
-	/**
-	 * Create kubernetes service for rest port. This will be used by client to interact with flink cluster.
-	 *
-	 * @param clusterId cluster id
-	 * @return A CompletableFuture is returned and could be used to wait for service ready.
-	 */
-	CompletableFuture<KubernetesService> createRestService(String clusterId) throws Exception;
-
-	/**
-	 * Create flink master deployment with replication of 1.
-	 *
-	 * @param clusterSpec {@link ClusterSpecification} to create the flink master deployment.
-	 */
-	void createFlinkMasterDeployment(ClusterSpecification clusterSpec);
-
-	/**
-	 * Create task manager pod.
-	 *
-	 * @param parameter {@link TaskManagerPodParameter} to create a taskmanager pod.
-	 */
-	void createTaskManagerPod(TaskManagerPodParameter parameter);
+	void createTaskManagerPod(KubernetesPod pod);
 
 	/**
 	 * Stop a specified pod by name.
@@ -84,22 +59,13 @@ public interface FlinkKubeClient extends AutoCloseable {
 	void stopAndCleanupCluster(String clusterId);
 
 	/**
-	 * Get the kubernetes internal service of the given flink clusterId.
-	 *
-	 * @param clusterId cluster id
-	 * @return Return the internal service of the specified cluster id. Return null if the service does not exist.
-	 */
-	@Nullable
-	KubernetesService getInternalService(String clusterId);
-
-	/**
 	 * Get the kubernetes rest service of the given flink clusterId.
 	 *
 	 * @param clusterId cluster id
 	 * @return Return the rest service of the specified cluster id. Return null if the service does not exist.
 	 */
 	@Nullable
-	KubernetesService getRestService(String clusterId);
+	Service getRestService(String clusterId);
 
 	/**
 	 * Get the rest endpoint for access outside cluster.

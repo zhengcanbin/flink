@@ -18,28 +18,29 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.kubernetes.kubeclient.resources.KubernetesResource;
+import org.apache.flink.kubernetes.kubeclient.FlinkPod;
+
+import io.fabric8.kubernetes.api.model.HasMetadata;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
- * Abstract decorator for add features to resource such as deployment/pod/service.
+ *
  */
-public abstract class Decorator<R, T extends KubernetesResource<R>> {
+public interface KubernetesStepDecorator {
 
 	/**
-	 * Decorate the internal resource.
+	 *
+	 * @param flinkPod
+	 * @return
 	 */
-	protected abstract R decorateInternalResource(R resource, Configuration flinkConfig);
+	FlinkPod configureFlinkPod(FlinkPod flinkPod);
 
 	/**
-	 * Extract real resource from resource, decorate and put it back.
+	 *
+	 * @return
 	 */
-	public T decorate(T resource) {
+	List<HasMetadata> generateAdditionalKubernetesResources() throws IOException;
 
-		R internalResource = resource.getInternalResource();
-		R decoratedInternalResource = decorateInternalResource(internalResource, resource.getFlinkConfig());
-		resource.setInternalResource(decoratedInternalResource);
-
-		return resource;
-	}
 }

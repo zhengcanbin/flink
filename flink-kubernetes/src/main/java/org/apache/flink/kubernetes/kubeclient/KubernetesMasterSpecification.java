@@ -16,31 +16,32 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.resources;
+package org.apache.flink.kubernetes.kubeclient;
 
-import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+
+import java.util.List;
 
 /**
- * Represent KubernetesPod resource in kubernetes.
+ *
  */
-public class KubernetesPod extends KubernetesResource<Pod> {
+public class KubernetesMasterSpecification {
 
-	public KubernetesPod(Pod pod) {
-		super(pod);
+	private Deployment deployment;
+
+	private List<HasMetadata> additionalResources;
+
+	public KubernetesMasterSpecification(Deployment deployment, List<HasMetadata> additionalResources) {
+		this.deployment = deployment;
+		this.additionalResources = additionalResources;
 	}
 
-	public String getName() {
-		return this.getInternalResource().getMetadata().getName();
+	public Deployment getDeployment() {
+		return deployment;
 	}
 
-	public boolean isTerminated() {
-		if (getInternalResource().getStatus() != null) {
-			return getInternalResource()
-				.getStatus()
-				.getContainerStatuses()
-				.stream()
-				.anyMatch(e -> e.getState() != null && e.getState().getTerminated() != null);
-		}
-		return false;
+	public List<HasMetadata> getAdditionalResources() {
+		return additionalResources;
 	}
 }

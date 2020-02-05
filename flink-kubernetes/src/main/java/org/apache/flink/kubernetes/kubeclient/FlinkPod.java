@@ -16,19 +16,38 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.resources;
+package org.apache.flink.kubernetes.kubeclient;
 
-import org.apache.flink.configuration.Configuration;
-
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
+import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.Pod;
 
 /**
- * Represent KubernetesDeployment resource in kubernetes.
+ *
  */
-public class KubernetesDeployment extends KubernetesResource<Deployment> {
+public class FlinkPod {
 
-	public KubernetesDeployment(Configuration flinkConfig) {
-		super(flinkConfig, new DeploymentBuilder().withNewMetadata().endMetadata().build());
+	private Pod pod;
+
+	private Container mainContainer;
+
+	public FlinkPod(Pod pod, Container mainContainer) {
+		this.pod = pod;
+		this.mainContainer = mainContainer;
+	}
+
+	public Pod getPod() {
+		return pod;
+	}
+
+	public void setPod(Pod pod) {
+		this.pod = pod;
+	}
+
+	public Container getMainContainer() {
+		return mainContainer;
+	}
+
+	public void setMainContainer(Container mainContainer) {
+		this.mainContainer = mainContainer;
 	}
 }
