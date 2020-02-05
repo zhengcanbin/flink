@@ -37,15 +37,17 @@ import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 
-import javax.annotation.Nullable;
-
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
 import static org.apache.flink.configuration.GlobalConfiguration.FLINK_CONF_FILENAME;
 import static org.apache.flink.kubernetes.utils.Constants.CONFIG_FILE_LOG4J_NAME;
@@ -66,21 +68,22 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 
 	@Override
 	public FlinkPod configureFlinkPod(FlinkPod flinkPod) {
-		final File localFlinkConfFile = getLocalFlinkConfFile();
-		if (localFlinkConfFile == null) {
-			return flinkPod;
-		}
-
-		final KeyToPath keyToPath = new KeyToPathBuilder()
-			.withKey(localFlinkConfFile.getName())
-			.withPath(localFlinkConfFile.getName())
-			.build();
+		final List<KeyToPath> keyToPaths = getLocalLogConfFiles().stream()
+			.map(file -> new KeyToPathBuilder()
+				.withKey(file.getName())
+				.withPath(file.getName())
+				.build())
+			.collect(Collectors.toList());
+		keyToPaths.add(new KeyToPathBuilder()
+			.withKey(FLINK_CONF_FILENAME)
+			.withPath(FLINK_CONF_FILENAME)
+			.build());
 
 		final Volume flinkConfVolume = new VolumeBuilder()
 			.withName(FLINK_CONF_VOLUME)
 			.withNewConfigMap()
-				.withName(getFlinkConfConfigMapName(kubernetesMasterConf.getClusterId()))
-				.withItems(keyToPath)
+				.withName(getFlinkConfConfigMapName(kubernetesComponentConf.getClusterId()))
+				.withItems(keyToPaths)
 				.endConfigMap()
 			.build();
 
@@ -94,7 +97,8 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 		final Container containerWithFlinkConfVolumeMount = new ContainerBuilder(flinkPod.getMainContainer())
 			.addNewVolumeMount()
 				.withName(FLINK_CONF_VOLUME)
-				.withMountPath(kubernetesMasterConf.getInternalFlinkConfDir())
+				.withMountPath(kubernetesComponentConf.getInternalFlinkConfDir())
+				.withSubPath(FLINK_CONF_FILENAME)
 				.endVolumeMount()
 			.build();
 
@@ -113,35 +117,25 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 		}
 		data.put(FLINK_CONF_FILENAME, getFlinkConfData());
 
-		final Map<String, String> flinkConfFileMap = new HashMap<>();
-		final File localFlinkConfFile = getLocalFlinkConfFile();
-		if (localFlinkConfFile == null) {
-			return Collections.emptyList();
-		}
-
-		flinkConfFileMap.put(localFlinkConfFile.getName(), Files.toString(localFlinkConfFile, StandardCharsets.UTF_8));
 		final ConfigMap flinkConfConfigMap = new ConfigMapBuilder()
 			.withNewMetadata()
 				.withName(getFlinkConfConfigMapName(clusterId))
 				.withLabels(kubernetesComponentConf.getCommonLabels())
 				.endMetadata()
-			.addToData(flinkConfFileMap)
+			.addToData(data)
 			.build();
 
 		return Collections.singletonList(flinkConfConfigMap);
 	}
 
-	// todo change to optional type
-	@Nullable
-	private File getLocalFlinkConfFile() {
-		final String confDir = CliFrontend.getConfigurationDirectoryFromEnv();
-		final File flinkConfFile = new File(confDir, FLINK_CONF_FILENAME);
+	private String getFlinkConfData() throws IOException {
+		final Properties properties = new Properties();
+		properties.putAll(configuration.toMap());
 
-		if (flinkConfFile.exists()) {
-			return flinkConfFile;
-		}
+		final StringWriter propertiesWriter = new StringWriter();
+		properties.store(propertiesWriter, "Write flink configuration for configmap");
 
-		return null;
+		return propertiesWriter.toString();
 	}
 
 	private List<File> getLocalLogConfFiles() {
