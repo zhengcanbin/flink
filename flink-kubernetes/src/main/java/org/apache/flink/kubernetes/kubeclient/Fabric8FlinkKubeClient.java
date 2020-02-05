@@ -74,6 +74,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 		final List<HasMetadata> additionalResources = spec.getAdditionalResources();
 
 		// create Deployment
+		LOG.debug("Start to create deployment with spec {}", deployment.getSpec().toString());
 		final Deployment createdDeployment = this.internalClient
 			.apps()
 			.deployments()
@@ -105,6 +106,8 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 		}
 
 		setOwnerReference(masterDeployment, Collections.singletonList(pod.getInternalResource()));
+
+		LOG.debug("Start to create pod with spec {}", pod.getInternalResource().getSpec().toString());
 
 		this.internalClient
 			.pods()

@@ -95,6 +95,7 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 			.addNewVolumeMount()
 				.withName(FLINK_CONF_VOLUME)
 				.withMountPath(kubernetesMasterConf.getInternalFlinkConfDir())
+				.withSubPath(FLINK_CONF_FILENAME)
 				.endVolumeMount()
 			.build();
 
@@ -103,8 +104,7 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 
 	@Override
 	public List<HasMetadata> generateAdditionalKubernetesResources() throws IOException {
-		final String clusterId = configuration.getString(KubernetesConfigOptions.CLUSTER_ID);
-		checkNotNull(clusterId, "ClusterId must be specified!");
+		final String clusterId = kubernetesMasterConf.getClusterId();
 
 		final Map<String, String> flinkConfFileMap = new HashMap<>();
 		final File localFlinkConfFile = getLocalFlinkConfFile();
