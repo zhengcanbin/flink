@@ -96,7 +96,9 @@ public class KubernetesComponentBuilder {
 			new MountVolumesDecorator(kubernetesTaskManagerConf),
 			new FlinkConfConfigMapDecorator(kubernetesTaskManagerConf));
 
-		stepDecorators.forEach(step -> step.configureFlinkPod(flinkPod));
+		for (KubernetesStepDecorator stepDecorator: stepDecorators) {
+			flinkPod = stepDecorator.configureFlinkPod(flinkPod);
+		}
 
 		final Pod pod = new PodBuilder(flinkPod.getPod())
 			.editOrNewSpec()
