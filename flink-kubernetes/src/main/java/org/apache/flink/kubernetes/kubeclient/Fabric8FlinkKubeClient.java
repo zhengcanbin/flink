@@ -107,7 +107,8 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 
 		setOwnerReference(masterDeployment, Collections.singletonList(pod.getInternalResource()));
 
-		LOG.debug("Start to create pod with spec {}", pod.getInternalResource().getSpec().toString());
+		LOG.debug("Start to create pod with metadata {}", pod.getInternalResource().getMetadata());
+		LOG.debug("Start to create pod with spec {}", pod.getInternalResource().getSpec());
 
 		this.internalClient
 			.pods()
