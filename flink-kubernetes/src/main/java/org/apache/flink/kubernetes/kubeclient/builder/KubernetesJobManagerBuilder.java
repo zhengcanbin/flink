@@ -21,16 +21,12 @@ package org.apache.flink.kubernetes.kubeclient.builder;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.KubernetesMasterSpecification;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesTaskManagerConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.KubernetesStepDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.common.MountVolumesDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.common.FlinkConfConfigMapDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.jobmanager.InitJobManagerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.jobmanager.RestServiceDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.jobmanager.StartCommandMasterDecorator;
-import org.apache.flink.kubernetes.kubeclient.decorators.taskmanager.InitTaskManagerDecorator;
-import org.apache.flink.kubernetes.kubeclient.decorators.taskmanager.StartCommandDecorator;
-import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -63,8 +59,8 @@ public class KubernetesJobManagerBuilder {
 			new FlinkConfConfigMapDecorator(kubernetesMasterConf));
 
 		for (KubernetesStepDecorator stepDecorator: stepDecorators) {
-			flinkPod = stepDecorator.configureFlinkPod(flinkPod);
-			additionalResources.addAll(stepDecorator.generateAdditionalKubernetesResources());
+			flinkPod = stepDecorator.decorateFlinkPod(flinkPod);
+			additionalResources.addAll(stepDecorator.buildAdditionalKubernetesResources());
 		}
 
 		final Deployment deployment = buildJobManagerDeployment(flinkPod, kubernetesMasterConf);

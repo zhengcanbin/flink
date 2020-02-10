@@ -18,7 +18,6 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators.jobmanager;
 
-import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
@@ -55,32 +54,33 @@ public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 	}
 
 	@Override
-	public FlinkPod configureFlinkPod(FlinkPod flinkPod) {
-		final ResourceRequirements requirements = KubernetesUtils.getResourceRequirements(
-			kubernetesMasterConf.getJobManagerMemoryMB(),
-			kubernetesMasterConf.getJobManagerCPU());
-
-		final Container decoratedMainContainer = new ContainerBuilder(flinkPod.getMainContainer())
-			.withName(kubernetesMasterConf.getJobManagerMainContainerName())
-			.withImage(kubernetesMasterConf.getImage())
-			.withImagePullPolicy(kubernetesMasterConf.getImagePullPolicy())
-			.withResources(requirements)
-			.withPorts(buildContainerPortForContainer())
-			.withEnv(buildEnvForContainer())
-			.build();
-
-		final Pod decoratedPod = new PodBuilder(flinkPod.getPod())
-			.editOrNewMetadata()
+	protected Pod decoratePod(Pod pod) {
+		return new PodBuilder(pod)
+				.editOrNewMetadata()
 				.withLabels(kubernetesMasterConf.getLabels())
 				.endMetadata()
-			.editOrNewSpec()
+				.editOrNewSpec()
 				// todo code base 没有设置 ServiceAccount
 				.withServiceAccount(kubernetesMasterConf.getServiceAccount())
 				.withServiceAccountName(kubernetesMasterConf.getServiceAccount())
 				.endSpec()
-			.build();
+				.build();
+	}
 
-		return new FlinkPod(decoratedPod, decoratedMainContainer);
+	@Override
+	protected Container decorateMainContainer(Container container) {
+		final ResourceRequirements requirements = KubernetesUtils.getResourceRequirements(
+				kubernetesMasterConf.getJobManagerMemoryMB(),
+				kubernetesMasterConf.getJobManagerCPU());
+
+		return new ContainerBuilder(container)
+				.withName(kubernetesMasterConf.getJobManagerMainContainerName())
+				.withImage(kubernetesMasterConf.getImage())
+				.withImagePullPolicy(kubernetesMasterConf.getImagePullPolicy())
+				.withResources(requirements)
+				.withPorts(buildContainerPortForContainer())
+				.withEnv(buildEnvForContainer())
+				.build();
 	}
 
 	// todo 缺少 Port 的名字啊

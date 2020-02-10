@@ -18,9 +18,6 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators.jobmanager;
 
-import io.fabric8.kubernetes.api.model.LoadBalancerIngress;
-import io.fabric8.kubernetes.api.model.LoadBalancerStatus;
-import io.fabric8.kubernetes.api.model.ServiceStatusBuilder;
 import org.apache.flink.configuration.BlobServerOptions;
 import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.RestOptions;
@@ -52,7 +49,7 @@ public class RestServiceDecorator extends AbstractKubernetesStepDecorator {
 	}
 
 	@Override
-	public List<HasMetadata> generateAdditionalKubernetesResources() throws IOException {
+	public List<HasMetadata> buildAdditionalKubernetesResources() throws IOException {
 		final String clusterId = kubernetesMasterConf.getClusterId();
 		final String restServiceName = KubernetesUtils.getRestServiceName(clusterId);
 

@@ -19,8 +19,6 @@
 package org.apache.flink.kubernetes.kubeclient.decorators.jobmanager;
 
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.builder.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
@@ -46,27 +44,21 @@ public class StartCommandMasterDecorator extends AbstractKubernetesStepDecorator
 	}
 
 	@Override
-	public FlinkPod configureFlinkPod(FlinkPod flinkPod) {
-
+	protected Container decorateMainContainer(Container container) {
 		final String startCommand = getJobManagerStartCommand(
-			configuration,
-			kubernetesMasterConf.getJobManagerMemoryMB(),
-			kubernetesMasterConf.getInternalFlinkConfDir(),
-			kubernetesMasterConf.getInternalFlinkLogDir(),
-			kubernetesMasterConf.hasLogback(),
-			kubernetesMasterConf.hasLog4j(),
-			kubernetesMasterConf.getEntrypointMainClass(),
-			null);
+				configuration,
+				kubernetesMasterConf.getJobManagerMemoryMB(),
+				kubernetesMasterConf.getInternalFlinkConfDir(),
+				kubernetesMasterConf.getInternalFlinkLogDir(),
+				kubernetesMasterConf.hasLogback(),
+				kubernetesMasterConf.hasLog4j(),
+				kubernetesMasterConf.getEntrypointMainClass(),
+				null);
 
-		final Container containerWithStartCommand = new ContainerBuilder(flinkPod.getMainContainer())
-			.withCommand(kubernetesMasterConf.getInternalEntrypoint())
-			.withArgs(Arrays.asList("/bin/bash", "-c", startCommand))
-			.build();
-
-		return new FlinkPodBuilder(flinkPod)
-			.withNewMainContainer(containerWithStartCommand)
-			.build();
-	}
+		return new ContainerBuilder(container)
+				.withCommand(kubernetesMasterConf.getInternalEntrypoint())
+				.withArgs(Arrays.asList("/bin/bash", "-c", startCommand))
+				.build();	}
 
 	/**
 	 * Generates the shell command to start a jobmanager for kubernetes.

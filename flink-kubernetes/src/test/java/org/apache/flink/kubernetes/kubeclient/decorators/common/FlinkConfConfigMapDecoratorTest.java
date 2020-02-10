@@ -97,7 +97,7 @@ public class FlinkConfConfigMapDecoratorTest {
 
 	@Test
 	public void testWhetherPodOrContainerIsDecorated() {
-		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.configureFlinkPod(baseFlinkPod);
+		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.decorateFlinkPod(baseFlinkPod);
 		assertNotEquals(baseFlinkPod.getPod(), decoratedFlinkPod.getPod());
 		assertNotEquals(baseFlinkPod.getMainContainer(), decoratedFlinkPod.getMainContainer());
 	}
@@ -107,7 +107,7 @@ public class FlinkConfConfigMapDecoratorTest {
 		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "log4j.properties"));
 		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "logback.xml"));
 
-		final List<HasMetadata> additionalResources = flinkConfConfigMapDecorator.generateAdditionalKubernetesResources();
+		final List<HasMetadata> additionalResources = flinkConfConfigMapDecorator.buildAdditionalKubernetesResources();
 		assertEquals(1, additionalResources.size());
 
 		final Map<String, String> expectedDatas = new HashMap<>();
@@ -127,12 +127,12 @@ public class FlinkConfConfigMapDecoratorTest {
 	@Test
 	public void testDecorateFlinkPodWithoutFlinkConfigYAML() {
 		// todo 当做一种异常场景去处理
-		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.configureFlinkPod(baseFlinkPod);
+		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.decorateFlinkPod(baseFlinkPod);
 	}
 
 	@Test
 	public void testDecoratedFlinkPodWithoutLog4jAndLogback() {
-		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.configureFlinkPod(baseFlinkPod);
+		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.decorateFlinkPod(baseFlinkPod);
 
 		final List<KeyToPath> expectedKeyToPaths = Collections.singletonList(
 			new KeyToPathBuilder()
@@ -161,7 +161,7 @@ public class FlinkConfConfigMapDecoratorTest {
 	public void testDecoratedFlinkPodWithLog4j() throws IOException {
 		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "log4j.properties"));
 
-		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.configureFlinkPod(baseFlinkPod);
+		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.decorateFlinkPod(baseFlinkPod);
 
 		final List<KeyToPath> expectedKeyToPaths = Arrays.asList(
 			new KeyToPathBuilder()
@@ -187,7 +187,7 @@ public class FlinkConfConfigMapDecoratorTest {
 	public void testDecoratedFlinkPodWithLogback() throws IOException {
 		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "logback.xml"));
 
-		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.configureFlinkPod(baseFlinkPod);
+		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.decorateFlinkPod(baseFlinkPod);
 
 		final List<KeyToPath> expectedKeyToPaths = Arrays.asList(
 			new KeyToPathBuilder()
@@ -214,7 +214,7 @@ public class FlinkConfConfigMapDecoratorTest {
 		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "log4j.properties"));
 		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "logback.xml"));
 
-		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.configureFlinkPod(baseFlinkPod);
+		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.decorateFlinkPod(baseFlinkPod);
 
 		final List<KeyToPath> expectedKeyToPaths = Arrays.asList(
 			new KeyToPathBuilder()

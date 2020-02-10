@@ -48,7 +48,7 @@ public class KubernetesTaskManagerBuilder {
 			new FlinkConfConfigMapDecorator(kubernetesTaskManagerConf));
 
 		for (KubernetesStepDecorator stepDecorator: stepDecorators) {
-			flinkPod = stepDecorator.configureFlinkPod(flinkPod);
+			flinkPod = stepDecorator.decorateFlinkPod(flinkPod);
 		}
 
 		final Pod resolvedPod = new PodBuilder(flinkPod.getPod())

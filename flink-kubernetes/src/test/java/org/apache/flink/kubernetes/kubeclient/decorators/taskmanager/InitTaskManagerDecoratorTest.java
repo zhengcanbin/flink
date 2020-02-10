@@ -68,7 +68,7 @@ public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 		final InitTaskManagerDecorator initTaskManagerDecorator =
 			new InitTaskManagerDecorator(kubernetesTaskManagerConf);
 
-		final FlinkPod decoratedFlinkPod = initTaskManagerDecorator.configureFlinkPod(this.baseFlinkPod);
+		final FlinkPod decoratedFlinkPod = initTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod);
 		this.decoratedPod = decoratedFlinkPod.getPod();
 		this.decoratedMainContainer = decoratedFlinkPod.getMainContainer();
 	}

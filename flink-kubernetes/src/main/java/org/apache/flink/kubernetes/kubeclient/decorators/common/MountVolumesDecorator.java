@@ -43,7 +43,7 @@ public class MountVolumesDecorator extends AbstractKubernetesStepDecorator {
 	}
 
 	@Override
-	public FlinkPod configureFlinkPod(FlinkPod flinkPod) {
+	public FlinkPod decorateFlinkPod(FlinkPod flinkPod) {
 		final Tuple2<Volume[], VolumeMount[]> volumes = kubernetesComponentConf.getVolumes();
 
 		final Pod podWithVolumes = new PodBuilder(flinkPod.getPod())

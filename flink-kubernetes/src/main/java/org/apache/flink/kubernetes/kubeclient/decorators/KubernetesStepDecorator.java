@@ -35,12 +35,12 @@ public interface KubernetesStepDecorator {
 	 * @param flinkPod
 	 * @return
 	 */
-	FlinkPod configureFlinkPod(FlinkPod flinkPod);
+	FlinkPod decorateFlinkPod(FlinkPod flinkPod);
 
 	/**
 	 *
 	 * @return
 	 */
-	List<HasMetadata> generateAdditionalKubernetesResources() throws IOException;
+	List<HasMetadata> buildAdditionalKubernetesResources() throws IOException;
 
 }

@@ -18,7 +18,6 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators.taskmanager;
 
-import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesTaskManagerConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
@@ -49,30 +48,31 @@ public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 	}
 
 	@Override
-	public FlinkPod configureFlinkPod(FlinkPod flinkPod) {
-		final ResourceRequirements resourceRequirements = KubernetesUtils.getResourceRequirements(
-			kubernetesTaskManagerConf.getTaskManagerMemoryMB(),
-			kubernetesTaskManagerConf.getTaskManagerCPU());
-
-		final Container initContainer = new ContainerBuilder(flinkPod.getMainContainer())
-			.withName(kubernetesTaskManagerConf.getTaskManagerMainContainerName())
-			.withImage(kubernetesTaskManagerConf.getImage())
-			.withImagePullPolicy(kubernetesTaskManagerConf.getImagePullPolicy())
-			.withResources(resourceRequirements)
-			.withPorts(new ContainerPortBuilder()
-				.withContainerPort(kubernetesTaskManagerConf.getRPCPort())
-				.build())
-			.withEnv(buildEnvForContainer())
-			.build();
-
-		final Pod initPod = new PodBuilder(flinkPod.getPod())
-			.editOrNewMetadata()
+	protected Pod decoratePod(Pod pod) {
+		return new PodBuilder(pod)
+				.editOrNewMetadata()
 				.withName(kubernetesTaskManagerConf.getPodName())
 				.withLabels(kubernetesTaskManagerConf.getLabels())
 				.endMetadata()
-			.build();
+				.build();
+	}
 
-		return new FlinkPod(initPod, initContainer);
+	@Override
+	protected Container decorateMainContainer(Container container) {
+		final ResourceRequirements resourceRequirements = KubernetesUtils.getResourceRequirements(
+				kubernetesTaskManagerConf.getTaskManagerMemoryMB(),
+				kubernetesTaskManagerConf.getTaskManagerCPU());
+
+		return new ContainerBuilder(container)
+				.withName(kubernetesTaskManagerConf.getTaskManagerMainContainerName())
+				.withImage(kubernetesTaskManagerConf.getImage())
+				.withImagePullPolicy(kubernetesTaskManagerConf.getImagePullPolicy())
+				.withResources(resourceRequirements)
+				.withPorts(new ContainerPortBuilder()
+						.withContainerPort(kubernetesTaskManagerConf.getRPCPort())
+						.build())
+				.withEnv(buildEnvForContainer())
+				.build();
 	}
 
 	private List<EnvVar> buildEnvForContainer() {

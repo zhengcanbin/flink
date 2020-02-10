@@ -19,8 +19,6 @@
 package org.apache.flink.kubernetes.kubeclient.decorators.taskmanager;
 
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.builder.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesTaskManagerConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
 import org.apache.flink.kubernetes.taskmanager.KubernetesTaskExecutorRunner;
@@ -50,16 +48,11 @@ public class StartCommandDecorator extends AbstractKubernetesStepDecorator {
 	}
 
 	@Override
-	public FlinkPod configureFlinkPod(FlinkPod flinkPod) {
-
-		final Container containerWithCommand = new ContainerBuilder(flinkPod.getMainContainer())
-			.withCommand(kubernetesTaskManagerConf.getInternalEntrypoint())
-			.withArgs(Arrays.asList("/bin/bash", "-c", getTaskManagerStartCommand()))
-			.build();
-
-		return new FlinkPodBuilder(flinkPod)
-			.withNewMainContainer(containerWithCommand)
-			.build();
+	protected Container decorateMainContainer(Container container) {
+		return new ContainerBuilder(container)
+				.withCommand(kubernetesTaskManagerConf.getInternalEntrypoint())
+				.withArgs(Arrays.asList("/bin/bash", "-c", getTaskManagerStartCommand()))
+				.build();
 	}
 
 	private String getTaskManagerStartCommand() {

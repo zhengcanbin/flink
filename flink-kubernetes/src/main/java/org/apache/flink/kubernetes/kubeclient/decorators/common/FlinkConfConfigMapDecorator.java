@@ -21,7 +21,6 @@ package org.apache.flink.kubernetes.kubeclient.decorators.common;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.client.cli.CliFrontend;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.conf.AbstractKubernetesComponentConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
 
@@ -69,45 +68,46 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 	}
 
 	@Override
-	public FlinkPod configureFlinkPod(FlinkPod flinkPod) {
+	protected Pod decoratePod(Pod pod) {
 		final List<KeyToPath> keyToPaths = getLocalLogConfFiles().stream()
-			.map(file -> new KeyToPathBuilder()
-				.withKey(file.getName())
-				.withPath(file.getName())
-				.build())
-			.collect(Collectors.toList());
+				.map(file -> new KeyToPathBuilder()
+						.withKey(file.getName())
+						.withPath(file.getName())
+						.build())
+				.collect(Collectors.toList());
 		keyToPaths.add(new KeyToPathBuilder()
-			.withKey(FLINK_CONF_FILENAME)
-			.withPath(FLINK_CONF_FILENAME)
-			.build());
+				.withKey(FLINK_CONF_FILENAME)
+				.withPath(FLINK_CONF_FILENAME)
+				.build());
 
 		final Volume flinkConfVolume = new VolumeBuilder()
-			.withName(FLINK_CONF_VOLUME)
-			.withNewConfigMap()
+				.withName(FLINK_CONF_VOLUME)
+				.withNewConfigMap()
 				.withName(getFlinkConfConfigMapName(kubernetesComponentConf.getClusterId()))
 				.withItems(keyToPaths)
 				.endConfigMap()
-			.build();
+				.build();
 
-		final Pod podWithFlinkConfVolume = new PodBuilder(flinkPod.getPod())
-			.editSpec()
+		return new PodBuilder(pod)
+				.editSpec()
 				.addNewVolumeLike(flinkConfVolume)
-					.endVolume()
+				.endVolume()
 				.endSpec()
-			.build();
-
-		final Container containerWithFlinkConfVolumeMount = new ContainerBuilder(flinkPod.getMainContainer())
-			.addNewVolumeMount()
-				.withName(FLINK_CONF_VOLUME)
-				.withMountPath(kubernetesComponentConf.getInternalFlinkConfDir())
-				.endVolumeMount()
-			.build();
-
-		return new FlinkPod(podWithFlinkConfVolume, containerWithFlinkConfVolumeMount);
+				.build();
 	}
 
 	@Override
-	public List<HasMetadata> generateAdditionalKubernetesResources() throws IOException {
+	protected Container decorateMainContainer(Container container) {
+		return new ContainerBuilder(container)
+				.addNewVolumeMount()
+				.withName(FLINK_CONF_VOLUME)
+				.withMountPath(kubernetesComponentConf.getInternalFlinkConfDir())
+				.endVolumeMount()
+				.build();
+	}
+
+	@Override
+	public List<HasMetadata> buildAdditionalKubernetesResources() throws IOException {
 		final String clusterId = kubernetesComponentConf.getClusterId();
 
 		final Map<String, String> data = new HashMap<>();

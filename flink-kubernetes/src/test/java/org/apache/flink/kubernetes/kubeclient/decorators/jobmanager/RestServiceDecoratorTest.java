@@ -62,7 +62,7 @@ public class RestServiceDecoratorTest extends JobManagerDecoratorTest {
 
 	@Test
 	public void testGetAdditionalKubernetesResources() throws IOException {
-		final List<HasMetadata> resources = this.restServiceDecorator.generateAdditionalKubernetesResources();
+		final List<HasMetadata> resources = this.restServiceDecorator.buildAdditionalKubernetesResources();
 		assertEquals(1, resources.size());
 
 		assertEquals(
@@ -102,11 +102,11 @@ public class RestServiceDecoratorTest extends JobManagerDecoratorTest {
 	@Test
 	public void testSetServiceExposedType() throws IOException {
 		this.flinkConfig.set(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE, "NodePort");
-		List<HasMetadata> resources = this.restServiceDecorator.generateAdditionalKubernetesResources();
+		List<HasMetadata> resources = this.restServiceDecorator.buildAdditionalKubernetesResources();
 		assertEquals("NodePort", ((Service) resources.get(0)).getSpec().getType());
 
 		this.flinkConfig.set(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE, "ClusterIP");
-		resources = this.restServiceDecorator.generateAdditionalKubernetesResources();
+		resources = this.restServiceDecorator.buildAdditionalKubernetesResources();
 		assertEquals("ClusterIP", ((Service) resources.get(0)).getSpec().getType());
 	}
 }
