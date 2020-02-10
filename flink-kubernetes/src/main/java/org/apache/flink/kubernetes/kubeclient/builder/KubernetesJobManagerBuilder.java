@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.flink.kubernetes.kubeclient.builder;
 
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
@@ -6,7 +24,7 @@ import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesTaskManagerConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.KubernetesStepDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.common.MountVolumesDecorator;
-import org.apache.flink.kubernetes.kubeclient.decorators.jobmanager.FlinkConfConfigMapDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.common.FlinkConfConfigMapDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.jobmanager.InitJobManagerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.jobmanager.RestServiceDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.jobmanager.StartCommandMasterDecorator;
@@ -30,7 +48,7 @@ import java.util.Map;
 /**
  *
  */
-public class KubernetesComponentBuilder {
+public class KubernetesJobManagerBuilder {
 
 	public static KubernetesMasterSpecification buildJobManagerComponent(
 			KubernetesMasterConf kubernetesMasterConf) throws IOException {
@@ -71,12 +89,13 @@ public class KubernetesComponentBuilder {
 			.editOrNewMetadata()
 				.withName(kubernetesMasterConf.getClusterId())
 				.withLabels(kubernetesMasterConf.getCommonLabels())
+				.withUid(kubernetesMasterConf.getClusterId())
 				.endMetadata()
 			.editOrNewSpec()
 				.withReplicas(1)
 				.editOrNewTemplate()
 					.editOrNewMetadata()
-						.withLabels(labels)
+						.withLabels(labels)	// todo 这里是否需要使用 Pod 的呢？？？
 						.endMetadata()
 					.withSpec(resolvedPod.getSpec())
 					.endTemplate()
@@ -85,27 +104,5 @@ public class KubernetesComponentBuilder {
 					.endSelector()
 				.endSpec()
 			.build();
-	}
-
-	public static KubernetesPod buildTaskManagerComponent(KubernetesTaskManagerConf kubernetesTaskManagerConf) {
-		FlinkPod flinkPod = new FlinkPodBuilder().build();
-
-		final List<KubernetesStepDecorator> stepDecorators = Arrays.asList(
-			new InitTaskManagerDecorator(kubernetesTaskManagerConf),
-			new StartCommandDecorator(kubernetesTaskManagerConf),
-			new MountVolumesDecorator(kubernetesTaskManagerConf),
-			new FlinkConfConfigMapDecorator(kubernetesTaskManagerConf));
-
-		for (KubernetesStepDecorator stepDecorator: stepDecorators) {
-			flinkPod = stepDecorator.configureFlinkPod(flinkPod);
-		}
-
-		final Pod resolvedPod = new PodBuilder(flinkPod.getPod())
-			.editOrNewSpec()
-				.addToContainers(flinkPod.getMainContainer())
-				.endSpec()
-			.build();
-
-		return new KubernetesPod(resolvedPod);
 	}
 }

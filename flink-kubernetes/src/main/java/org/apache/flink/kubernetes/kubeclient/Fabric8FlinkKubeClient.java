@@ -22,9 +22,12 @@ import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
+import org.apache.flink.kubernetes.kubeclient.resources.ActionWatcher;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
@@ -35,15 +38,20 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watcher;
+import org.apache.flink.util.TimeUtils;
+import org.apache.flink.util.function.FunctionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
@@ -58,7 +66,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 	private final Configuration flinkConfig;
 	private final KubernetesClient internalClient;
 	private final String clusterId;
-	private final String nameSpace;
+	private final String nameSpace;	// todo felix
 
 	public Fabric8FlinkKubeClient(Configuration flinkConfig, KubernetesClient client) {
 		this.flinkConfig = checkNotNull(flinkConfig);
@@ -69,7 +77,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 	}
 
 	@Override
-	public void createFlinkMasterComponent(KubernetesMasterSpecification spec) {
+	public void createFlinkMasterComponent(KubernetesMasterSpecification spec) throws Exception {
 		final Deployment deployment = spec.getDeployment();
 		final List<HasMetadata> additionalResources = spec.getAdditionalResources();
 
@@ -85,10 +93,40 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 		setOwnerReference(createdDeployment, additionalResources);
 
 		// create other Resources, including ConfigMaps, Services.
-		this.internalClient
-			.resourceList(additionalResources)
-			.inNamespace(this.nameSpace)
-			.createOrReplace();
+		for (HasMetadata resource : additionalResources) {
+			if (resource instanceof ConfigMap) {
+				this.internalClient.configMaps().inNamespace(this.nameSpace).create((ConfigMap) resource);
+			} else if (resource instanceof Service) {
+				createServiceInternal((Service) resource).get();
+			} else {
+				throw new UnsupportedOperationException("");
+			}
+		}
+	}
+
+	private CompletableFuture<Service> createServiceInternal(Service service) {
+		this.internalClient.services().inNamespace(this.nameSpace).create(service);
+
+		final ActionWatcher<Service> watcher = new ActionWatcher<>(
+				Watcher.Action.ADDED,
+				service);
+
+		final Watch watchConnectionManager = this.internalClient
+				.services()
+				.inNamespace(this.nameSpace)
+				.withName(service.getMetadata().getName())
+				.watch(watcher);
+
+		final Duration timeout = TimeUtils.parseDuration(
+				flinkConfig.get(KubernetesConfigOptions.SERVICE_CREATE_TIMEOUT));
+
+		return CompletableFuture.supplyAsync(
+				FunctionUtils.uncheckedSupplier(() -> {
+					final Service createdService = watcher.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+					watchConnectionManager.close();
+
+					return createdService;
+				}));
 	}
 
 	@Override
@@ -100,8 +138,9 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 			.withName(clusterId)
 			.get();
 
+		// todo 可能要抛出异常
 		if (masterDeployment == null) {
-			// todo throw Exception
+			LOG.error("Failed to find Deployment");
 			return;
 		}
 
@@ -123,15 +162,19 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 			.withUid(deployment.getMetadata().getUid())
 			.withKind(deployment.getKind())
 			.withController(true)
+			.withBlockOwnerDeletion(true)
 			.build();
-		resources.forEach(resource -> {
-			resource.getMetadata().setOwnerReferences(Collections.singletonList(deploymentOwnerReference));
-		});
+		resources.forEach(resource ->
+				resource.getMetadata().setOwnerReferences(Collections.singletonList(deploymentOwnerReference)));
 	}
 
 	@Override
 	public void stopPod(String podName) {
-		this.internalClient.pods().withName(podName).delete();
+		this.internalClient
+				.pods()
+				.inNamespace(nameSpace)
+				.withName(podName)
+				.delete();
 	}
 
 	@Override
@@ -171,7 +214,11 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 
 	@Override
 	public List<KubernetesPod> getPodsWithLabels(Map<String, String> labels) {
-		final List<Pod> podList = this.internalClient.pods().withLabels(labels).list().getItems();
+		final List<Pod> podList = this.internalClient.pods()
+				.inNamespace(this.nameSpace)
+				.withLabels(labels)
+				.list()
+				.getItems();
 
 		if (podList == null || podList.size() < 1) {
 			return new ArrayList<>();
@@ -185,7 +232,8 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 
 	@Override
 	public void stopAndCleanupCluster(String clusterId) {
-		this.internalClient.services().inNamespace(this.nameSpace).withName(clusterId).cascading(true).delete();
+		this.internalClient.apps().deployments().inNamespace(this.nameSpace)
+				.withName(clusterId).cascading(true).delete();
 	}
 
 	@Override

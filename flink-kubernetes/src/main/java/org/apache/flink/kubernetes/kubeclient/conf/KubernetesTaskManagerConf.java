@@ -39,7 +39,7 @@ import static org.apache.flink.util.Preconditions.checkArgument;
  */
 public class KubernetesTaskManagerConf extends AbstractKubernetesComponentConf {
 
-	private final Map<String, String> labels;
+	public static final String TASK_MANAGER_MAIN_CONTAINER_NAME = "flink-task-manager";
 
 	private final String podName;
 
@@ -53,14 +53,12 @@ public class KubernetesTaskManagerConf extends AbstractKubernetesComponentConf {
 
 	public KubernetesTaskManagerConf(
 			Configuration flinkConfig,
-			Map<String, String> labels,
 			String podName,
 			int taskManagerMemoryMB,
 			double taskManagerCPU,
 			String dynamicProperties,
 			ContaineredTaskManagerParameters containeredTaskManagerParameters) {
 		super(flinkConfig);
-		this.labels = labels;
 		this.podName = podName;
 		this.taskManagerMemoryMB = taskManagerMemoryMB;
 		this.taskManagerCPU = taskManagerCPU;
@@ -70,7 +68,7 @@ public class KubernetesTaskManagerConf extends AbstractKubernetesComponentConf {
 
 	@Override
 	public Map<String, String> getLabels() {
-		return labels;
+		return KubernetesUtils.getTaskManagerLabels(getClusterId());
 	}
 
 	@Override
@@ -84,6 +82,10 @@ public class KubernetesTaskManagerConf extends AbstractKubernetesComponentConf {
 			KubernetesVolumeUtils.parseVolumesWithPrefix(
 				flinkConfig,
 				KUBERNETES_TASKMANAGER_VOLUMES_PREFIX));
+	}
+
+	public String getTaskManagerMainContainerName() {
+		return TASK_MANAGER_MAIN_CONTAINER_NAME;
 	}
 
 	public String getPodName() {

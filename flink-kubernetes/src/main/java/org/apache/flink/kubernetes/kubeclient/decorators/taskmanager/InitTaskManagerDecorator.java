@@ -41,9 +41,6 @@ import static org.apache.flink.kubernetes.utils.Constants.ENV_FLINK_POD_NAME;
  *
  */
 public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
-
-	private static final String CONTAINER_NAME = "flink-task-manager";
-
 	private final KubernetesTaskManagerConf kubernetesTaskManagerConf;
 
 	public InitTaskManagerDecorator(KubernetesTaskManagerConf kubernetesTaskManagerConf) {
@@ -58,7 +55,7 @@ public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 			kubernetesTaskManagerConf.getTaskManagerCPU());
 
 		final Container initContainer = new ContainerBuilder(flinkPod.getMainContainer())
-			.withName(CONTAINER_NAME)
+			.withName(kubernetesTaskManagerConf.getTaskManagerMainContainerName())
 			.withImage(kubernetesTaskManagerConf.getImage())
 			.withImagePullPolicy(kubernetesTaskManagerConf.getImagePullPolicy())
 			.withResources(resourceRequirements)

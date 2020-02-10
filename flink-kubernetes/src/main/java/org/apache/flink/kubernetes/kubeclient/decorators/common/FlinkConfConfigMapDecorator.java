@@ -16,9 +16,11 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.jobmanager;
+package org.apache.flink.kubernetes.kubeclient.decorators.common;
 
+import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.client.cli.CliFrontend;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.conf.AbstractKubernetesComponentConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
@@ -39,6 +41,8 @@ import io.fabric8.kubernetes.api.model.VolumeBuilder;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -112,7 +116,7 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 		for (File file : localLogFiles) {
 			data.put(file.getName(), Files.toString(file, StandardCharsets.UTF_8));
 		}
-		data.put(FLINK_CONF_FILENAME, getFlinkConfData());
+		data.put(FLINK_CONF_FILENAME, getFlinkConfData(this.configuration));
 
 		final ConfigMap flinkConfConfigMap = new ConfigMapBuilder()
 			.withNewMetadata()
@@ -125,16 +129,19 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 		return Collections.singletonList(flinkConfConfigMap);
 	}
 
-	private String getFlinkConfData() {
-		final StringBuilder builder = new StringBuilder();
-		configuration.toMap().forEach((k, v) -> {
-			builder.append(k);
-			builder.append(": ");
-			builder.append(v);
-			builder.append(System.getProperty("line.separator", "\n"));
-		});
+	@VisibleForTesting
+	String getFlinkConfData(Configuration configuration) throws IOException {
+		try (StringWriter sw = new StringWriter();
+			 PrintWriter out = new PrintWriter(sw)) {
+			for (String key : configuration.keySet()) {
+				String value = configuration.getString(key, null);
+				out.print(key);
+				out.print(": ");
+				out.println(value);
+			}
 
-		return builder.toString();
+			return sw.toString();
+		}
 	}
 
 	private List<File> getLocalLogConfFiles() {
@@ -153,7 +160,8 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 		return localLogFiles;
 	}
 
-	private String getFlinkConfConfigMapName(String prefix) {
+	@VisibleForTesting
+	String getFlinkConfConfigMapName(String prefix) {
 		return prefix + "-flink-conf";
 	}
 }

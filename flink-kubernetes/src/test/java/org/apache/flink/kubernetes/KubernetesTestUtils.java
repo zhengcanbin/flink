@@ -16,42 +16,18 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient;
+package org.apache.flink.kubernetes;
 
-import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.Pod;
+import org.apache.flink.shaded.guava18.com.google.common.io.Files;
 
-import java.util.Objects;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
-/**
- *
- */
-public class FlinkPod {
+public class KubernetesTestUtils {
 
-	private Pod pod;
-
-	private Container mainContainer;
-
-	public FlinkPod(Pod pod, Container mainContainer) {
-		this.pod = pod;
-		this.mainContainer = mainContainer;
+	public static void createTemporyFile(String data, File directory, String fileName) throws IOException {
+		Files.write(data, new File(directory,fileName), StandardCharsets.UTF_8);
 	}
-
-	public Pod getPod() {
-		return pod;
-	}
-
-	public void setPod(Pod pod) {
-		this.pod = pod;
-	}
-
-	public Container getMainContainer() {
-		return mainContainer;
-	}
-
-	public void setMainContainer(Container mainContainer) {
-		this.mainContainer = mainContainer;
-	}
-
 
 }

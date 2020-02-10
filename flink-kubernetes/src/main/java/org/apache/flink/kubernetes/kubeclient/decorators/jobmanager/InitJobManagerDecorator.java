@@ -25,6 +25,7 @@ import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
@@ -46,8 +47,6 @@ import static org.apache.flink.kubernetes.utils.Constants.POD_IP_FIELD_PATH;
  */
 public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 
-	private static final String CONTAINER_NAME = "flink-job-manager";
-
 	private final KubernetesMasterConf kubernetesMasterConf;
 
 	public InitJobManagerDecorator(KubernetesMasterConf kubernetesMasterConf) {
@@ -62,15 +61,12 @@ public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 			kubernetesMasterConf.getJobManagerCPU());
 
 		final Container decoratedMainContainer = new ContainerBuilder(flinkPod.getMainContainer())
-			.withName(CONTAINER_NAME)
+			.withName(kubernetesMasterConf.getJobManagerMainContainerName())
 			.withImage(kubernetesMasterConf.getImage())
 			.withImagePullPolicy(kubernetesMasterConf.getImagePullPolicy())
-			.withPorts(Arrays.asList(
-				new ContainerPortBuilder().withContainerPort(kubernetesMasterConf.getRestPort()).build(),
-				new ContainerPortBuilder().withContainerPort(kubernetesMasterConf.getRPCPort()).build(),
-				new ContainerPortBuilder().withContainerPort(kubernetesMasterConf.getBlobServerPort()).build()))
-			.withEnv(buildEnvForContainer())
 			.withResources(requirements)
+			.withPorts(buildContainerPortForContainer())
+			.withEnv(buildEnvForContainer())
 			.build();
 
 		final Pod decoratedPod = new PodBuilder(flinkPod.getPod())
@@ -78,11 +74,27 @@ public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 				.withLabels(kubernetesMasterConf.getLabels())
 				.endMetadata()
 			.editOrNewSpec()
+				// todo code base 没有设置 ServiceAccount
+				.withServiceAccount(kubernetesMasterConf.getServiceAccount())
 				.withServiceAccountName(kubernetesMasterConf.getServiceAccount())
 				.endSpec()
 			.build();
 
 		return new FlinkPod(decoratedPod, decoratedMainContainer);
+	}
+
+	// todo 缺少 Port 的名字啊
+	private List<ContainerPort> buildContainerPortForContainer() {
+		return Arrays.asList(
+			new ContainerPortBuilder()
+				.withContainerPort(kubernetesMasterConf.getRestPort())
+				.build(),
+			new ContainerPortBuilder()
+				.withContainerPort(kubernetesMasterConf.getRPCPort())
+				.build(),
+			new ContainerPortBuilder().
+				withContainerPort(kubernetesMasterConf.getBlobServerPort())
+				.build());
 	}
 
 	private List<EnvVar> buildEnvForContainer() {
@@ -94,7 +106,9 @@ public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 
 		envList.add(new EnvVarBuilder()
 			.withName(ENV_FLINK_POD_IP_ADDRESS)
-			.withValueFrom(new EnvVarSourceBuilder().withNewFieldRef(API_VERSION, POD_IP_FIELD_PATH).build())
+			.withValueFrom(new EnvVarSourceBuilder()
+				.withNewFieldRef(API_VERSION, POD_IP_FIELD_PATH)
+				.build())
 			.build());
 
 		return envList;

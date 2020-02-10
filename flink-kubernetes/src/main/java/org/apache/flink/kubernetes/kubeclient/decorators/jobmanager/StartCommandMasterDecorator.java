@@ -69,7 +69,7 @@ public class StartCommandMasterDecorator extends AbstractKubernetesStepDecorator
 	}
 
 	/**
-	 * Generates the shell command to start a job manager for kubernetes.
+	 * Generates the shell command to start a jobmanager for kubernetes.
 	 *
 	 * @param flinkConfig The Flink configuration.
 	 * @param jobManagerMemoryMb JobManager heap size.
