@@ -21,8 +21,6 @@ package org.apache.flink.kubernetes.kubeclient;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.Pod;
 
-import java.util.Objects;
-
 /**
  *
  */
@@ -52,6 +50,4 @@ public class FlinkPod {
 	public void setMainContainer(Container mainContainer) {
 		this.mainContainer = mainContainer;
 	}
-
-
 }
