@@ -30,9 +30,6 @@ import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
  *
  */
@@ -41,11 +38,11 @@ public class KubernetesTaskManagerBuilder {
 	public static KubernetesPod buildTaskManagerComponent(KubernetesTaskManagerConf kubernetesTaskManagerConf) {
 		FlinkPod flinkPod = new FlinkPodBuilder().build();
 
-		final List<KubernetesStepDecorator> stepDecorators = Arrays.asList(
+		final KubernetesStepDecorator[] stepDecorators = new KubernetesStepDecorator[] {
 			new InitTaskManagerDecorator(kubernetesTaskManagerConf),
 			new StartCommandDecorator(kubernetesTaskManagerConf),
 			new MountVolumesDecorator(kubernetesTaskManagerConf),
-			new FlinkConfConfigMapDecorator(kubernetesTaskManagerConf));
+			new FlinkConfConfigMapDecorator(kubernetesTaskManagerConf)};
 
 		for (KubernetesStepDecorator stepDecorator: stepDecorators) {
 			flinkPod = stepDecorator.decorateFlinkPod(flinkPod);
