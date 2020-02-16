@@ -19,8 +19,7 @@
 package org.apache.flink.kubernetes.kubeclient;
 
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
-
-import io.fabric8.kubernetes.api.model.Service;
+import org.apache.flink.kubernetes.kubeclient.resources.KubernetesService;
 
 import javax.annotation.Nullable;
 
@@ -65,7 +64,7 @@ public interface FlinkKubeClient extends AutoCloseable {
 	 * @return Return the rest service of the specified cluster id. Return null if the service does not exist.
 	 */
 	@Nullable
-	Service getRestService(String clusterId);
+	KubernetesService getRestService(String clusterId);
 
 	/**
 	 * Get the rest endpoint for access outside cluster.

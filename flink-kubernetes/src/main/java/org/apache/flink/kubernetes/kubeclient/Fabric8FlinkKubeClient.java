@@ -24,10 +24,12 @@ import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.resources.ActionWatcher;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
+import org.apache.flink.kubernetes.kubeclient.resources.KubernetesService;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
+import org.apache.flink.util.TimeUtils;
+import org.apache.flink.util.function.FunctionUtils;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
@@ -37,9 +39,8 @@ import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
-import org.apache.flink.util.TimeUtils;
-import org.apache.flink.util.function.FunctionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -188,7 +189,11 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 			return new Endpoint(KubernetesUtils.getRestServiceName(clusterId) + "." + nameSpace, restPort);
 		}
 
-		Service service = getRestService(clusterId);
+		KubernetesService restService = getRestService(clusterId);
+		if (restService == null) {
+			return null;
+		}
+		Service service = restService.getInternalResource();
 
 		String address = null;
 
@@ -243,7 +248,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 
 	@Override
 	@Nullable
-	public Service getRestService(String clusterId) {
+	public KubernetesService getRestService(String clusterId) {
 		final String restServiceName = KubernetesUtils.getRestServiceName(clusterId);
 		final Service restService = this
 			.internalClient
@@ -258,7 +263,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 			return null;
 		}
 
-		return restService;
+		return new KubernetesService(restService);
 	}
 
 	@Override
