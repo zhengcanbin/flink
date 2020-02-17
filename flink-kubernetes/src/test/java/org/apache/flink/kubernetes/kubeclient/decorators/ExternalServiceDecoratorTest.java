@@ -41,7 +41,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Test for {@link ExternalServiceDecorator}.
+ * General tests for the {@link ExternalServiceDecorator}.
  */
 public class ExternalServiceDecoratorTest extends JobManagerDecoratorTest {
 	private static final String _NAMESPACE = "default-test";
