@@ -73,6 +73,7 @@ public class KubernetesTaskManagerBuilderTest {
 		final Map<String, String> map = new HashMap<>();
 		map.put(ConfigConstants.ENV_FLINK_CONF_DIR, flinkConfDir.toString());
 		TestBaseUtils.setEnv(map);
+
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
 
