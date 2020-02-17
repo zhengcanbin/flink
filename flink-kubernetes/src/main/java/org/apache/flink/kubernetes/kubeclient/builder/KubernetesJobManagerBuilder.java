@@ -44,8 +44,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Utility class for constructing all the Kubernetes components on the client-side. This
- * can include the Deployment, the ConfigMap(s), and the Service(s).
+ * Utility class for constructing all the Kubernetes components on the client-side. This can
+ * include the Deployment, the ConfigMap(s), and the Service(s).
  */
 public class KubernetesJobManagerBuilder {
 
