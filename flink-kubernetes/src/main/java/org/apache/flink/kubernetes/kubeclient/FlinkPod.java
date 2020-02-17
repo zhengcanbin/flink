@@ -22,7 +22,8 @@ import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.Pod;
 
 /**
- *
+ * A collection of variables that composes a JobManager/TaskManager Pod. This can include
+ * the Pod, the main Container, and the InitContainer, etc.
  */
 public class FlinkPod {
 
