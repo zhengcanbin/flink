@@ -19,6 +19,7 @@
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.ConfigConstants;
+import org.apache.flink.configuration.CoreOptions;
 import org.apache.flink.kubernetes.KubernetesTestUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
@@ -56,16 +57,23 @@ public class JavaCmdJobManagerDecoratorTest extends JobManagerDecoratorTest {
 	private static final String _INTERNAL_FLINK_LOG_DIR = "/opt/flink/flink-log-";
 	private static final String _ENTRY_POINT_CLASS = KubernetesSessionClusterEntrypoint.class.getCanonicalName();
 
-	private final String java = "$JAVA_HOME/bin/java";
-	private final String classpath = "-classpath $FLINK_CLASSPATH";
-	private final String jvmmem = String.format(
-		"-Xms%sm -Xmx%sm",
-		JOB_MANAGER_MEMORY - 600,
-		JOB_MANAGER_MEMORY - 600);
-	private final String redirects = String.format(
-		"1> %s/jobmanager.out 2> %s/jobmanager.err",
-			_INTERNAL_FLINK_LOG_DIR,
-			_INTERNAL_FLINK_LOG_DIR);
+	private static final String java = "$JAVA_HOME/bin/java";
+	private static final String classpath = "-classpath $FLINK_CLASSPATH";
+	private static final String jvmOpts = "-Djvm";
+
+	// Logging variables
+	private static final String logback =
+			String.format("-Dlogback.configurationFile=file:%s/logback.xml", _INTERNAL_FLINK_CONF_DIR);
+	private static final String log4j =
+			String.format("-Dlog4j.configuration=file:%s/log4j.properties", _INTERNAL_FLINK_CONF_DIR);
+	private static final String jmLogfile = String.format("-Dlog.file=%s/jobmanager.log", _INTERNAL_FLINK_LOG_DIR);
+	private static final String jmLogRedirects =
+			String.format("1> %s/jobmanager.out 2> %s/jobmanager.err",
+					_INTERNAL_FLINK_LOG_DIR, _INTERNAL_FLINK_LOG_DIR);
+
+	// Memory variables
+	private static final String jmJvmMem = String.format("-Xms%dm -Xmx%dm",
+			JOB_MANAGER_MEMORY - 600, JOB_MANAGER_MEMORY - 600);
 
 	private final FlinkPod baseFlinkPod = new FlinkPodBuilder().build();
 
@@ -107,13 +115,7 @@ public class JavaCmdJobManagerDecoratorTest extends JobManagerDecoratorTest {
 
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
-		final String expectedCommand = String.format(
-			"%s %s %s %s %s",
-			java,
-			classpath,
-			jvmmem,
-			_ENTRY_POINT_CLASS,
-			redirects);
+		final String expectedCommand = getJobManagerExpectedCommand("", "");
 
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
 
@@ -125,24 +127,11 @@ public class JavaCmdJobManagerDecoratorTest extends JobManagerDecoratorTest {
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
 
 		final Container resultMainContainer =
-			javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+				javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
 
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
-		final String expectedLogging = String.format(
-			"-Dlog.file=%s/jobmanager.log -Dlog4j.configuration=file:%s/log4j.properties",
-				_INTERNAL_FLINK_LOG_DIR,
-				_INTERNAL_FLINK_CONF_DIR);
-
-		final String expectedCommand = String.format(
-			"%s %s %s %s %s %s",
-			java,
-			classpath,
-			jvmmem,
-			expectedLogging,
-			_ENTRY_POINT_CLASS,
-			redirects);
-
+		final String expectedCommand = getJobManagerExpectedCommand("", log4j);
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
 		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
 	}
@@ -152,24 +141,11 @@ public class JavaCmdJobManagerDecoratorTest extends JobManagerDecoratorTest {
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
 
 		final Container resultMainContainer =
-			javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+				javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
 
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
-		final String expectedLogging = String.format(
-			"-Dlog.file=%s/jobmanager.log -Dlogback.configurationFile=file:%s/logback.xml",
-				_INTERNAL_FLINK_LOG_DIR,
-				_INTERNAL_FLINK_CONF_DIR);
-
-		final String expectedCommand = String.format(
-			"%s %s %s %s %s %s",
-			java,
-			classpath,
-			jvmmem,
-			expectedLogging,
-				_ENTRY_POINT_CLASS,
-			redirects);
-
+		final String expectedCommand = getJobManagerExpectedCommand("", logback);
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
 		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
 	}
@@ -180,116 +156,117 @@ public class JavaCmdJobManagerDecoratorTest extends JobManagerDecoratorTest {
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
 
 		final Container resultMainContainer =
-			javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+				javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
 
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
-		final String expectedLogging = String.format(
-			"-Dlog.file=%s/jobmanager.log -Dlogback.configurationFile=file:%s/logback.xml" +
-				" -Dlog4j.configuration=file:%s/log4j.properties",
-				_INTERNAL_FLINK_LOG_DIR,
-				_INTERNAL_FLINK_CONF_DIR,
-				_INTERNAL_FLINK_CONF_DIR);
-
-		final String expectedCommand = String.format(
-			"%s %s %s %s %s %s",
-			java,
-			classpath,
-			jvmmem,
-			expectedLogging,
-				_ENTRY_POINT_CLASS,
-			redirects);
+		final String expectedCommand =
+				getJobManagerExpectedCommand("", logback + " " + log4j);
 
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
 		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
 	}
 
+	@Test
+	public void testStartCommandWithLogAndJVMOpts() throws IOException {
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
+
+		flinkConfig.set(CoreOptions.FLINK_JVM_OPTIONS, jvmOpts);
+		final Container resultMainContainer =
+				javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+
+		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
 
-//	@Test
-//	public void testJobManagerStartCommand() {
-//		final Configuration cfg = new Configuration();
-//
-//		final String jmJvmOpts = "-DjmJvm";
-//
-//		assertEquals(
-//				getJobManagerExpectedCommand("", "", mainClassArgs),
-//				getJobManagerStartCommand(cfg, false, false, mainClassArgs));
-//
-//		// logback only
-//		assertEquals(
-//				getJobManagerExpectedCommand("", logback, mainClassArgs),
-//				getJobManagerStartCommand(cfg, true, false, mainClassArgs));
-//
-//		// log4j only
-//		assertEquals(
-//				getJobManagerExpectedCommand("", log4j, mainClassArgs),
-//				getJobManagerStartCommand(cfg, false, true, mainClassArgs));
-//
-//		// logback + log4j
-//		assertEquals(
-//				getJobManagerExpectedCommand("", logback + " " + log4j, mainClassArgs),
-//				getJobManagerStartCommand(cfg, true, true, mainClassArgs));
-//
-//		// logback + log4j, different JVM opts
-//		cfg.setString(CoreOptions.FLINK_JVM_OPTIONS, jvmOpts);
-//		assertEquals(
-//				getJobManagerExpectedCommand(jvmOpts, logback + " " + log4j, mainClassArgs),
-//				getJobManagerStartCommand(cfg, true, true, mainClassArgs));
-//
-//		// logback + log4j,different TM JVM opts
-//		cfg.setString(CoreOptions.FLINK_JM_JVM_OPTIONS, jmJvmOpts);
-//		assertEquals(
-//				getJobManagerExpectedCommand(jvmOpts + " " + jmJvmOpts, logback + " " + log4j, mainClassArgs),
-//				getJobManagerStartCommand(cfg, true, true, mainClassArgs));
-//
-//		// no args
-//		assertEquals(
-//				getJobManagerExpectedCommand(jvmOpts + " " + jmJvmOpts, logback + " " + log4j, ""),
-//				getJobManagerStartCommand(cfg, true, true, ""));
-//
-//		// now try some configurations with different container-start-command-template
-//
-//		cfg.setString(KubernetesConfigOptions.CONTAINER_START_COMMAND_TEMPLATE,
-//				"%java% 1 %classpath% 2 %jvmmem% %jvmopts% %logging% %class% %args% %redirects%");
-//		assertEquals(
-//				java + " 1 " + classpath + " 2 " + jmJvmMem +
-//						" " + jvmOpts + " " + jmJvmOpts + // jvmOpts
-//						" " + jmLogfile + " " + logback + " " + log4j +
-//						" " + mainClass + " " + mainClassArgs + " " + jmLogRedirects,
-//				getJobManagerStartCommand(cfg, true, true, mainClassArgs));
-//
-//		cfg.setString(KubernetesConfigOptions.CONTAINER_START_COMMAND_TEMPLATE,
-//				"%java% %jvmmem% %logging% %jvmopts% %class% %args% %redirects%");
-//		assertEquals(
-//				java + " " + jmJvmMem +
-//						" " + jmLogfile + " " + logback + " " + log4j +
-//						" " + jvmOpts + " " + jmJvmOpts + // jvmOpts
-//						" " + mainClass + " " + mainClassArgs + " " + jmLogRedirects,
-//				getJobManagerStartCommand(cfg, true, true, mainClassArgs));
-//
-//	}
-//
-//	private String getJobManagerExpectedCommand(String jvmAllOpts, String logging, String mainClassArgs) {
-//		return java + " " + classpath + " " + jmJvmMem +
-//				(jvmAllOpts.isEmpty() ? "" : " " + jvmAllOpts) +
-//				(logging.isEmpty() ? "" : " " + jmLogfile + " " + logging) +
-//				" " + mainClass + (mainClassArgs.isEmpty() ? "" : " " + mainClassArgs) + " " + jmLogRedirects;
-//	}
-//
-//	private String getJobManagerStartCommand(
-//			Configuration cfg,
-//			boolean hasLogBack,
-//			boolean hasLog4j,
-//			String mainClassArgs) {
-//		return JavaCmdJobManagerDecorator.getJobManagerStartCommand(
-//				cfg,
-//				jobManagerMem,
-//				confDirInPod,
-//				logDirInPod,
-//				hasLogBack,
-//				hasLog4j,
-//				mainClass,
-//				mainClassArgs
-//		);
+		final String expectedCommand =
+				getJobManagerExpectedCommand(jvmOpts, logback + " " + log4j);
+
+		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
+		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
+	}
+
+	@Test
+	public void testStartCommandWithLogAndJMOpts() throws IOException {
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
+
+		flinkConfig.set(CoreOptions.FLINK_JM_JVM_OPTIONS, jvmOpts);
+		final Container resultMainContainer =
+				javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+
+		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+
+
+		final String expectedCommand =
+				getJobManagerExpectedCommand(jvmOpts, logback + " " + log4j);
+
+		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
+		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
+	}
+
+	@Test
+	public void testContainerStartCommandTemplate1() throws IOException {
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
+
+		final String containerStartCommandTemplate =
+				"%java% 1 %classpath% 2 %jvmmem% %jvmopts% %logging% %class% %args% %redirects%";
+		this.flinkConfig.set(KubernetesConfigOptions.CONTAINER_START_COMMAND_TEMPLATE,
+				containerStartCommandTemplate);
+
+		final String jmJvmOpts = "-DjmJvm";
+		this.flinkConfig.setString(CoreOptions.FLINK_JVM_OPTIONS, jvmOpts);
+		this.flinkConfig.setString(CoreOptions.FLINK_JM_JVM_OPTIONS, jmJvmOpts);
+
+		final Container resultMainContainer =
+				javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+
+		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+
+		final String expectedCommand = java + " 1 " + classpath + " 2 " + jmJvmMem +
+				" " + jvmOpts + " " + jmJvmOpts +
+				" " + jmLogfile + " " + logback + " " + log4j +
+				" " + _ENTRY_POINT_CLASS + " " + jmLogRedirects;
+
+		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
+
+		assertThat(resultMainContainer.getArgs(), is(expectedArgs));
+	}
+
+	@Test
+	public void testContainerStartCommandTemplate2() throws IOException {
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
+
+		final String containerStartCommandTemplate =
+				"%java% %jvmmem% %logging% %jvmopts% %class% %args% %redirects%";
+		this.flinkConfig.set(KubernetesConfigOptions.CONTAINER_START_COMMAND_TEMPLATE,
+				containerStartCommandTemplate);
+
+		final String jmJvmOpts = "-DjmJvm";
+		this.flinkConfig.setString(CoreOptions.FLINK_JVM_OPTIONS, jvmOpts);
+		this.flinkConfig.setString(CoreOptions.FLINK_JM_JVM_OPTIONS, jmJvmOpts);
+
+		final Container resultMainContainer =
+				javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+
+		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+
+		final String expectedCommand = java + " " + jmJvmMem +
+				" " + jmLogfile + " " + logback + " " + log4j +
+				" " + jvmOpts + " " + jmJvmOpts +
+				" " + _ENTRY_POINT_CLASS + " " + jmLogRedirects;
+
+		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
+
+		assertThat(resultMainContainer.getArgs(), is(expectedArgs));
+	}
+
+	private String getJobManagerExpectedCommand(String jvmAllOpts, String logging) {
+		return java + " " + classpath + " " + jmJvmMem +
+				(jvmAllOpts.isEmpty() ? "" : " " + jvmAllOpts) +
+				(logging.isEmpty() ? "" : " " + jmLogfile + " " + logging) +
+				" " + _ENTRY_POINT_CLASS + " " + jmLogRedirects;
+	}
 }
