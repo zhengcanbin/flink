@@ -32,6 +32,7 @@ import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint
 import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerSpecification;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
 import org.apache.flink.kubernetes.utils.Constants;
+import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.test.util.TestBaseUtils;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -97,6 +98,7 @@ public class KubernetesJobManagerBuilderTest {
 		final Map<String, String> map = new HashMap<>();
 		map.put(ConfigConstants.ENV_FLINK_CONF_DIR, flinkConfDir.toString());
 		TestBaseUtils.setEnv(map);
+
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
 
@@ -201,20 +203,40 @@ public class KubernetesJobManagerBuilderTest {
 	}
 
 	@Test
-	public void testService() {
-//		final Service re = (Service) this.kubernetesJobManagerSpecification.getAccompanyingResources()
-//			.stream()
-//			.filter(x -> x instanceof Service)
-//			.collect(Collectors.toList())
-//			.get(0);
-//
-//
-//		assertEquals(resultedService.getMetadata().getName(), KubernetesUtils.getRestServiceName(_CLUSTER_ID));
-//		assertEquals(2, resultedService.getMetadata().getLabels().size());
-//
-//		assertEquals(resultedService.getSpec().getType(), "LoadBalancer");
-//		assertEquals(3, resultedService.getSpec().getPorts().size());
-//		assertEquals(3, resultedService.getSpec().getSelector().size());
+	public void testServices() {
+		final List<Service> services = this.kubernetesJobManagerSpecification.getAccompanyingResources()
+			.stream()
+			.filter(x -> x instanceof Service)
+			.map(x -> (Service) x)
+			.collect(Collectors.toList());
+
+		assertEquals(2, services.size());
+
+		final List<Service> internalServiceCandidates = services
+				.stream()
+				.filter(x -> x.getMetadata().getName().equals(KubernetesUtils.getInternalServiceName(_CLUSTER_ID)))
+				.collect(Collectors.toList());
+		assertEquals(1, internalServiceCandidates.size());
+
+		final List<Service> restServiceCandidates = services
+				.stream()
+				.filter(x -> x.getMetadata().getName().equals(KubernetesUtils.getRestServiceName(_CLUSTER_ID)))
+				.collect(Collectors.toList());
+		assertEquals(1, restServiceCandidates.size());
+
+		final Service resultedInternalService = internalServiceCandidates.get(0);
+		assertEquals(2, resultedInternalService.getMetadata().getLabels().size());
+
+		assertEquals(resultedInternalService.getSpec().getType(), "ClusterIP");
+		assertEquals(3, resultedInternalService.getSpec().getPorts().size());
+		assertEquals(3, resultedInternalService.getSpec().getSelector().size());
+
+		final Service resultedRestService = restServiceCandidates.get(0);
+		assertEquals(2, resultedRestService.getMetadata().getLabels().size());
+
+		assertEquals(resultedRestService.getSpec().getType(), "LoadBalancer");
+		assertEquals(1, resultedRestService.getSpec().getPorts().size());
+		assertEquals(3, resultedRestService.getSpec().getSelector().size());
 	}
 
 	@Test
