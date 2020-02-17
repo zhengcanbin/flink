@@ -21,7 +21,7 @@ package org.apache.flink.kubernetes.kubeclient.builder;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerSpecification;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
+import org.apache.flink.kubernetes.kubeclient.conf.KubernetesJobManagerConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.ExternalServiceDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.FlinkConfMountDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.InitJobManagerDecorator;
@@ -50,31 +50,31 @@ import java.util.Map;
 public class KubernetesJobManagerBuilder {
 
 	public static KubernetesJobManagerSpecification buildJobManagerComponent(
-			KubernetesMasterConf kubernetesMasterConf) throws IOException {
+			KubernetesJobManagerConf kubernetesJobManagerConf) throws IOException {
 		FlinkPod flinkPod = new FlinkPodBuilder().build();
 		List<HasMetadata> accompanyingResources = new ArrayList<>();
 
 		final KubernetesStepDecorator[] stepDecorators = new KubernetesStepDecorator[] {
-			new InitJobManagerDecorator(kubernetesMasterConf),
-			new JavaCmdJobManagerDecorator(kubernetesMasterConf),
-			new InternalServiceDecorator(kubernetesMasterConf),
-			new ExternalServiceDecorator(kubernetesMasterConf),
-			new VolumesMountDecorator(kubernetesMasterConf),
-			new FlinkConfMountDecorator(kubernetesMasterConf)};
+			new InitJobManagerDecorator(kubernetesJobManagerConf),
+			new JavaCmdJobManagerDecorator(kubernetesJobManagerConf),
+			new InternalServiceDecorator(kubernetesJobManagerConf),
+			new ExternalServiceDecorator(kubernetesJobManagerConf),
+			new VolumesMountDecorator(kubernetesJobManagerConf),
+			new FlinkConfMountDecorator(kubernetesJobManagerConf)};
 
 		for (KubernetesStepDecorator stepDecorator: stepDecorators) {
 			flinkPod = stepDecorator.decorateFlinkPod(flinkPod);
 			accompanyingResources.addAll(stepDecorator.buildAccompanyingKubernetesResources());
 		}
 
-		final Deployment deployment = buildJobManagerDeployment(flinkPod, kubernetesMasterConf);
+		final Deployment deployment = buildJobManagerDeployment(flinkPod, kubernetesJobManagerConf);
 
 		return new KubernetesJobManagerSpecification(deployment, accompanyingResources);
 	}
 
 	private static Deployment buildJobManagerDeployment(
 			FlinkPod flinkPod,
-			KubernetesMasterConf kubernetesMasterConf) {
+			KubernetesJobManagerConf kubernetesJobManagerConf) {
 		final Container resolvedMainContainer = flinkPod.getMainContainer();
 
 		final Pod resolvedPod = new PodBuilder(flinkPod.getPod())
@@ -88,9 +88,9 @@ public class KubernetesJobManagerBuilder {
 		return new DeploymentBuilder()
 			.withApiVersion(Constants.APPS_API_VERSION)
 			.editOrNewMetadata()
-				.withName(kubernetesMasterConf.getClusterId())
-				.withLabels(kubernetesMasterConf.getCommonLabels())
-				.withUid(kubernetesMasterConf.getClusterId())
+				.withName(kubernetesJobManagerConf.getClusterId())
+				.withLabels(kubernetesJobManagerConf.getCommonLabels())
+				.withUid(kubernetesJobManagerConf.getClusterId())
 				.endMetadata()
 			.editOrNewSpec()
 				.withReplicas(1)

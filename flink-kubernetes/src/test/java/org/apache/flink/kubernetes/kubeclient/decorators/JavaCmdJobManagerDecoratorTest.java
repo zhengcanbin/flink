@@ -98,7 +98,7 @@ public class JavaCmdJobManagerDecoratorTest extends JobManagerDecoratorTest {
 		flinkConfig.set(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS, _ENTRY_POINT_CLASS);
 		flinkConfig.set(KubernetesConfigOptions.KUBERNETES_ENTRY_PATH, _KUBERNETES_ENTRY_PATH);
 
-		this.javaCmdJobManagerDecorator = new JavaCmdJobManagerDecorator(kubernetesMasterConf);
+		this.javaCmdJobManagerDecorator = new JavaCmdJobManagerDecorator(kubernetesJobManagerConf);
 	}
 
 	@Test

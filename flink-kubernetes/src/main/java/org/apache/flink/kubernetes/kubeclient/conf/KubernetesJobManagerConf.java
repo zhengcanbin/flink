@@ -43,13 +43,13 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  *
  */
-public class KubernetesMasterConf extends AbstractKubernetesComponentConf {
+public class KubernetesJobManagerConf extends AbstractKubernetesComponentConf {
 
 	public static final String JOB_MANAGER_MAIN_CONTAINER_NAME = "flink-job-manager";
 
 	private final ClusterSpecification clusterSpecification;
 
-	public KubernetesMasterConf(Configuration flinkConfig, ClusterSpecification clusterSpecification) {
+	public KubernetesJobManagerConf(Configuration flinkConfig, ClusterSpecification clusterSpecification) {
 		super(flinkConfig);
 		this.clusterSpecification = clusterSpecification;
 	}

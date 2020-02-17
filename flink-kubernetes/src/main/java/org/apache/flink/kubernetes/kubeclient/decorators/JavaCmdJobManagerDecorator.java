@@ -19,7 +19,7 @@
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
+import org.apache.flink.kubernetes.kubeclient.conf.KubernetesJobManagerConf;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.clusterframework.BootstrapTools;
 
@@ -33,26 +33,26 @@ import java.util.Arrays;
  */
 public class JavaCmdJobManagerDecorator extends AbstractKubernetesStepDecorator {
 
-	private final KubernetesMasterConf kubernetesMasterConf;
+	private final KubernetesJobManagerConf kubernetesJobManagerConf;
 
-	public JavaCmdJobManagerDecorator(KubernetesMasterConf kubernetesMasterConf) {
-		super(kubernetesMasterConf.getFlinkConfiguration());
-		this.kubernetesMasterConf = kubernetesMasterConf;
+	public JavaCmdJobManagerDecorator(KubernetesJobManagerConf kubernetesJobManagerConf) {
+		super(kubernetesJobManagerConf.getFlinkConfiguration());
+		this.kubernetesJobManagerConf = kubernetesJobManagerConf;
 	}
 
 	@Override
 	protected Container decorateMainContainer(Container container) {
 		final String startCommand = getJobManagerStartCommand(
 				configuration,
-				kubernetesMasterConf.getJobManagerMemoryMB(),
-				kubernetesMasterConf.getInternalFlinkConfDir(),
-				kubernetesMasterConf.getInternalFlinkLogDir(),
-				kubernetesMasterConf.hasLogback(),
-				kubernetesMasterConf.hasLog4j(),
-				kubernetesMasterConf.getEntrypointMainClass());
+				kubernetesJobManagerConf.getJobManagerMemoryMB(),
+				kubernetesJobManagerConf.getInternalFlinkConfDir(),
+				kubernetesJobManagerConf.getInternalFlinkLogDir(),
+				kubernetesJobManagerConf.hasLogback(),
+				kubernetesJobManagerConf.hasLog4j(),
+				kubernetesJobManagerConf.getEntrypointMainClass());
 
 		return new ContainerBuilder(container)
-				.withCommand(kubernetesMasterConf.getInternalEntrypoint())
+				.withCommand(kubernetesJobManagerConf.getInternalEntrypoint())
 				.withArgs(Arrays.asList("/bin/bash", "-c", startCommand))
 				.build();
 	}

@@ -30,7 +30,7 @@ import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
 import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint;
 import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerSpecification;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
+import org.apache.flink.kubernetes.kubeclient.conf.KubernetesJobManagerConf;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.test.util.TestBaseUtils;
@@ -122,9 +122,9 @@ public class KubernetesJobManagerBuilderTest {
 			.setSlotsPerTaskManager(3)
 			.createClusterSpecification();
 
-		final KubernetesMasterConf kubernetesMasterConf = new KubernetesMasterConf(flinkConfig, clusterSpecification);
+		final KubernetesJobManagerConf kubernetesJobManagerConf = new KubernetesJobManagerConf(flinkConfig, clusterSpecification);
 
-		this.kubernetesJobManagerSpecification = KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesMasterConf);
+		this.kubernetesJobManagerSpecification = KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesJobManagerConf);
 	}
 
 	@Test
@@ -163,7 +163,7 @@ public class KubernetesJobManagerBuilderTest {
 		assertEquals(1, resultedPodSpec.getVolumes().size());
 
 		final Container resultedMainContainer = resultedPodSpec.getContainers().get(0);
-		assertEquals(KubernetesMasterConf.JOB_MANAGER_MAIN_CONTAINER_NAME, resultedMainContainer.getName());
+		assertEquals(KubernetesJobManagerConf.JOB_MANAGER_MAIN_CONTAINER_NAME, resultedMainContainer.getName());
 		assertEquals(_CONTAINER_IMAGE, resultedMainContainer.getImage());
 		assertEquals(_CONTAINER_IMAGE_PULL_POLICY, resultedMainContainer.getImagePullPolicy());
 

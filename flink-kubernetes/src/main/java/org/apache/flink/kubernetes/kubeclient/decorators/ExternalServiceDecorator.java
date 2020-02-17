@@ -18,7 +18,7 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
+import org.apache.flink.kubernetes.kubeclient.conf.KubernetesJobManagerConf;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
 /**
@@ -27,13 +27,13 @@ import org.apache.flink.kubernetes.utils.KubernetesUtils;
  */
 public class ExternalServiceDecorator extends AbstractServiceDecorator {
 
-	public ExternalServiceDecorator(KubernetesMasterConf kubernetesMasterConf) {
-		super(kubernetesMasterConf);
+	public ExternalServiceDecorator(KubernetesJobManagerConf kubernetesJobManagerConf) {
+		super(kubernetesJobManagerConf);
 	}
 
 	@Override
 	protected String getServiceType() {
-		return kubernetesMasterConf.getRestServiceExposedType();
+		return kubernetesJobManagerConf.getRestServiceExposedType();
 	}
 
 	@Override
@@ -43,7 +43,7 @@ public class ExternalServiceDecorator extends AbstractServiceDecorator {
 
 	@Override
 	protected String getServiceName() {
-		return KubernetesUtils.getRestServiceName(kubernetesMasterConf.getClusterId());
+		return KubernetesUtils.getRestServiceName(kubernetesJobManagerConf.getClusterId());
 	}
 
 	@Override

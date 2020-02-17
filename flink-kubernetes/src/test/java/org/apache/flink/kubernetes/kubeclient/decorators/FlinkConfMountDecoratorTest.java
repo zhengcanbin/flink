@@ -24,7 +24,7 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
+import org.apache.flink.kubernetes.kubeclient.conf.KubernetesJobManagerConf;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.runtime.clusterframework.BootstrapTools;
 import org.apache.flink.test.util.TestBaseUtils;
@@ -74,7 +74,7 @@ public class FlinkConfMountDecoratorTest {
 	private File flinkConfDir;
 
 	private Configuration flinkConfig;
-	private KubernetesMasterConf kubernetesMasterConf;
+	private KubernetesJobManagerConf kubernetesJobManagerConf;
 	private FlinkConfMountDecorator flinkConfMountDecorator;
 
 	@Before
@@ -94,9 +94,9 @@ public class FlinkConfMountDecoratorTest {
 			.setSlotsPerTaskManager(3)
 			.createClusterSpecification();
 
-		this.kubernetesMasterConf = new KubernetesMasterConf(flinkConfig, clusterSpecification);
+		this.kubernetesJobManagerConf = new KubernetesJobManagerConf(flinkConfig, clusterSpecification);
 
-		this.flinkConfMountDecorator = new FlinkConfMountDecorator(kubernetesMasterConf);
+		this.flinkConfMountDecorator = new FlinkConfMountDecorator(kubernetesJobManagerConf);
 	}
 
 	@Test
@@ -121,7 +121,7 @@ public class FlinkConfMountDecoratorTest {
 		final List<ConfigMap> expectedConfigMaps = Collections.singletonList(new ConfigMapBuilder()
 			.withNewMetadata()
 				.withName(flinkConfMountDecorator.getFlinkConfConfigMapName(CLUSTER_ID))
-				.withLabels(kubernetesMasterConf.getCommonLabels())
+				.withLabels(kubernetesJobManagerConf.getCommonLabels())
 				.endMetadata()
 			.addToData(expectedDatas)
 			.build());
