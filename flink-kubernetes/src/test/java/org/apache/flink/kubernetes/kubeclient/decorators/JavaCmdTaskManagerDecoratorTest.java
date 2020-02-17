@@ -19,6 +19,7 @@
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.ConfigConstants;
+import org.apache.flink.configuration.CoreOptions;
 import org.apache.flink.kubernetes.KubernetesTestUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
@@ -54,23 +55,36 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 	private static final String _INTERNAL_FLINK_CONF_DIR = "/opt/flink/flink-conf-";
 	private static final String _INTERNAL_FLINK_LOG_DIR = "/opt/flink/flink-log-";
 
-	private final String java = "$JAVA_HOME/bin/java";
-	private final String classpath = "-classpath $FLINK_CLASSPATH";
-	private final String jvmmemOpts = TaskExecutorProcessUtils.generateJvmParametersStr(this.taskExecutorProcessSpec);
-	private final String mainClass = KubernetesTaskExecutorRunner.class.getCanonicalName();
+	private static final String java = "$JAVA_HOME/bin/java";
+	private static final String classpath = "-classpath $FLINK_CLASSPATH";
+	private static final String jvmOpts = "-Djvm";
+
+	private static final String tmJvmMem =
+			"-Xmx251658235 -Xms251658235 -XX:MaxDirectMemorySize=211392922 -XX:MaxMetaspaceSize=100663296";
+
+	private static final String mainClass = KubernetesTaskExecutorRunner.class.getCanonicalName();
 	private final String mainClassArgs = String.format(
-		"%s--configDir %s",
-		TaskExecutorProcessUtils.generateDynamicConfigsStr(taskExecutorProcessSpec),
-		_INTERNAL_FLINK_CONF_DIR);
-	private final String redirects = String.format(
-		"1> %s/taskmanager.out 2> %s/taskmanager.err",
-		_INTERNAL_FLINK_LOG_DIR,
-		_INTERNAL_FLINK_LOG_DIR);
+			"%s--configDir %s",
+			TaskExecutorProcessUtils.generateDynamicConfigsStr(taskExecutorProcessSpec),
+			_INTERNAL_FLINK_CONF_DIR);
+
+	// Logging variables
+	private static final String logback =
+			String.format("-Dlogback.configurationFile=file:%s/logback.xml", _INTERNAL_FLINK_CONF_DIR);
+	private static final String log4j =
+			String.format("-Dlog4j.configuration=file:%s/log4j.properties", _INTERNAL_FLINK_CONF_DIR);
+	private static final String tmLogfile =
+			String.format("-Dlog.file=%s/taskmanager.log", _INTERNAL_FLINK_LOG_DIR);
+	private static final String tmLogRedirects = String.format(
+			"1> %s/taskmanager.out 2> %s/taskmanager.err",
+			_INTERNAL_FLINK_LOG_DIR,
+			_INTERNAL_FLINK_LOG_DIR);
 
 	@Rule
 	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 	private File flinkConfDir;
+
 	private JavaCmdTaskManagerDecorator javaCmdTaskManagerDecorator;
 
 	@Before
@@ -101,14 +115,7 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 			javaCmdTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
-		final String expectedCommand = String.format(
-			"%s %s %s %s %s %s",
-			this.java,
-			this.classpath,
-			this.jvmmemOpts,
-			this.mainClass,
-			this.mainClassArgs,
-			this.redirects);
+		final String expectedCommand = getTaskManagerExpectedCommand("", "");
 
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
 		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
@@ -123,20 +130,7 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
-		final String logging = String.format(
-			"-Dlog.file=%s/taskmanager.log -Dlog4j.configuration=file:%s/log4j.properties",
-			_INTERNAL_FLINK_LOG_DIR,
-			_INTERNAL_FLINK_CONF_DIR);
-
-		final String expectedCommand = String.format(
-			"%s %s %s %s %s %s %s",
-			this.java,
-			this.classpath,
-			this.jvmmemOpts,
-			logging,
-			this.mainClass,
-			this.mainClassArgs,
-			this.redirects);
+		final String expectedCommand = getTaskManagerExpectedCommand("", log4j);
 
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
 		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
@@ -151,20 +145,7 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
-		final String logging = String.format(
-			"-Dlog.file=%s/taskmanager.log -Dlogback.configurationFile=file:%s/logback.xml",
-			_INTERNAL_FLINK_LOG_DIR,
-			_INTERNAL_FLINK_CONF_DIR);
-
-		final String expectedCommand = String.format(
-			"%s %s %s %s %s %s %s",
-			this.java,
-			this.classpath,
-			this.jvmmemOpts,
-			logging,
-			this.mainClass,
-			this.mainClassArgs,
-			this.redirects);
+		final String expectedCommand = getTaskManagerExpectedCommand("", logback);
 
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
 		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
@@ -179,24 +160,111 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 			javaCmdTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
-		final String logging = String.format(
-			"-Dlog.file=%s/taskmanager.log -Dlogback.configurationFile=file:%s/logback.xml" +
-				" -Dlog4j.configuration=file:%s/log4j.properties",
-			_INTERNAL_FLINK_LOG_DIR,
-			_INTERNAL_FLINK_CONF_DIR,
-			_INTERNAL_FLINK_CONF_DIR);
-
-		final String expectedCommand = String.format(
-			"%s %s %s %s %s %s %s",
-			this.java,
-			this.classpath,
-			this.jvmmemOpts,
-			logging,
-			this.mainClass,
-			this.mainClassArgs,
-			this.redirects);
+		final String expectedCommand = getTaskManagerExpectedCommand("", logback + " " + log4j);
 
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
 		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
+	}
+
+	@Test
+	public void testStartCommandWithLogAndJVMOpts() throws IOException {
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
+
+		flinkConfig.set(CoreOptions.FLINK_JVM_OPTIONS, jvmOpts);
+		final Container resultMainContainer =
+				javaCmdTaskManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+
+		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+
+		final String expectedCommand =
+				getTaskManagerExpectedCommand(jvmOpts, logback + " " + log4j);
+
+		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
+		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
+	}
+
+	@Test
+	public void testStartCommandWithLogAndJMOpts() throws IOException {
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
+
+		flinkConfig.set(CoreOptions.FLINK_TM_JVM_OPTIONS, jvmOpts);
+		final Container resultMainContainer =
+				javaCmdTaskManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+
+		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+
+
+		final String expectedCommand =
+				getTaskManagerExpectedCommand(jvmOpts, logback + " " + log4j);
+
+		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
+		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
+	}
+
+	@Test
+	public void testContainerStartCommandTemplate1() throws IOException {
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
+
+		final String containerStartCommandTemplate =
+				"%java% 1 %classpath% 2 %jvmmem% %jvmopts% %logging% %class% %args% %redirects%";
+		this.flinkConfig.set(KubernetesConfigOptions.CONTAINER_START_COMMAND_TEMPLATE,
+				containerStartCommandTemplate);
+
+		final String tmJvmOpts = "-DjmJvm";
+		this.flinkConfig.setString(CoreOptions.FLINK_JVM_OPTIONS, jvmOpts);
+		this.flinkConfig.setString(CoreOptions.FLINK_TM_JVM_OPTIONS, tmJvmOpts);
+
+		final Container resultMainContainer =
+				javaCmdTaskManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+
+		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+
+		final String expectedCommand = java + " 1 " + classpath + " 2 " + tmJvmMem +
+				" " + jvmOpts + " " + tmJvmOpts +
+				" " + tmLogfile + " " + logback + " " + log4j +
+				" " + mainClass + " " + mainClassArgs + " " + tmLogRedirects;
+
+		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
+
+		assertThat(resultMainContainer.getArgs(), is(expectedArgs));
+	}
+
+	@Test
+	public void testContainerStartCommandTemplate2() throws IOException {
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
+
+		final String containerStartCommandTemplate =
+				"%java% %jvmmem% %logging% %jvmopts% %class% %args% %redirects%";
+		this.flinkConfig.set(KubernetesConfigOptions.CONTAINER_START_COMMAND_TEMPLATE,
+				containerStartCommandTemplate);
+
+		final String tmJvmOpts = "-DjmJvm";
+		this.flinkConfig.setString(CoreOptions.FLINK_JVM_OPTIONS, jvmOpts);
+		this.flinkConfig.setString(CoreOptions.FLINK_TM_JVM_OPTIONS, tmJvmOpts);
+
+		final Container resultMainContainer =
+				javaCmdTaskManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+
+		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+
+		final String expectedCommand = java + " " + tmJvmMem +
+				" " + tmLogfile + " " + logback + " " + log4j +
+				" " + jvmOpts + " " + tmJvmOpts + " " + mainClass +
+				" " + mainClassArgs + " " + tmLogRedirects;
+
+		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
+
+		assertThat(resultMainContainer.getArgs(), is(expectedArgs));
+	}
+
+	private String getTaskManagerExpectedCommand(String jvmAllOpts, String logging) {
+		return java + " " + classpath + " " + tmJvmMem +
+				(jvmAllOpts.isEmpty() ? "" : " " + jvmAllOpts) +
+				(logging.isEmpty() ? "" : " " + tmLogfile + " " + logging) +
+				" " + mainClass + " " +  mainClassArgs + " " + tmLogRedirects;
 	}
 }
