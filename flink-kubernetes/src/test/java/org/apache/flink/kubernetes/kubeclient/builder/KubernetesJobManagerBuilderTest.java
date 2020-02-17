@@ -29,7 +29,7 @@ import org.apache.flink.kubernetes.KubernetesTestUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
 import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint;
-import org.apache.flink.kubernetes.kubeclient.KubernetesMasterSpecification;
+import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerSpecification;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.test.util.TestBaseUtils;
@@ -89,7 +89,7 @@ public class KubernetesJobManagerBuilderTest {
 	@Rule
 	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-	private KubernetesMasterSpecification kubernetesMasterSpecification;
+	private KubernetesJobManagerSpecification kubernetesJobManagerSpecification;
 
 	@Before
 	public void setup() throws IOException {
@@ -122,12 +122,12 @@ public class KubernetesJobManagerBuilderTest {
 
 		final KubernetesMasterConf kubernetesMasterConf = new KubernetesMasterConf(flinkConfig, clusterSpecification);
 
-		this.kubernetesMasterSpecification = KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesMasterConf);
+		this.kubernetesJobManagerSpecification = KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesMasterConf);
 	}
 
 	@Test
 	public void testDeploymentMetadata() throws IOException {
-		final Deployment deployment = this.kubernetesMasterSpecification.getDeployment();
+		final Deployment deployment = this.kubernetesJobManagerSpecification.getDeployment();
 		assertEquals(_CLUSTER_ID, deployment.getMetadata().getName());
 
 		final Map<String, String> commonLabels =  new HashMap<>();
@@ -138,7 +138,7 @@ public class KubernetesJobManagerBuilderTest {
 
 	@Test
 	public void testDeploymentSpec() {
-		final DeploymentSpec deploymentSpec = this.kubernetesMasterSpecification.getDeployment().getSpec();
+		final DeploymentSpec deploymentSpec = this.kubernetesJobManagerSpecification.getDeployment().getSpec();
 		assertEquals(1, deploymentSpec.getReplicas().intValue());
 
 		final Map<String, String> expectedLabels =  new HashMap<>();
@@ -154,7 +154,7 @@ public class KubernetesJobManagerBuilderTest {
 
 	@Test
 	public void testPodSpec() {
-		final PodSpec resultedPodSpec = this.kubernetesMasterSpecification.getDeployment().getSpec().getTemplate().getSpec();
+		final PodSpec resultedPodSpec = this.kubernetesJobManagerSpecification.getDeployment().getSpec().getTemplate().getSpec();
 
 		assertEquals(1, resultedPodSpec.getContainers().size());
 		assertEquals(_SERVICE_ACCOUNT_NAME, resultedPodSpec.getServiceAccountName());
@@ -184,7 +184,7 @@ public class KubernetesJobManagerBuilderTest {
 
 	@Test
 	public void testAdditionalResourcesSize() {
-		final List<HasMetadata> resultedAdditionalResources = this.kubernetesMasterSpecification.getAccompanyingResources();
+		final List<HasMetadata> resultedAdditionalResources = this.kubernetesJobManagerSpecification.getAccompanyingResources();
 		assertEquals(3, resultedAdditionalResources.size());
 
 		final List<HasMetadata> resultedServices = resultedAdditionalResources
@@ -202,7 +202,7 @@ public class KubernetesJobManagerBuilderTest {
 
 	@Test
 	public void testService() {
-//		final Service re = (Service) this.kubernetesMasterSpecification.getAccompanyingResources()
+//		final Service re = (Service) this.kubernetesJobManagerSpecification.getAccompanyingResources()
 //			.stream()
 //			.filter(x -> x instanceof Service)
 //			.collect(Collectors.toList())
@@ -219,7 +219,7 @@ public class KubernetesJobManagerBuilderTest {
 
 	@Test
 	public void testFlinkConfConfigMap() {
-		final ConfigMap resultedConfigMap = (ConfigMap) this.kubernetesMasterSpecification.getAccompanyingResources()
+		final ConfigMap resultedConfigMap = (ConfigMap) this.kubernetesJobManagerSpecification.getAccompanyingResources()
 			.stream()
 			.filter(x -> x instanceof ConfigMap)
 			.collect(Collectors.toList())

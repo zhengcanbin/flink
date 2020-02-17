@@ -101,7 +101,7 @@ public class Fabric8FlinkKubeClientTest {
 	@Rule
 	public MixedKubernetesServer server = new MixedKubernetesServer(true, true);
 
-	private KubernetesMasterSpecification kubernetesMasterSpecification;
+	private KubernetesJobManagerSpecification kubernetesJobManagerSpecification;
 
 	private KubernetesClient kubeClient;
 
@@ -138,7 +138,7 @@ public class Fabric8FlinkKubeClientTest {
 
 		final KubernetesMasterConf kubernetesMasterConf = new KubernetesMasterConf(flinkConfig, clusterSpecification);
 
-		this.kubernetesMasterSpecification = KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesMasterConf);
+		this.kubernetesJobManagerSpecification = KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesMasterConf);
 
 		this.kubeClient = server.getClient();
 		this.flinkKubeClient = new Fabric8FlinkKubeClient(flinkConfig, this.kubeClient);
@@ -149,7 +149,7 @@ public class Fabric8FlinkKubeClientTest {
 		mockInternalServiceAddEventFromServerSide();
 		mockRestServiceAddEventFromServerSide();
 
-		flinkKubeClient.createFlinkMasterComponent(this.kubernetesMasterSpecification);
+		flinkKubeClient.createFlinkMasterComponent(this.kubernetesJobManagerSpecification);
 
 		final List<Deployment> resultedDeployments = kubeClient.apps().deployments()
 				.inNamespace(_NAMESPACE)
@@ -188,7 +188,7 @@ public class Fabric8FlinkKubeClientTest {
 		mockInternalServiceAddEventFromServerSide();
 		mockRestServiceAddEventFromServerSide();
 
-		this.flinkKubeClient.createFlinkMasterComponent(this.kubernetesMasterSpecification);
+		this.flinkKubeClient.createFlinkMasterComponent(this.kubernetesJobManagerSpecification);
 
 		final KubernetesPod kubernetesPod = new KubernetesPod(new PodBuilder()
 				.editOrNewMetadata()
@@ -257,7 +257,7 @@ public class Fabric8FlinkKubeClientTest {
 		mockInternalServiceAddEventFromServerSide();
 		mockRestServiceAddEventFromServerSide();
 
-		this.flinkKubeClient.createFlinkMasterComponent(this.kubernetesMasterSpecification);
+		this.flinkKubeClient.createFlinkMasterComponent(this.kubernetesJobManagerSpecification);
 
 		final KubernetesPod kubernetesPod = new KubernetesPod(new PodBuilder()
 				.editOrNewMetadata()

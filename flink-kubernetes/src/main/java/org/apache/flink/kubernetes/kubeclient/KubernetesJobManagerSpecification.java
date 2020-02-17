@@ -26,13 +26,13 @@ import java.util.List;
 /**
  *	Composition of the created Kubernetes components that represents a Flink application.
  */
-public class KubernetesMasterSpecification {
+public class KubernetesJobManagerSpecification {
 
 	private Deployment deployment;
 
 	private List<HasMetadata> accompanyingResources;
 
-	public KubernetesMasterSpecification(Deployment deployment, List<HasMetadata> accompanyingResources) {
+	public KubernetesJobManagerSpecification(Deployment deployment, List<HasMetadata> accompanyingResources) {
 		this.deployment = deployment;
 		this.accompanyingResources = accompanyingResources;
 	}

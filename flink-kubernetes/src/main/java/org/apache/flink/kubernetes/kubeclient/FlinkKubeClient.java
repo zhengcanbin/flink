@@ -35,7 +35,7 @@ public interface FlinkKubeClient extends AutoCloseable {
 	 * Create flink master component.
 	 *
 	 */
-	void createFlinkMasterComponent(KubernetesMasterSpecification spec) throws Exception;
+	void createFlinkMasterComponent(KubernetesJobManagerSpecification spec) throws Exception;
 
 	/**
 	 *

@@ -20,7 +20,7 @@ package org.apache.flink.kubernetes.kubeclient.builder;
 
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
-import org.apache.flink.kubernetes.kubeclient.KubernetesMasterSpecification;
+import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerSpecification;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.ExternalServiceDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.FlinkConfMountDecorator;
@@ -49,7 +49,7 @@ import java.util.Map;
  */
 public class KubernetesJobManagerBuilder {
 
-	public static KubernetesMasterSpecification buildJobManagerComponent(
+	public static KubernetesJobManagerSpecification buildJobManagerComponent(
 			KubernetesMasterConf kubernetesMasterConf) throws IOException {
 		FlinkPod flinkPod = new FlinkPodBuilder().build();
 		List<HasMetadata> accompanyingResources = new ArrayList<>();
@@ -69,7 +69,7 @@ public class KubernetesJobManagerBuilder {
 
 		final Deployment deployment = buildJobManagerDeployment(flinkPod, kubernetesMasterConf);
 
-		return new KubernetesMasterSpecification(deployment, accompanyingResources);
+		return new KubernetesJobManagerSpecification(deployment, accompanyingResources);
 	}
 
 	private static Deployment buildJobManagerDeployment(

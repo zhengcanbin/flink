@@ -78,7 +78,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 	}
 
 	@Override
-	public void createFlinkMasterComponent(KubernetesMasterSpecification spec) throws Exception {
+	public void createFlinkMasterComponent(KubernetesJobManagerSpecification spec) throws Exception {
 		final Deployment deployment = spec.getDeployment();
 		final List<HasMetadata> additionalResources = spec.getAccompanyingResources();
 
