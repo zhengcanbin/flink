@@ -18,7 +18,6 @@
 
 package org.apache.flink.kubernetes;
 
-import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import org.apache.flink.configuration.BlobServerOptions;
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.Configuration;
@@ -29,26 +28,17 @@ import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal
 import org.apache.flink.kubernetes.kubeclient.Fabric8FlinkKubeClient;
 import org.apache.flink.kubernetes.kubeclient.FlinkKubeClient;
 import org.apache.flink.kubernetes.utils.Constants;
-import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.clusterframework.BootstrapTools;
 import org.apache.flink.test.util.TestBaseUtils;
 import org.apache.flink.util.TestLogger;
 
-import io.fabric8.kubernetes.api.model.LoadBalancerIngress;
-import io.fabric8.kubernetes.api.model.LoadBalancerStatus;
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.ServiceStatusBuilder;
-import io.fabric8.kubernetes.api.model.WatchEvent;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
-import javax.annotation.Nullable;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,6 +46,16 @@ import java.util.Map;
  * Base test class for Kubernetes.
  */
 public class KubernetesTestBase extends TestLogger {
+    protected static final String NAMESPACE = "test";
+    protected static final String CLUSTER_ID = "my-flink-cluster1";
+    protected static final String CONTAINER_IMAGE = "flink-k8s-test:latest";
+
+	protected static final String FLINK_MASTER_ENV_KEY = "LD_LIBRARY_PATH";
+	protected static final String FLINK_MASTER_ENV_VALUE = "/usr/lib/native";
+
+	protected static final String MOCK_SERVICE_HOST_NAME = "mock-host-name-of-service";
+	protected static final String MOCK_SERVICE_IP = "192.168.0.1";
+
 	@Rule
 	public MixedKubernetesServer server = new MixedKubernetesServer(true, true);
 
@@ -64,31 +64,17 @@ public class KubernetesTestBase extends TestLogger {
 
 	private File flinkConfDir;
 
-    protected static final Configuration FLINK_CONFIG = new Configuration();
-
-    protected static final String NAMESPACE = "test";
-
-	protected static final String CLUSTER_ID = "my-flink-cluster1";
-
-	protected static final String CONTAINER_IMAGE = "flink-k8s-test:latest";
-
-	protected static final String MOCK_SERVICE_HOST_NAME = "mock-host-name-of-service";
-
-	protected static final String MOCK_SERVICE_IP = "192.168.0.1";
-
-	protected static final String FLINK_MASTER_ENV_KEY = "LD_LIBRARY_PATH";
-
-	protected static final String FLINK_MASTER_ENV_VALUE = "/usr/lib/native";
+	protected Configuration flinkConfig = new Configuration();
 
 	@Before
 	public void setUp() throws IOException {
-		FLINK_CONFIG.setString(KubernetesConfigOptions.NAMESPACE, NAMESPACE);
-		FLINK_CONFIG.setString(KubernetesConfigOptions.CLUSTER_ID, CLUSTER_ID);
-		FLINK_CONFIG.setString(KubernetesConfigOptions.CONTAINER_IMAGE, CONTAINER_IMAGE);
-		FLINK_CONFIG.setString(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS, "main-class");
-		FLINK_CONFIG.setString(BlobServerOptions.PORT, String.valueOf(Constants.BLOB_SERVER_PORT));
-		FLINK_CONFIG.setString(TaskManagerOptions.RPC_PORT, String.valueOf(Constants.TASK_MANAGER_RPC_PORT));
-		FLINK_CONFIG.setString(
+		flinkConfig.setString(KubernetesConfigOptions.NAMESPACE, NAMESPACE);
+		flinkConfig.setString(KubernetesConfigOptions.CLUSTER_ID, CLUSTER_ID);
+		flinkConfig.setString(KubernetesConfigOptions.CONTAINER_IMAGE, CONTAINER_IMAGE);
+		flinkConfig.setString(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS, "main-class");
+		flinkConfig.setString(BlobServerOptions.PORT, String.valueOf(Constants.BLOB_SERVER_PORT));
+		flinkConfig.setString(TaskManagerOptions.RPC_PORT, String.valueOf(Constants.TASK_MANAGER_RPC_PORT));
+		flinkConfig.setString(
 			ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX + FLINK_MASTER_ENV_KEY,
 			FLINK_MASTER_ENV_VALUE);
 
@@ -103,7 +89,7 @@ public class KubernetesTestBase extends TestLogger {
 	}
 
 	protected FlinkKubeClient getFabric8FlinkKubeClient(){
-		return getFabric8FlinkKubeClient(FLINK_CONFIG);
+		return getFabric8FlinkKubeClient(flinkConfig);
 	}
 
 	protected FlinkKubeClient getFabric8FlinkKubeClient(Configuration flinkConfig){

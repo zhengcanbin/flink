@@ -432,7 +432,7 @@ public class Fabric8FlinkKubeClientTest {
 //			Matchers.hasItems(8081, 6123, 6124));
 //
 //		assertEquals(1, jmContainer.getVolumeMounts().size());
-//		final String mountPath = FLINK_CONFIG.getString(KubernetesConfigOptions.FLINK_CONF_DIR);
+//		final String mountPath = flinkConfig.getString(KubernetesConfigOptions.FLINK_CONF_DIR);
 //		assertEquals(new File(mountPath, FLINK_CONF_FILENAME).getPath(),
 //			jmContainer.getVolumeMounts().get(0).getMountPath());
 //		assertEquals(FLINK_CONF_FILENAME, jmContainer.getVolumeMounts().get(0).getSubPath());
@@ -492,7 +492,7 @@ public class Fabric8FlinkKubeClientTest {
 //			Matchers.hasItems(6122));
 //
 //		assertEquals(1, tmContainer.getVolumeMounts().size());
-//		final String mountPath = FLINK_CONFIG.getString(KubernetesConfigOptions.FLINK_CONF_DIR);
+//		final String mountPath = flinkConfig.getString(KubernetesConfigOptions.FLINK_CONF_DIR);
 //		assertEquals(new File(mountPath, FLINK_CONF_FILENAME).getPath(),
 //			tmContainer.getVolumeMounts().get(0).getMountPath());
 //		assertEquals(FLINK_CONF_FILENAME, tmContainer.getVolumeMounts().get(0).getSubPath());

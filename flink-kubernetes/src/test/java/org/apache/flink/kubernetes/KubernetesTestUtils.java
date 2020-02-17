@@ -24,6 +24,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Utilities for the Kubernetes tests.
+ */
 public class KubernetesTestUtils {
 
 	public static void createTemporyFile(String data, File directory, String fileName) throws IOException {

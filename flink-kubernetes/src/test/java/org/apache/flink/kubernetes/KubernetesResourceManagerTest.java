@@ -18,9 +18,6 @@
 
 package org.apache.flink.kubernetes;
 
-import io.fabric8.kubernetes.api.model.PodBuilder;
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.configuration.Configuration;
@@ -64,8 +61,11 @@ import io.fabric8.kubernetes.api.model.ContainerStateBuilder;
 import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.PodStatusBuilder;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -95,8 +95,6 @@ public class KubernetesResourceManagerTest extends KubernetesTestBase {
 
 	private final String jobManagerHost = "jm-host1";
 
-	private Configuration flinkConfig;
-
 	private TestingKubernetesResourceManager resourceManager;
 
 	private FlinkKubeClient flinkKubeClient;
@@ -104,18 +102,17 @@ public class KubernetesResourceManagerTest extends KubernetesTestBase {
 	@Before
 	public void setup() throws Exception {
 		testingFatalErrorHandler = new TestingFatalErrorHandler();
-		flinkConfig = new Configuration(FLINK_CONFIG);
 		flinkConfig.set(TaskManagerOptions.TOTAL_PROCESS_MEMORY, MemorySize.parse("1024m"));
 
 		flinkKubeClient = getFabric8FlinkKubeClient();
 		resourceManager = createAndStartResourceManager(flinkConfig);
 
 		final Deployment mockDeployment = new DeploymentBuilder()
-                .editOrNewMetadata()
-                    .withName(CLUSTER_ID)
-                    .withUid(CLUSTER_ID)
-                    .endMetadata()
-                .build();
+				.editOrNewMetadata()
+					.withName(CLUSTER_ID)
+					.withUid(CLUSTER_ID)
+					.endMetadata()
+				.build();
 		getKubeClient().apps().deployments().inNamespace(NAMESPACE).create(mockDeployment);
 	}
 
@@ -271,13 +268,13 @@ public class KubernetesResourceManagerTest extends KubernetesTestBase {
 		final String previewPodName = CLUSTER_ID + "-taskmanager-1-1";
 
 		final Pod mockTaskManagerPod = new PodBuilder()
-                .editOrNewMetadata()
-                    .withName(previewPodName)
-                    .withLabels(KubernetesUtils.getTaskManagerLabels(CLUSTER_ID))
-                    .endMetadata()
-                .editOrNewSpec()
-                    .endSpec()
-                .build();
+				.editOrNewMetadata()
+					.withName(previewPodName)
+					.withLabels(KubernetesUtils.getTaskManagerLabels(CLUSTER_ID))
+					.endMetadata()
+				.editOrNewSpec()
+					.endSpec()
+				.build();
 
 		flinkKubeClient.createTaskManagerPod(new KubernetesPod(mockTaskManagerPod));
 		final KubernetesClient client = getKubeClient();

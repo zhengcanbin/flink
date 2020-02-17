@@ -18,8 +18,6 @@
 
 package org.apache.flink.kubernetes.kubeclient.builder;
 
-import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.Pod;
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.MemorySize;
@@ -31,6 +29,9 @@ import org.apache.flink.runtime.clusterframework.ContaineredTaskManagerParameter
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessSpec;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
 import org.apache.flink.test.util.TestBaseUtils;
+
+import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.Pod;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,7 +46,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 
 /**
- *
+ * General tests for the {@link KubernetesTaskManagerBuilder}.
  */
 public class KubernetesTaskManagerBuilderTest {
 

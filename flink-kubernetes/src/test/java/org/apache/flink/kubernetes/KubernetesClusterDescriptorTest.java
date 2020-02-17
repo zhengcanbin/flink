@@ -18,11 +18,6 @@
 
 package org.apache.flink.kubernetes;
 
-import io.fabric8.kubernetes.api.model.LoadBalancerIngress;
-import io.fabric8.kubernetes.api.model.LoadBalancerStatus;
-import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.ServiceStatusBuilder;
-import io.fabric8.kubernetes.api.model.WatchEvent;
 import org.apache.flink.client.deployment.ClusterDeploymentException;
 import org.apache.flink.client.deployment.ClusterSpecification;
 import org.apache.flink.client.program.ClusterClient;
@@ -37,13 +32,19 @@ import org.apache.flink.runtime.jobmanager.HighAvailabilityMode;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.LoadBalancerIngress;
+import io.fabric8.kubernetes.api.model.LoadBalancerStatus;
 import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.ServiceStatusBuilder;
+import io.fabric8.kubernetes.api.model.WatchEvent;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.annotation.Nullable;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -59,7 +60,7 @@ import static org.junit.Assert.assertTrue;
 public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 
 	private final ClusterSpecification clusterSpecification =
-            new ClusterSpecification.ClusterSpecificationBuilder().createClusterSpecification();
+			new ClusterSpecification.ClusterSpecificationBuilder().createClusterSpecification();
 
 	@Before
 	public void setup() throws IOException {
@@ -73,10 +74,10 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 	public void testDeploySessionCluster() throws Exception {
 		final ClusterClient<String> clusterClient = deploySessionCluster();
 		// Check updated flink config options
-		assertEquals(String.valueOf(Constants.BLOB_SERVER_PORT), FLINK_CONFIG.getString(BlobServerOptions.PORT));
-		assertEquals(String.valueOf(Constants.TASK_MANAGER_RPC_PORT), FLINK_CONFIG.getString(TaskManagerOptions.RPC_PORT));
+		assertEquals(String.valueOf(Constants.BLOB_SERVER_PORT), flinkConfig.getString(BlobServerOptions.PORT));
+		assertEquals(String.valueOf(Constants.TASK_MANAGER_RPC_PORT), flinkConfig.getString(TaskManagerOptions.RPC_PORT));
 		assertEquals(KubernetesUtils.getInternalServiceName(CLUSTER_ID) + "." + NAMESPACE,
-				FLINK_CONFIG.getString(JobManagerOptions.ADDRESS));
+				flinkConfig.getString(JobManagerOptions.ADDRESS));
 
 		final KubernetesClient kubeClient = getKubeClient();
 
@@ -110,7 +111,7 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 
 	@Test
 	public void testDeployHighAvailabilitySessionCluster() throws ClusterDeploymentException {
-		FLINK_CONFIG.setString(HighAvailabilityOptions.HA_MODE, HighAvailabilityMode.ZOOKEEPER.toString());
+		flinkConfig.setString(HighAvailabilityOptions.HA_MODE, HighAvailabilityMode.ZOOKEEPER.toString());
 
 		final ClusterClient<String> clusterClient = deploySessionCluster();
 
@@ -139,7 +140,7 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 	@Test
 	public void testKillCluster() throws Exception {
 		final FlinkKubeClient flinkKubeClient = getFabric8FlinkKubeClient();
-		final KubernetesClusterDescriptor descriptor = new KubernetesClusterDescriptor(FLINK_CONFIG, flinkKubeClient);
+		final KubernetesClusterDescriptor descriptor = new KubernetesClusterDescriptor(flinkConfig, flinkKubeClient);
 
 		final ClusterSpecification clusterSpecification = new ClusterSpecification.ClusterSpecificationBuilder()
 			.createClusterSpecification();
@@ -161,7 +162,7 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 
 	private ClusterClient<String> deploySessionCluster() throws ClusterDeploymentException {
 		final FlinkKubeClient flinkKubeClient = getFabric8FlinkKubeClient();
-		final KubernetesClusterDescriptor descriptor = new KubernetesClusterDescriptor(FLINK_CONFIG, flinkKubeClient);
+		final KubernetesClusterDescriptor descriptor = new KubernetesClusterDescriptor(flinkConfig, flinkKubeClient);
 
 		final ClusterClient<String> clusterClient = descriptor
 			.deploySessionCluster(clusterSpecification)
