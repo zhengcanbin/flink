@@ -16,12 +16,11 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.common;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.conf.AbstractKubernetesComponentConf;
-import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
@@ -31,13 +30,13 @@ import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeMount;
 
 /**
- *
+ * Mounts the user-specified volumes to the JobManager or TaskManager pod.
  */
-public class MountVolumesDecorator extends AbstractKubernetesStepDecorator {
+public class VolumesMountDecorator extends AbstractKubernetesStepDecorator {
 
 	private final AbstractKubernetesComponentConf kubernetesComponentConf;
 
-	public MountVolumesDecorator(AbstractKubernetesComponentConf kubernetesComponentConf) {
+	public VolumesMountDecorator(AbstractKubernetesComponentConf kubernetesComponentConf) {
 		super(kubernetesComponentConf.getFlinkConfiguration());
 		this.kubernetesComponentConf = kubernetesComponentConf;
 	}

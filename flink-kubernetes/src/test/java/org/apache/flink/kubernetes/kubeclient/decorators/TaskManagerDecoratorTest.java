@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.taskmanager;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.MemorySize;
@@ -27,11 +27,15 @@ import org.apache.flink.kubernetes.kubeclient.conf.KubernetesTaskManagerConf;
 import org.apache.flink.runtime.clusterframework.ContaineredTaskManagerParameters;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessSpec;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
+
 import org.junit.Before;
 
 import java.io.IOException;
 import java.util.HashMap;
 
+/**
+ * Base test class for the TaskManager decorators.
+ */
 public class TaskManagerDecoratorTest {
 
 	protected static final String CLUSTER_ID = "cluster-id-test";

@@ -16,14 +16,12 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.jobmanager;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.BlobServerOptions;
 import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
-import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
-import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Service;
@@ -37,33 +35,34 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- *
+ * An abstract class containing some common implementations for the internal/external Services.
  */
-public class RestServiceDecorator extends AbstractKubernetesStepDecorator {
+public abstract class AbstractServiceDecorator extends AbstractKubernetesStepDecorator {
 
-	private final KubernetesMasterConf kubernetesMasterConf;
+	protected final KubernetesMasterConf kubernetesMasterConf;
 
-	public RestServiceDecorator(KubernetesMasterConf kubernetesMasterConf) {
+	public AbstractServiceDecorator(KubernetesMasterConf kubernetesMasterConf) {
 		super(kubernetesMasterConf.getFlinkConfiguration());
 		this.kubernetesMasterConf = kubernetesMasterConf;
 	}
 
 	@Override
-	public List<HasMetadata> buildAdditionalKubernetesResources() throws IOException {
-		final String clusterId = kubernetesMasterConf.getClusterId();
-		final String restServiceName = KubernetesUtils.getRestServiceName(clusterId);
+	public List<HasMetadata> buildAccompanyingKubernetesResources() throws IOException {
+		final String serviceName = getServiceName();
 
-		// Set jobmanager address to namespaced service name
-		final String namespace = kubernetesMasterConf.getNamespace();
-		configuration.setString(JobManagerOptions.ADDRESS, restServiceName + "." + namespace);
+		if (isInternalService()) {
+			// Set jobmanager address to namespaced service name
+			final String namespace = kubernetesMasterConf.getNamespace();
+			configuration.setString(JobManagerOptions.ADDRESS, serviceName + "." + namespace);
+		}
 
 		final Service restService = new ServiceBuilder()
 			.withNewMetadata()
-				.withName(restServiceName)
+				.withName(getServiceName())
 				.withLabels(kubernetesMasterConf.getCommonLabels())
 				.endMetadata()
 			.withNewSpec()
-				.withType(kubernetesMasterConf.getRestServiceExposedType())
+				.withType(getServiceType())
 				.withPorts(getServicePorts())
 				.withSelector(kubernetesMasterConf.getLabels())
 				.endSpec()
@@ -72,17 +71,28 @@ public class RestServiceDecorator extends AbstractKubernetesStepDecorator {
 		return Collections.singletonList(restService);
 	}
 
+	protected abstract String getServiceType();
+
+	protected abstract boolean isRestPortOnly();
+
+	protected abstract String getServiceName();
+
+	protected abstract boolean isInternalService();
+
 	private List<ServicePort> getServicePorts() {
 		final List<ServicePort> servicePorts = new ArrayList<>();
 		servicePorts.add(getServicePort(
 			getPortName(RestOptions.PORT.key()),
 			kubernetesMasterConf.getRestPort()));
-		servicePorts.add(getServicePort(
-			getPortName(JobManagerOptions.PORT.key()),
-			kubernetesMasterConf.getRPCPort()));
-		servicePorts.add(getServicePort(
-			getPortName(BlobServerOptions.PORT.key()),
-			kubernetesMasterConf.getBlobServerPort()));
+
+		if (!isRestPortOnly()) {
+			servicePorts.add(getServicePort(
+				getPortName(JobManagerOptions.PORT.key()),
+				kubernetesMasterConf.getRPCPort()));
+			servicePorts.add(getServicePort(
+				getPortName(BlobServerOptions.PORT.key()),
+				kubernetesMasterConf.getBlobServerPort()));
+		}
 
 		return servicePorts;
 	}

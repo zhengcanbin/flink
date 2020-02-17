@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.jobmanager;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.kubernetes.KubernetesTestUtils;
@@ -26,12 +26,12 @@ import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.builder.FlinkPodBuilder;
 import org.apache.flink.test.util.TestBaseUtils;
+
+import io.fabric8.kubernetes.api.model.Container;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import io.fabric8.kubernetes.api.model.Container;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +46,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
-public class StartCommandMasterDecoratorTest extends JobManagerDecoratorTest {
+/**
+ * Test for {@link JavaCmdJobManagerDecorator}.
+ */
+public class JavaCmdJobManagerDecoratorTest extends JobManagerDecoratorTest {
 
 	private static final String _KUBERNETES_ENTRY_PATH = "/opt/bin/start.sh";
 	private static final String _INTERNAL_FLINK_CONF_DIR = "/opt/flink/flink-conf-";
@@ -71,7 +74,7 @@ public class StartCommandMasterDecoratorTest extends JobManagerDecoratorTest {
 
 	private File flinkConfDir;
 
-	private StartCommandMasterDecorator startCommandMasterDecorator;
+	private JavaCmdJobManagerDecorator javaCmdJobManagerDecorator;
 
 	@Before
 	public void setup() throws IOException {
@@ -87,12 +90,12 @@ public class StartCommandMasterDecoratorTest extends JobManagerDecoratorTest {
 		flinkConfig.set(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS, _ENTRY_POINT_CLASS);
 		flinkConfig.set(KubernetesConfigOptions.KUBERNETES_ENTRY_PATH, _KUBERNETES_ENTRY_PATH);
 
-		this.startCommandMasterDecorator = new StartCommandMasterDecorator(kubernetesMasterConf);
+		this.javaCmdJobManagerDecorator = new JavaCmdJobManagerDecorator(kubernetesMasterConf);
 	}
 
 	@Test
 	public void testWhetherContainerOrPodIsReplaced() {
-		final FlinkPod resultFlinkPod = startCommandMasterDecorator.decorateFlinkPod(baseFlinkPod);
+		final FlinkPod resultFlinkPod = javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod);
 		assertEquals(baseFlinkPod.getPod(), resultFlinkPod.getPod());
 		assertNotEquals(baseFlinkPod.getMainContainer(), resultFlinkPod.getMainContainer());
 	}
@@ -100,7 +103,7 @@ public class StartCommandMasterDecoratorTest extends JobManagerDecoratorTest {
 	@Test
 	public void testStartCommandWithoutLog4jAndLogback() {
 		final Container resultMainContainer =
-				startCommandMasterDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+				javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
 
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
@@ -122,7 +125,7 @@ public class StartCommandMasterDecoratorTest extends JobManagerDecoratorTest {
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
 
 		final Container resultMainContainer =
-			startCommandMasterDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+			javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
 
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
@@ -149,7 +152,7 @@ public class StartCommandMasterDecoratorTest extends JobManagerDecoratorTest {
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
 
 		final Container resultMainContainer =
-			startCommandMasterDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+			javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
 
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
@@ -177,7 +180,7 @@ public class StartCommandMasterDecoratorTest extends JobManagerDecoratorTest {
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
 
 		final Container resultMainContainer =
-			startCommandMasterDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+			javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
 
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
@@ -200,6 +203,8 @@ public class StartCommandMasterDecoratorTest extends JobManagerDecoratorTest {
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
 		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
 	}
+
+
 
 //	@Test
 //	public void testJobManagerStartCommand() {
@@ -277,7 +282,7 @@ public class StartCommandMasterDecoratorTest extends JobManagerDecoratorTest {
 //			boolean hasLogBack,
 //			boolean hasLog4j,
 //			String mainClassArgs) {
-//		return StartCommandMasterDecorator.getJobManagerStartCommand(
+//		return JavaCmdJobManagerDecorator.getJobManagerStartCommand(
 //				cfg,
 //				jobManagerMem,
 //				confDirInPod,

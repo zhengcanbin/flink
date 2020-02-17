@@ -16,10 +16,9 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.taskmanager;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesTaskManagerConf;
-import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
 import io.fabric8.kubernetes.api.model.Container;
@@ -37,9 +36,10 @@ import java.util.stream.Collectors;
 import static org.apache.flink.kubernetes.utils.Constants.ENV_FLINK_POD_NAME;
 
 /**
- *
+ * An initializer for the TaskManager {@link org.apache.flink.kubernetes.kubeclient.FlinkPod}.
  */
 public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
+
 	private final KubernetesTaskManagerConf kubernetesTaskManagerConf;
 
 	public InitTaskManagerDecorator(KubernetesTaskManagerConf kubernetesTaskManagerConf) {
@@ -63,6 +63,7 @@ public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 				kubernetesTaskManagerConf.getTaskManagerMemoryMB(),
 				kubernetesTaskManagerConf.getTaskManagerCPU());
 
+		// todo 缺少 Port 的名字
 		return new ContainerBuilder(container)
 				.withName(kubernetesTaskManagerConf.getTaskManagerMainContainerName())
 				.withImage(kubernetesTaskManagerConf.getImage())

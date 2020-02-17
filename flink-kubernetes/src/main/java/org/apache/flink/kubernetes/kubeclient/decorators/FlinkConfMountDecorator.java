@@ -16,13 +16,12 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.common;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.client.cli.CliFrontend;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.kubeclient.conf.AbstractKubernetesComponentConf;
-import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
 
 import org.apache.flink.shaded.guava18.com.google.common.io.Files;
 
@@ -56,13 +55,13 @@ import static org.apache.flink.kubernetes.utils.Constants.CONFIG_FILE_LOGBACK_NA
 import static org.apache.flink.kubernetes.utils.Constants.FLINK_CONF_VOLUME;
 
 /**
- *
+ * Mounts the log4j.properties, logback.xml, and flink-conf.yaml configuration on the JobManager or TaskManager pod.
  */
-public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator {
+public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 
 	private final AbstractKubernetesComponentConf kubernetesComponentConf;
 
-	public FlinkConfConfigMapDecorator(AbstractKubernetesComponentConf kubernetesComponentConf) {
+	public FlinkConfMountDecorator(AbstractKubernetesComponentConf kubernetesComponentConf) {
 		super(kubernetesComponentConf.getFlinkConfiguration());
 		this.kubernetesComponentConf = kubernetesComponentConf;
 	}
@@ -107,7 +106,7 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 	}
 
 	@Override
-	public List<HasMetadata> buildAdditionalKubernetesResources() throws IOException {
+	public List<HasMetadata> buildAccompanyingKubernetesResources() throws IOException {
 		final String clusterId = kubernetesComponentConf.getClusterId();
 
 		final Map<String, String> data = new HashMap<>();
@@ -132,7 +131,7 @@ public class FlinkConfConfigMapDecorator extends AbstractKubernetesStepDecorator
 	@VisibleForTesting
 	String getFlinkConfData(Configuration configuration) throws IOException {
 		try (StringWriter sw = new StringWriter();
-			 PrintWriter out = new PrintWriter(sw)) {
+			PrintWriter out = new PrintWriter(sw)) {
 			for (String key : configuration.keySet()) {
 				String value = configuration.getString(key, null);
 				out.print(key);

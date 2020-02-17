@@ -16,17 +16,8 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.common;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
-import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.KeyToPath;
-import io.fabric8.kubernetes.api.model.KeyToPathBuilder;
-import io.fabric8.kubernetes.api.model.Volume;
-import io.fabric8.kubernetes.api.model.VolumeBuilder;
-import io.fabric8.kubernetes.api.model.VolumeMount;
-import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import org.apache.flink.client.deployment.ClusterSpecification;
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.Configuration;
@@ -37,6 +28,16 @@ import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.runtime.clusterframework.BootstrapTools;
 import org.apache.flink.test.util.TestBaseUtils;
+
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.KeyToPath;
+import io.fabric8.kubernetes.api.model.KeyToPathBuilder;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -56,7 +57,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
-public class FlinkConfConfigMapDecoratorTest {
+/**
+ * Test for {@link FlinkConfMountDecorator}.
+ */
+public class FlinkConfMountDecoratorTest {
 
 	private static final String CLUSTER_ID = "cluster-id-test";
 	private static final int JOB_MANAGER_MEMORY = 768;
@@ -71,7 +75,7 @@ public class FlinkConfConfigMapDecoratorTest {
 
 	private Configuration flinkConfig;
 	private KubernetesMasterConf kubernetesMasterConf;
-	private FlinkConfConfigMapDecorator flinkConfConfigMapDecorator;
+	private FlinkConfMountDecorator flinkConfMountDecorator;
 
 	@Before
 	public void setup() throws IOException {
@@ -92,12 +96,12 @@ public class FlinkConfConfigMapDecoratorTest {
 
 		this.kubernetesMasterConf = new KubernetesMasterConf(flinkConfig, clusterSpecification);
 
-		this.flinkConfConfigMapDecorator = new FlinkConfConfigMapDecorator(kubernetesMasterConf);
+		this.flinkConfMountDecorator = new FlinkConfMountDecorator(kubernetesMasterConf);
 	}
 
 	@Test
 	public void testWhetherPodOrContainerIsDecorated() {
-		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.decorateFlinkPod(baseFlinkPod);
+		final FlinkPod decoratedFlinkPod = flinkConfMountDecorator.decorateFlinkPod(baseFlinkPod);
 		assertNotEquals(baseFlinkPod.getPod(), decoratedFlinkPod.getPod());
 		assertNotEquals(baseFlinkPod.getMainContainer(), decoratedFlinkPod.getMainContainer());
 	}
@@ -107,16 +111,16 @@ public class FlinkConfConfigMapDecoratorTest {
 		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "log4j.properties"));
 		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "logback.xml"));
 
-		final List<HasMetadata> additionalResources = flinkConfConfigMapDecorator.buildAdditionalKubernetesResources();
+		final List<HasMetadata> additionalResources = flinkConfMountDecorator.buildAccompanyingKubernetesResources();
 		assertEquals(1, additionalResources.size());
 
 		final Map<String, String> expectedDatas = new HashMap<>();
-		expectedDatas.put(FLINK_CONF_FILENAME, flinkConfConfigMapDecorator.getFlinkConfData(this.flinkConfig));
+		expectedDatas.put(FLINK_CONF_FILENAME, flinkConfMountDecorator.getFlinkConfData(this.flinkConfig));
 		expectedDatas.put("logback.xml", "");
 		expectedDatas.put("log4j.properties", "");
 		final List<ConfigMap> expectedConfigMaps = Collections.singletonList(new ConfigMapBuilder()
 			.withNewMetadata()
-				.withName(flinkConfConfigMapDecorator.getFlinkConfConfigMapName(CLUSTER_ID))
+				.withName(flinkConfMountDecorator.getFlinkConfConfigMapName(CLUSTER_ID))
 				.withLabels(kubernetesMasterConf.getCommonLabels())
 				.endMetadata()
 			.addToData(expectedDatas)
@@ -127,12 +131,12 @@ public class FlinkConfConfigMapDecoratorTest {
 	@Test
 	public void testDecorateFlinkPodWithoutFlinkConfigYAML() {
 		// todo 当做一种异常场景去处理
-		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.decorateFlinkPod(baseFlinkPod);
+		final FlinkPod decoratedFlinkPod = flinkConfMountDecorator.decorateFlinkPod(baseFlinkPod);
 	}
 
 	@Test
 	public void testDecoratedFlinkPodWithoutLog4jAndLogback() {
-		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.decorateFlinkPod(baseFlinkPod);
+		final FlinkPod decoratedFlinkPod = flinkConfMountDecorator.decorateFlinkPod(baseFlinkPod);
 
 		final List<KeyToPath> expectedKeyToPaths = Collections.singletonList(
 			new KeyToPathBuilder()
@@ -143,7 +147,7 @@ public class FlinkConfConfigMapDecoratorTest {
 			new VolumeBuilder()
 				.withName(Constants.FLINK_CONF_VOLUME)
 				.withNewConfigMap()
-					.withName(flinkConfConfigMapDecorator.getFlinkConfConfigMapName(CLUSTER_ID))
+					.withName(flinkConfMountDecorator.getFlinkConfConfigMapName(CLUSTER_ID))
 					.withItems(expectedKeyToPaths)
 					.endConfigMap()
 				.build());
@@ -161,7 +165,7 @@ public class FlinkConfConfigMapDecoratorTest {
 	public void testDecoratedFlinkPodWithLog4j() throws IOException {
 		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "log4j.properties"));
 
-		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.decorateFlinkPod(baseFlinkPod);
+		final FlinkPod decoratedFlinkPod = flinkConfMountDecorator.decorateFlinkPod(baseFlinkPod);
 
 		final List<KeyToPath> expectedKeyToPaths = Arrays.asList(
 			new KeyToPathBuilder()
@@ -176,7 +180,7 @@ public class FlinkConfConfigMapDecoratorTest {
 			new VolumeBuilder()
 				.withName(Constants.FLINK_CONF_VOLUME)
 				.withNewConfigMap()
-				.withName(flinkConfConfigMapDecorator.getFlinkConfConfigMapName(CLUSTER_ID))
+				.withName(flinkConfMountDecorator.getFlinkConfConfigMapName(CLUSTER_ID))
 				.withItems(expectedKeyToPaths)
 				.endConfigMap()
 				.build());
@@ -187,7 +191,7 @@ public class FlinkConfConfigMapDecoratorTest {
 	public void testDecoratedFlinkPodWithLogback() throws IOException {
 		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "logback.xml"));
 
-		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.decorateFlinkPod(baseFlinkPod);
+		final FlinkPod decoratedFlinkPod = flinkConfMountDecorator.decorateFlinkPod(baseFlinkPod);
 
 		final List<KeyToPath> expectedKeyToPaths = Arrays.asList(
 			new KeyToPathBuilder()
@@ -202,7 +206,7 @@ public class FlinkConfConfigMapDecoratorTest {
 			new VolumeBuilder()
 				.withName(Constants.FLINK_CONF_VOLUME)
 				.withNewConfigMap()
-				.withName(flinkConfConfigMapDecorator.getFlinkConfConfigMapName(CLUSTER_ID))
+				.withName(flinkConfMountDecorator.getFlinkConfConfigMapName(CLUSTER_ID))
 				.withItems(expectedKeyToPaths)
 				.endConfigMap()
 				.build());
@@ -214,7 +218,7 @@ public class FlinkConfConfigMapDecoratorTest {
 		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "log4j.properties"));
 		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "logback.xml"));
 
-		final FlinkPod decoratedFlinkPod = flinkConfConfigMapDecorator.decorateFlinkPod(baseFlinkPod);
+		final FlinkPod decoratedFlinkPod = flinkConfMountDecorator.decorateFlinkPod(baseFlinkPod);
 
 		final List<KeyToPath> expectedKeyToPaths = Arrays.asList(
 			new KeyToPathBuilder()
@@ -233,7 +237,7 @@ public class FlinkConfConfigMapDecoratorTest {
 			new VolumeBuilder()
 				.withName(Constants.FLINK_CONF_VOLUME)
 				.withNewConfigMap()
-				.withName(flinkConfConfigMapDecorator.getFlinkConfConfigMapName(CLUSTER_ID))
+				.withName(flinkConfMountDecorator.getFlinkConfConfigMapName(CLUSTER_ID))
 				.withItems(expectedKeyToPaths)
 				.endConfigMap()
 				.build());

@@ -21,10 +21,10 @@ package org.apache.flink.kubernetes.kubeclient.builder;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesTaskManagerConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.KubernetesStepDecorator;
-import org.apache.flink.kubernetes.kubeclient.decorators.common.FlinkConfConfigMapDecorator;
-import org.apache.flink.kubernetes.kubeclient.decorators.common.MountVolumesDecorator;
-import org.apache.flink.kubernetes.kubeclient.decorators.taskmanager.InitTaskManagerDecorator;
-import org.apache.flink.kubernetes.kubeclient.decorators.taskmanager.StartCommandDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.FlinkConfMountDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.VolumesMountDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.InitTaskManagerDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.JavaCmdTaskManagerDecorator;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
 
 import io.fabric8.kubernetes.api.model.Pod;
@@ -40,9 +40,9 @@ public class KubernetesTaskManagerBuilder {
 
 		final KubernetesStepDecorator[] stepDecorators = new KubernetesStepDecorator[] {
 			new InitTaskManagerDecorator(kubernetesTaskManagerConf),
-			new StartCommandDecorator(kubernetesTaskManagerConf),
-			new MountVolumesDecorator(kubernetesTaskManagerConf),
-			new FlinkConfConfigMapDecorator(kubernetesTaskManagerConf)};
+			new JavaCmdTaskManagerDecorator(kubernetesTaskManagerConf),
+			new VolumesMountDecorator(kubernetesTaskManagerConf),
+			new FlinkConfMountDecorator(kubernetesTaskManagerConf)};
 
 		for (KubernetesStepDecorator stepDecorator: stepDecorators) {
 			flinkPod = stepDecorator.decorateFlinkPod(flinkPod);

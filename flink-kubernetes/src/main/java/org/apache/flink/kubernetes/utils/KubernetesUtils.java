@@ -28,7 +28,6 @@ import org.apache.flink.util.FlinkRuntimeException;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.ResourceRequirementsBuilder;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,9 +132,14 @@ public class KubernetesUtils {
 	}
 
 	/**
-	 *
-	 * @param prefix
-	 * @return
+	 * Generate name of the internal Service.
+	 */
+	public static String getInternalServiceName(String prefix) {
+		return prefix + Constants.FLINK_INTERNAL_SERVICE_SUFFIX;
+	}
+
+	/**
+	 * Generate name of the external Service.
 	 */
 	public static String getRestServiceName(String prefix) {
 		return prefix + Constants.FLINK_REST_SERVICE_SUFFIX;

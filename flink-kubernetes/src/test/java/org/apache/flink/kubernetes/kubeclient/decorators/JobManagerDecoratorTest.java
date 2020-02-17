@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.jobmanager;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.client.deployment.ClusterSpecification;
 import org.apache.flink.configuration.Configuration;
@@ -24,10 +24,14 @@ import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.builder.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
+
 import org.junit.Before;
 
 import java.io.IOException;
 
+/**
+ * Base test class for the JobManager decorators.
+ */
 public class JobManagerDecoratorTest {
 
 	static final String _CLUSTER_ID = "cluster-id-test";

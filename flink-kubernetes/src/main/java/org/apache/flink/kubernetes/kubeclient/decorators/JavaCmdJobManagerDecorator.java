@@ -16,29 +16,26 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.jobmanager;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
-import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.clusterframework.BootstrapTools;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 
-import javax.annotation.Nullable;
-
 import java.util.Arrays;
 
 /**
- *
+ * Creates the command and args for the main container which runs the JobManager code.
  */
-public class StartCommandMasterDecorator extends AbstractKubernetesStepDecorator {
+public class JavaCmdJobManagerDecorator extends AbstractKubernetesStepDecorator {
 
 	private final KubernetesMasterConf kubernetesMasterConf;
 
-	public StartCommandMasterDecorator(KubernetesMasterConf kubernetesMasterConf) {
+	public JavaCmdJobManagerDecorator(KubernetesMasterConf kubernetesMasterConf) {
 		super(kubernetesMasterConf.getFlinkConfiguration());
 		this.kubernetesMasterConf = kubernetesMasterConf;
 	}
@@ -52,13 +49,13 @@ public class StartCommandMasterDecorator extends AbstractKubernetesStepDecorator
 				kubernetesMasterConf.getInternalFlinkLogDir(),
 				kubernetesMasterConf.hasLogback(),
 				kubernetesMasterConf.hasLog4j(),
-				kubernetesMasterConf.getEntrypointMainClass(),
-				null);
+				kubernetesMasterConf.getEntrypointMainClass());
 
 		return new ContainerBuilder(container)
 				.withCommand(kubernetesMasterConf.getInternalEntrypoint())
 				.withArgs(Arrays.asList("/bin/bash", "-c", startCommand))
-				.build();	}
+				.build();
+	}
 
 	/**
 	 * Generates the shell command to start a jobmanager for kubernetes.
@@ -70,18 +67,16 @@ public class StartCommandMasterDecorator extends AbstractKubernetesStepDecorator
 	 * @param hasLogback Uses logback?
 	 * @param hasLog4j Uses log4j?
 	 * @param mainClass The main class to start with.
-	 * @param mainArgs The args for main class.
 	 * @return A String containing the job manager startup command.
 	 */
-	public static String getJobManagerStartCommand(
+	private static String getJobManagerStartCommand(
 			Configuration flinkConfig,
 			int jobManagerMemoryMb,
 			String configDirectory,
 			String logDirectory,
 			boolean hasLogback,
 			boolean hasLog4j,
-			String mainClass,
-			@Nullable String mainArgs) {
+			String mainClass) {
 		final int heapSize = BootstrapTools.calculateHeapSize(jobManagerMemoryMb, flinkConfig);
 		final String jvmMemOpts = String.format("-Xms%sm -Xmx%sm", heapSize, heapSize);
 		return KubernetesUtils.getCommonStartCommand(
@@ -93,6 +88,6 @@ public class StartCommandMasterDecorator extends AbstractKubernetesStepDecorator
 			hasLogback,
 			hasLog4j,
 			mainClass,
-			mainArgs);
+			null);
 	}
 }

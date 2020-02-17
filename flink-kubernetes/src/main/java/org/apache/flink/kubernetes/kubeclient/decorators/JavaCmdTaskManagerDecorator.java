@@ -16,11 +16,10 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.taskmanager;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesTaskManagerConf;
-import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
 import org.apache.flink.kubernetes.taskmanager.KubernetesTaskExecutorRunner;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.clusterframework.ContaineredTaskManagerParameters;
@@ -36,13 +35,13 @@ import javax.annotation.Nullable;
 import java.util.Arrays;
 
 /**
- *
+ * Creates the command and args for the main container to run the TaskManager code.
  */
-public class StartCommandDecorator extends AbstractKubernetesStepDecorator {
+public class JavaCmdTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 
 	private final KubernetesTaskManagerConf kubernetesTaskManagerConf;
 
-	public StartCommandDecorator(KubernetesTaskManagerConf kubernetesTaskManagerConf) {
+	public JavaCmdTaskManagerDecorator(KubernetesTaskManagerConf kubernetesTaskManagerConf) {
 		super(kubernetesTaskManagerConf.getFlinkConfiguration());
 		this.kubernetesTaskManagerConf = kubernetesTaskManagerConf;
 	}
@@ -74,7 +73,7 @@ public class StartCommandDecorator extends AbstractKubernetesStepDecorator {
 			mainClassArgs);
 	}
 
-	public static String getTaskManagerStartCommand(
+	private static String getTaskManagerStartCommand(
 			Configuration flinkConfig,
 			ContaineredTaskManagerParameters tmParams,
 			String configDirectory,

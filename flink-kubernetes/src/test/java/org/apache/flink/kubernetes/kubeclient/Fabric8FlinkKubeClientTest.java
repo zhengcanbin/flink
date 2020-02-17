@@ -146,6 +146,7 @@ public class Fabric8FlinkKubeClientTest {
 
 	@Test
 	public void testCreateFlinkMasterComponent() throws Exception {
+		mockInternalServiceAddEventFromServerSide();
 		mockRestServiceAddEventFromServerSide();
 
 		flinkKubeClient.createFlinkMasterComponent(this.kubernetesMasterSpecification);
@@ -166,7 +167,7 @@ public class Fabric8FlinkKubeClientTest {
 				.inNamespace(_NAMESPACE)
 				.list()
 				.getItems();
-		assertEquals(1, resultedServices.size());
+		assertEquals(2, resultedServices.size());
 
 		testOwnerReferenceSetting(resultedDeployments.get(0), resultedConfigMaps);
 		testOwnerReferenceSetting(resultedDeployments.get(0), resultedServices);
@@ -184,6 +185,7 @@ public class Fabric8FlinkKubeClientTest {
 
 	@Test
 	public void testCreateFlinkTaskManagerPod() throws Exception {
+		mockInternalServiceAddEventFromServerSide();
 		mockRestServiceAddEventFromServerSide();
 
 		this.flinkKubeClient.createFlinkMasterComponent(this.kubernetesMasterSpecification);
@@ -252,6 +254,7 @@ public class Fabric8FlinkKubeClientTest {
 
 	@Test
 	public void testStopAndCleanupCluster() throws Exception {
+		mockInternalServiceAddEventFromServerSide();
 		mockRestServiceAddEventFromServerSide();
 
 		this.flinkKubeClient.createFlinkMasterComponent(this.kubernetesMasterSpecification);
@@ -267,7 +270,7 @@ public class Fabric8FlinkKubeClientTest {
 
 		assertEquals(1, this.kubeClient.apps().deployments().inNamespace(_NAMESPACE).list().getItems().size());
 		assertEquals(1, this.kubeClient.configMaps().inNamespace(_NAMESPACE).list().getItems().size());
-		assertEquals(1, this.kubeClient.services().inNamespace(_NAMESPACE).list().getItems().size());
+		assertEquals(2, this.kubeClient.services().inNamespace(_NAMESPACE).list().getItems().size());
 		assertEquals(1, this.kubeClient.pods().inNamespace(_NAMESPACE).list().getItems().size());
 
 		this.flinkKubeClient.stopAndCleanupCluster(_CLUSTER_ID);
@@ -275,6 +278,25 @@ public class Fabric8FlinkKubeClientTest {
 //		assertTrue(this.kubeClient.configMaps().inNamespace(_NAMESPACE).list().getItems().isEmpty());
 //		assertTrue(this.kubeClient.services().inNamespace(_NAMESPACE).list().getItems().isEmpty());
 //		assertTrue(this.kubeClient.pods().inNamespace(_NAMESPACE).list().getItems().isEmpty());
+	}
+
+	private void mockInternalServiceAddEventFromServerSide() {
+		final Service mockService = new ServiceBuilder()
+				.editOrNewMetadata()
+				.endMetadata()
+				.build();
+
+		final String path = String.format("/api/v1/namespaces/%s/services?fieldSelector=metadata.name%%3D%s&watch=true",
+				_NAMESPACE, KubernetesUtils.getInternalServiceName(_CLUSTER_ID));
+
+		server.expect()
+				.withPath(path)
+				.andUpgradeToWebSocket()
+				.open()
+				.waitFor(1000)
+				.andEmit(new WatchEvent(mockService, "ADDED"))
+				.done()
+				.once();
 	}
 
 	private void mockRestServiceAddEventFromServerSide() {

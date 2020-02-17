@@ -16,7 +16,12 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.taskmanager;
+package org.apache.flink.kubernetes.kubeclient.decorators;
+
+import org.apache.flink.configuration.ResourceManagerOptions;
+import org.apache.flink.configuration.TaskManagerOptions;
+import org.apache.flink.kubernetes.kubeclient.FlinkPod;
+import org.apache.flink.kubernetes.utils.Constants;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerPort;
@@ -25,10 +30,6 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
-import org.apache.flink.configuration.ResourceManagerOptions;
-import org.apache.flink.configuration.TaskManagerOptions;
-import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.utils.Constants;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,6 +45,9 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
+/**
+ * Test for {@link InitJobManagerDecorator}.
+ */
 public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 
 	private static final int RPC_PORT = 12345;
@@ -55,12 +59,13 @@ public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 		}
 	};
 
-	private Pod decoratedPod;
-	private Container decoratedMainContainer;
+	private Pod resultPod;
+	private Container resultMainContainer;
 
 	@Before
 	public void setup() throws IOException {
 		super.setup();
+
 		flinkConfig.set(TaskManagerOptions.RPC_PORT, String.valueOf(RPC_PORT));
 		customizedEnvs.forEach((k, v) ->
 			flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_TASK_MANAGER_ENV_PREFIX + k, v));
@@ -68,31 +73,31 @@ public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 		final InitTaskManagerDecorator initTaskManagerDecorator =
 			new InitTaskManagerDecorator(kubernetesTaskManagerConf);
 
-		final FlinkPod decoratedFlinkPod = initTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod);
-		this.decoratedPod = decoratedFlinkPod.getPod();
-		this.decoratedMainContainer = decoratedFlinkPod.getMainContainer();
+		final FlinkPod resultFlinkPod = initTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod);
+		this.resultPod = resultFlinkPod.getPod();
+		this.resultMainContainer = resultFlinkPod.getMainContainer();
 	}
 
 	@Test
 	public void testMainContainerName() {
 		Assert.assertEquals(
 			kubernetesTaskManagerConf.getTaskManagerMainContainerName(),
-			this.decoratedMainContainer.getName());
+			this.resultMainContainer.getName());
 	}
 
 	@Test
 	public void testMainContainerImage() {
-		assertEquals(CONTAINER_IMAGE, this.decoratedMainContainer.getImage());
+		assertEquals(CONTAINER_IMAGE, this.resultMainContainer.getImage());
 	}
 
 	@Test
 	public void testMainContainerImagePullPolicy() {
-		assertEquals(CONTAINER_IMAGE_PULL_POLICY, this.decoratedMainContainer.getImagePullPolicy());
+		assertEquals(CONTAINER_IMAGE_PULL_POLICY, this.resultMainContainer.getImagePullPolicy());
 	}
 
 	@Test
 	public void testMainContainerResourceRequirements() {
-		final ResourceRequirements resourceRequirements = this.decoratedMainContainer.getResources();
+		final ResourceRequirements resourceRequirements = this.resultMainContainer.getResources();
 
 		final Map<String, Quantity> requests = resourceRequirements.getRequests();
 		assertEquals(Double.toString(TASK_MANAGER_CPU), requests.get("cpu").getAmount());
@@ -110,7 +115,7 @@ public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 				.withContainerPort(RPC_PORT)
 			.build());
 
-		assertThat(expectedContainerPorts, equalTo(this.decoratedMainContainer.getPorts()));
+		assertThat(expectedContainerPorts, equalTo(this.resultMainContainer.getPorts()));
 	}
 
 	@Test
@@ -118,7 +123,7 @@ public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 		final Map<String, String> expectedEnvVars = new HashMap<>(customizedEnvs);
 		expectedEnvVars.put(Constants.ENV_FLINK_POD_NAME, POD_NAME);
 
-		final Map<String, String> resultEnvVars = this.decoratedMainContainer.getEnv()
+		final Map<String, String> resultEnvVars = this.resultMainContainer.getEnv()
 			.stream()
 			.collect(Collectors.toMap(EnvVar::getName, EnvVar::getValue));
 
@@ -127,7 +132,7 @@ public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 
 	@Test
 	public void testPodName() {
-		assertEquals(POD_NAME, this.decoratedPod.getMetadata().getName());
+		assertEquals(POD_NAME, this.resultPod.getMetadata().getName());
 	}
 
 	@Test
@@ -140,6 +145,6 @@ public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 			}
 		};
 
-		assertEquals(expectedLabels, this.decoratedPod.getMetadata().getLabels());
+		assertEquals(expectedLabels, this.resultPod.getMetadata().getLabels());
 	}
 }

@@ -18,13 +18,13 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.Pod;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import org.apache.flink.kubernetes.kubeclient.builder.FlinkPodBuilder;
+
+import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.Pod;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -33,7 +33,8 @@ import java.util.List;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
- *
+ * An abstract {@link KubernetesStepDecorator} containing some common implementations for different plug-in features
+ * while providing two additional methods.
  */
 public abstract class AbstractKubernetesStepDecorator implements KubernetesStepDecorator {
 
@@ -45,7 +46,6 @@ public abstract class AbstractKubernetesStepDecorator implements KubernetesStepD
 
 	@Override
 	public FlinkPod decorateFlinkPod(FlinkPod flinkPod) {
-
 		final Pod decoratedPod = this.decoratePod(flinkPod.getPod());
 		final Container decoratedMainContainer = this.decorateMainContainer(flinkPod.getMainContainer());
 
@@ -64,8 +64,7 @@ public abstract class AbstractKubernetesStepDecorator implements KubernetesStepD
 	}
 
 	@Override
-	public List<HasMetadata> buildAdditionalKubernetesResources() throws IOException {
+	public List<HasMetadata> buildAccompanyingKubernetesResources() throws IOException {
 		return Collections.emptyList();
 	}
-
 }

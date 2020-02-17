@@ -16,9 +16,8 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.taskmanager;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import io.fabric8.kubernetes.api.model.Container;
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.kubernetes.KubernetesTestUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
@@ -26,6 +25,8 @@ import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.taskmanager.KubernetesTaskExecutorRunner;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
 import org.apache.flink.test.util.TestBaseUtils;
+
+import io.fabric8.kubernetes.api.model.Container;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,7 +45,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
-public class StartCommandDecoratorTest extends TaskManagerDecoratorTest {
+/**
+ * Test for {@link JavaCmdTaskManagerDecorator}.
+ */
+public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 
 	private static final String _KUBERNETES_ENTRY_PATH = "/opt/flink/bin/start.sh";
 	private static final String _INTERNAL_FLINK_CONF_DIR = "/opt/flink/flink-conf-";
@@ -67,7 +71,7 @@ public class StartCommandDecoratorTest extends TaskManagerDecoratorTest {
 	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 	private File flinkConfDir;
-	private StartCommandDecorator startCommandDecorator;
+	private JavaCmdTaskManagerDecorator javaCmdTaskManagerDecorator;
 
 	@Before
 	public void setup() throws IOException {
@@ -81,12 +85,12 @@ public class StartCommandDecoratorTest extends TaskManagerDecoratorTest {
 		map.put(ConfigConstants.ENV_FLINK_CONF_DIR, flinkConfDir.toString());
 		TestBaseUtils.setEnv(map);
 
-		this.startCommandDecorator = new StartCommandDecorator(this.kubernetesTaskManagerConf);
+		this.javaCmdTaskManagerDecorator = new JavaCmdTaskManagerDecorator(this.kubernetesTaskManagerConf);
 	}
 
 	@Test
 	public void testWhetherContainerOrPodIsUpdated() {
-		final FlinkPod resultFlinkPod = startCommandDecorator.decorateFlinkPod(this.baseFlinkPod);
+		final FlinkPod resultFlinkPod = javaCmdTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod);
 		assertEquals(this.baseFlinkPod.getPod(), resultFlinkPod.getPod());
 		assertNotEquals(this.baseFlinkPod.getMainContainer(), resultFlinkPod.getMainContainer());
 	}
@@ -94,7 +98,7 @@ public class StartCommandDecoratorTest extends TaskManagerDecoratorTest {
 	@Test
 	public void testStartCommandWithoutLog4jAndLogback() {
 		final Container resultMainContainer =
-			startCommandDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
+			javaCmdTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
 		final String expectedCommand = String.format(
@@ -115,7 +119,7 @@ public class StartCommandDecoratorTest extends TaskManagerDecoratorTest {
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
 
 		final Container resultMainContainer =
-			startCommandDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
+			javaCmdTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
 
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
@@ -143,7 +147,7 @@ public class StartCommandDecoratorTest extends TaskManagerDecoratorTest {
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
 
 		final Container resultMainContainer =
-			startCommandDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
+			javaCmdTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
 
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
@@ -172,7 +176,7 @@ public class StartCommandDecoratorTest extends TaskManagerDecoratorTest {
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
 
 		final Container resultMainContainer =
-			startCommandDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
+			javaCmdTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
 		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
 
 		final String logging = String.format(

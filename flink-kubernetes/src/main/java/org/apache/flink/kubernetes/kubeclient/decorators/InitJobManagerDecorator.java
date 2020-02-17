@@ -16,10 +16,9 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.jobmanager;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
-import org.apache.flink.kubernetes.kubeclient.decorators.AbstractKubernetesStepDecorator;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
 import io.fabric8.kubernetes.api.model.Container;
@@ -42,7 +41,7 @@ import static org.apache.flink.kubernetes.utils.Constants.ENV_FLINK_POD_IP_ADDRE
 import static org.apache.flink.kubernetes.utils.Constants.POD_IP_FIELD_PATH;
 
 /**
- *
+ * An initializer for the JobManager {@link org.apache.flink.kubernetes.kubeclient.FlinkPod}.
  */
 public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 

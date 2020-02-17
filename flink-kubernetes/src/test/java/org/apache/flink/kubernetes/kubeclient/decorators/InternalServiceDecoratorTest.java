@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators.jobmanager;
+package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Service;
@@ -39,14 +39,18 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
-public class RestServiceDecoratorTest extends JobManagerDecoratorTest {
+/**
+ * Test for {@link InternalServiceDecorator}.
+ */
+public class InternalServiceDecoratorTest extends JobManagerDecoratorTest {
+
 	private static final String _NAMESPACE = "default-test";
 
 	private static final int _REST_PORT = 9081;
 	private static final int _RPC_PORT = 7123;
 	private static final int _BLOB_SERVER_PORT = 8346;
 
-	private RestServiceDecorator restServiceDecorator;
+	private InternalServiceDecorator internalServiceDecorator;
 
 	@Before
 	public void setup() throws IOException {
@@ -57,28 +61,28 @@ public class RestServiceDecoratorTest extends JobManagerDecoratorTest {
 		this.flinkConfig.set(JobManagerOptions.PORT, _RPC_PORT);
 		this.flinkConfig.set(BlobServerOptions.PORT, Integer.toString(_BLOB_SERVER_PORT));
 
-		this.restServiceDecorator = new RestServiceDecorator(this.kubernetesMasterConf);
+		this.internalServiceDecorator = new InternalServiceDecorator(this.kubernetesMasterConf);
 	}
 
 	@Test
-	public void testGetAdditionalKubernetesResources() throws IOException {
-		final List<HasMetadata> resources = this.restServiceDecorator.buildAdditionalKubernetesResources();
+	public void testBuildAccompanyingKubernetesResources() throws IOException {
+		final List<HasMetadata> resources = this.internalServiceDecorator.buildAccompanyingKubernetesResources();
 		assertEquals(1, resources.size());
 
 		assertEquals(
-			KubernetesUtils.getRestServiceName(_CLUSTER_ID) + "." + _NAMESPACE,
+			KubernetesUtils.getInternalServiceName(_CLUSTER_ID) + "." + _NAMESPACE,
 			this.flinkConfig.getString(JobManagerOptions.ADDRESS));
 
-		final Service restService = (Service) resources.get(0);
+		final Service internalService = (Service) resources.get(0);
 
-		assertEquals(KubernetesUtils.getRestServiceName(_CLUSTER_ID), restService.getMetadata().getName());
+		assertEquals(KubernetesUtils.getInternalServiceName(_CLUSTER_ID), internalService.getMetadata().getName());
 
 		final Map<String, String> expectedLabels = new HashMap<>();
 		expectedLabels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
 		expectedLabels.put(Constants.LABEL_APP_KEY, _CLUSTER_ID);
-		assertEquals(expectedLabels, restService.getMetadata().getLabels());
+		assertEquals(expectedLabels, internalService.getMetadata().getLabels());
 
-		assertEquals("LoadBalancer", restService.getSpec().getType());
+		assertEquals("ClusterIP", internalService.getSpec().getType());
 
 		List<ServicePort> expectedServicePorts = Arrays.asList(
 			new ServicePortBuilder()
@@ -93,20 +97,9 @@ public class RestServiceDecoratorTest extends JobManagerDecoratorTest {
 				.withName("blob-server-port")
 				.withPort(_BLOB_SERVER_PORT)
 				.build());
-		assertEquals(expectedServicePorts, restService.getSpec().getPorts());
+		assertEquals(expectedServicePorts, internalService.getSpec().getPorts());
 
 		expectedLabels.put(Constants.LABEL_COMPONENT_KEY, Constants.LABEL_COMPONENT_JOB_MANAGER);
-		assertEquals(expectedLabels, restService.getSpec().getSelector());
-	}
-
-	@Test
-	public void testSetServiceExposedType() throws IOException {
-		this.flinkConfig.set(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE, "NodePort");
-		List<HasMetadata> resources = this.restServiceDecorator.buildAdditionalKubernetesResources();
-		assertEquals("NodePort", ((Service) resources.get(0)).getSpec().getType());
-
-		this.flinkConfig.set(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE, "ClusterIP");
-		resources = this.restServiceDecorator.buildAdditionalKubernetesResources();
-		assertEquals("ClusterIP", ((Service) resources.get(0)).getSpec().getType());
+		assertEquals(expectedLabels, internalService.getSpec().getSelector());
 	}
 }

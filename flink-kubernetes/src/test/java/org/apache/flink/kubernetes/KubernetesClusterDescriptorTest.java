@@ -66,6 +66,7 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 		super.setUp();
 		mockRestServiceWithLoadBalancerOnServerSide(CLUSTER_ID, MOCK_SERVICE_HOST_NAME, MOCK_SERVICE_IP);
 		mockRestServiceAddEventFromServerSide();
+		mockInternalServiceAddEventFromServerSide();
 	}
 
 	@Test
@@ -74,14 +75,14 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 		// Check updated flink config options
 		assertEquals(String.valueOf(Constants.BLOB_SERVER_PORT), FLINK_CONFIG.getString(BlobServerOptions.PORT));
 		assertEquals(String.valueOf(Constants.TASK_MANAGER_RPC_PORT), FLINK_CONFIG.getString(TaskManagerOptions.RPC_PORT));
-		assertEquals(KubernetesUtils.getRestServiceName(CLUSTER_ID) + "." + NAMESPACE,
+		assertEquals(KubernetesUtils.getInternalServiceName(CLUSTER_ID) + "." + NAMESPACE,
 				FLINK_CONFIG.getString(JobManagerOptions.ADDRESS));
 
 		final KubernetesClient kubeClient = getKubeClient();
 
 		assertEquals(1, kubeClient.apps().deployments().list().getItems().size());
 		assertEquals(1, kubeClient.configMaps().list().getItems().size());
-		assertEquals(1, kubeClient.services().list().getItems().size());
+		assertEquals(2, kubeClient.services().list().getItems().size());
 
 		final Deployment jmDeployment = kubeClient
 			.apps()
@@ -146,13 +147,13 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 		descriptor.deploySessionCluster(clusterSpecification);
 
 		final KubernetesClient kubeClient = server.getClient();
-		assertEquals(1, kubeClient.services().list().getItems().size());
+		assertEquals(2, kubeClient.services().list().getItems().size());
 
 		descriptor.killCluster(CLUSTER_ID);
 
 		// Mock kubernetes server do not delete the rest service by gc, so the rest service still exist.
 		final List<Service> services = kubeClient.services().list().getItems();
-		assertEquals(1, services.size());
+		assertEquals(2, services.size());
 //		assertEquals(
 //			MOCK_SERVICE_ID,
 //			services.get(0).getMetadata().getOwnerReferences().get(0).getUid());
@@ -207,6 +208,24 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 
 		final String path = String.format("/api/v1/namespaces/%s/services?fieldSelector=metadata.name%%3D%s&watch=true",
 				NAMESPACE, KubernetesUtils.getRestServiceName(CLUSTER_ID));
+		server.expect()
+				.withPath(path)
+				.andUpgradeToWebSocket()
+				.open()
+				.waitFor(1000)
+				.andEmit(new WatchEvent(mockService, "ADDED"))
+				.done()
+				.once();
+	}
+
+	private void mockInternalServiceAddEventFromServerSide() {
+		final Service mockService = new ServiceBuilder()
+				.editOrNewMetadata()
+				.endMetadata()
+				.build();
+
+		final String path = String.format("/api/v1/namespaces/%s/services?fieldSelector=metadata.name%%3D%s&watch=true",
+				NAMESPACE, KubernetesUtils.getInternalServiceName(CLUSTER_ID));
 		server.expect()
 				.withPath(path)
 				.andUpgradeToWebSocket()

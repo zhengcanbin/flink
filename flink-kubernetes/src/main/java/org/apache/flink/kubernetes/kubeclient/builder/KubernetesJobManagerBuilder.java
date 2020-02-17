@@ -21,12 +21,14 @@ package org.apache.flink.kubernetes.kubeclient.builder;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.KubernetesMasterSpecification;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
+import org.apache.flink.kubernetes.kubeclient.decorators.ExternalServiceDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.FlinkConfMountDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.InitJobManagerDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.InternalServiceDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.JavaCmdJobManagerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.KubernetesStepDecorator;
-import org.apache.flink.kubernetes.kubeclient.decorators.common.MountVolumesDecorator;
-import org.apache.flink.kubernetes.kubeclient.decorators.common.FlinkConfConfigMapDecorator;
-import org.apache.flink.kubernetes.kubeclient.decorators.jobmanager.InitJobManagerDecorator;
-import org.apache.flink.kubernetes.kubeclient.decorators.jobmanager.RestServiceDecorator;
-import org.apache.flink.kubernetes.kubeclient.decorators.jobmanager.StartCommandMasterDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.VolumesMountDecorator;
+import org.apache.flink.kubernetes.utils.Constants;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -37,7 +39,6 @@ import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -51,16 +52,17 @@ public class KubernetesJobManagerBuilder {
 		FlinkPod flinkPod = new FlinkPodBuilder().build();
 		List<HasMetadata> additionalResources = new ArrayList<>();
 
-		final List<KubernetesStepDecorator> stepDecorators = Arrays.asList(
+		final KubernetesStepDecorator[] stepDecorators = new KubernetesStepDecorator[] {
 			new InitJobManagerDecorator(kubernetesMasterConf),
-			new StartCommandMasterDecorator(kubernetesMasterConf),
-			new RestServiceDecorator(kubernetesMasterConf),
-			new MountVolumesDecorator(kubernetesMasterConf),
-			new FlinkConfConfigMapDecorator(kubernetesMasterConf));
+			new JavaCmdJobManagerDecorator(kubernetesMasterConf),
+			new InternalServiceDecorator(kubernetesMasterConf),
+			new ExternalServiceDecorator(kubernetesMasterConf),
+			new VolumesMountDecorator(kubernetesMasterConf),
+			new FlinkConfMountDecorator(kubernetesMasterConf)};
 
 		for (KubernetesStepDecorator stepDecorator: stepDecorators) {
 			flinkPod = stepDecorator.decorateFlinkPod(flinkPod);
-			additionalResources.addAll(stepDecorator.buildAdditionalKubernetesResources());
+			additionalResources.addAll(stepDecorator.buildAccompanyingKubernetesResources());
 		}
 
 		final Deployment deployment = buildJobManagerDeployment(flinkPod, kubernetesMasterConf);
@@ -82,6 +84,7 @@ public class KubernetesJobManagerBuilder {
 		final Map<String, String> labels = resolvedPod.getMetadata().getLabels();
 
 		return new DeploymentBuilder()
+			.withApiVersion(Constants.APPS_API_VERSION)
 			.editOrNewMetadata()
 				.withName(kubernetesMasterConf.getClusterId())
 				.withLabels(kubernetesMasterConf.getCommonLabels())
