@@ -16,9 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.builder;
-
-import org.apache.flink.kubernetes.kubeclient.FlinkPod;
+package org.apache.flink.kubernetes.kubeclient;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
@@ -26,7 +24,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 
 /**
- *
+ * Utility class for constructing the {@link FlinkPod}.
  */
 public class FlinkPodBuilder {
 
@@ -49,12 +47,12 @@ public class FlinkPodBuilder {
 		this.flinkPod = flinkPod;
 	}
 
-	public FlinkPodBuilder withNewPod(Pod pod) {
+	public FlinkPodBuilder withPod(Pod pod) {
 		this.flinkPod = new FlinkPod(pod, this.flinkPod.getMainContainer());
 		return this;
 	}
 
-	public FlinkPodBuilder withNewMainContainer(Container mainContainer) {
+	public FlinkPodBuilder withMainContainer(Container mainContainer) {
 		this.flinkPod = new FlinkPod(this.flinkPod.getPod(), mainContainer);
 		return this;
 	}
@@ -62,5 +60,4 @@ public class FlinkPodBuilder {
 	public FlinkPod build() {
 		return this.flinkPod;
 	}
-
 }

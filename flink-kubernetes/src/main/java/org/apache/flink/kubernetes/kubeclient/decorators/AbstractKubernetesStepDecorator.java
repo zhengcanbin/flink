@@ -20,7 +20,7 @@ package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.builder.FlinkPodBuilder;
+import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -50,8 +50,8 @@ public abstract class AbstractKubernetesStepDecorator implements KubernetesStepD
 		final Container decoratedMainContainer = this.decorateMainContainer(flinkPod.getMainContainer());
 
 		return new FlinkPodBuilder()
-				.withNewPod(decoratedPod)
-				.withNewMainContainer(decoratedMainContainer)
+				.withPod(decoratedPod)
+				.withMainContainer(decoratedMainContainer)
 				.build();
 	}
 

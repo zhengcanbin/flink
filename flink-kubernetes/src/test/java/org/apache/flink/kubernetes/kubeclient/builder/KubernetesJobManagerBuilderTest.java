@@ -184,7 +184,7 @@ public class KubernetesJobManagerBuilderTest {
 
 	@Test
 	public void testAdditionalResourcesSize() {
-		final List<HasMetadata> resultedAdditionalResources = this.kubernetesMasterSpecification.getAdditionalResources();
+		final List<HasMetadata> resultedAdditionalResources = this.kubernetesMasterSpecification.getAccompanyingResources();
 		assertEquals(3, resultedAdditionalResources.size());
 
 		final List<HasMetadata> resultedServices = resultedAdditionalResources
@@ -202,7 +202,7 @@ public class KubernetesJobManagerBuilderTest {
 
 	@Test
 	public void testService() {
-//		final Service re = (Service) this.kubernetesMasterSpecification.getAdditionalResources()
+//		final Service re = (Service) this.kubernetesMasterSpecification.getAccompanyingResources()
 //			.stream()
 //			.filter(x -> x instanceof Service)
 //			.collect(Collectors.toList())
@@ -219,7 +219,7 @@ public class KubernetesJobManagerBuilderTest {
 
 	@Test
 	public void testFlinkConfConfigMap() {
-		final ConfigMap resultedConfigMap = (ConfigMap) this.kubernetesMasterSpecification.getAdditionalResources()
+		final ConfigMap resultedConfigMap = (ConfigMap) this.kubernetesMasterSpecification.getAccompanyingResources()
 			.stream()
 			.filter(x -> x instanceof ConfigMap)
 			.collect(Collectors.toList())

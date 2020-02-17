@@ -19,6 +19,7 @@
 package org.apache.flink.kubernetes.kubeclient.builder;
 
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
+import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.KubernetesMasterSpecification;
 import org.apache.flink.kubernetes.kubeclient.conf.KubernetesMasterConf;
 import org.apache.flink.kubernetes.kubeclient.decorators.ExternalServiceDecorator;
@@ -43,14 +44,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Utility class for constructing all the Kubernetes components on the client-side. This
+ * can include the Deployment, the ConfigMap(s), and the Service(s).
  */
 public class KubernetesJobManagerBuilder {
 
 	public static KubernetesMasterSpecification buildJobManagerComponent(
 			KubernetesMasterConf kubernetesMasterConf) throws IOException {
 		FlinkPod flinkPod = new FlinkPodBuilder().build();
-		List<HasMetadata> additionalResources = new ArrayList<>();
+		List<HasMetadata> accompanyingResources = new ArrayList<>();
 
 		final KubernetesStepDecorator[] stepDecorators = new KubernetesStepDecorator[] {
 			new InitJobManagerDecorator(kubernetesMasterConf),
@@ -62,12 +64,12 @@ public class KubernetesJobManagerBuilder {
 
 		for (KubernetesStepDecorator stepDecorator: stepDecorators) {
 			flinkPod = stepDecorator.decorateFlinkPod(flinkPod);
-			additionalResources.addAll(stepDecorator.buildAccompanyingKubernetesResources());
+			accompanyingResources.addAll(stepDecorator.buildAccompanyingKubernetesResources());
 		}
 
 		final Deployment deployment = buildJobManagerDeployment(flinkPod, kubernetesMasterConf);
 
-		return new KubernetesMasterSpecification(deployment, additionalResources);
+		return new KubernetesMasterSpecification(deployment, accompanyingResources);
 	}
 
 	private static Deployment buildJobManagerDeployment(

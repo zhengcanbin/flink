@@ -24,24 +24,24 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import java.util.List;
 
 /**
- *
+ *	Composition of the created Kubernetes components that represents a Flink application.
  */
 public class KubernetesMasterSpecification {
 
 	private Deployment deployment;
 
-	private List<HasMetadata> additionalResources;
+	private List<HasMetadata> accompanyingResources;
 
-	public KubernetesMasterSpecification(Deployment deployment, List<HasMetadata> additionalResources) {
+	public KubernetesMasterSpecification(Deployment deployment, List<HasMetadata> accompanyingResources) {
 		this.deployment = deployment;
-		this.additionalResources = additionalResources;
+		this.accompanyingResources = accompanyingResources;
 	}
 
 	public Deployment getDeployment() {
 		return deployment;
 	}
 
-	public List<HasMetadata> getAdditionalResources() {
-		return additionalResources;
+	public List<HasMetadata> getAccompanyingResources() {
+		return accompanyingResources;
 	}
 }
