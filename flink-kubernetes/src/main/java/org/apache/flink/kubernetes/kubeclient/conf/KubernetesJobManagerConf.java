@@ -41,7 +41,9 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
- *
+ * A utility class helps parse, verify, and manage the Kubernetes side parameters
+ * that are used for constructing the JobManager Pod and all accompanying resources
+ * connected to it.
  */
 public class KubernetesJobManagerConf extends AbstractKubernetesComponentConf {
 
@@ -51,7 +53,7 @@ public class KubernetesJobManagerConf extends AbstractKubernetesComponentConf {
 
 	public KubernetesJobManagerConf(Configuration flinkConfig, ClusterSpecification clusterSpecification) {
 		super(flinkConfig);
-		this.clusterSpecification = clusterSpecification;
+		this.clusterSpecification = checkNotNull(clusterSpecification);
 	}
 
 	@Override
@@ -106,15 +108,14 @@ public class KubernetesJobManagerConf extends AbstractKubernetesComponentConf {
 	}
 
 	public String getEntrypointMainClass() {
-		final String mainClass = flinkConfig.getString(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS);
-		checkNotNull(mainClass, "Main class must be specified!");
+		final String entrypointClass = flinkConfig.getString(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS);
+		checkNotNull(entrypointClass, KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS + " must be specified!");
 
-		return mainClass;
+		return entrypointClass;
 	}
 
 	public String getRestServiceExposedType() {
 		final String exposedType = flinkConfig.getString(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE);
 		return KubernetesConfigOptions.ServiceExposedType.valueOf(exposedType).toString();
 	}
-
 }

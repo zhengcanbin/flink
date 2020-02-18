@@ -26,7 +26,8 @@ import io.fabric8.kubernetes.api.model.VolumeMount;
 import java.util.Map;
 
 /**
- *
+ * A common collection of parameters that is used to construct the JobManager/TaskManager Pods,
+ * including the accompanying Kubernetes resources that together represent a Flink application.
  */
 public interface KubernetesComponentConf {
 
@@ -38,21 +39,46 @@ public interface KubernetesComponentConf {
 
 	String getImagePullPolicy();
 
+	/**
+	 * A common collection of labels that are attached to every created Kubernetes resources.
+	 * This can include the Deployment, the Pod(s), the ConfigMap(s), and the Service(s), etc.
+	 */
 	Map<String, String> getCommonLabels();
 
+	/**
+	 * A collection of labels that are attached to the JobManager and TaskManager Pod(s).
+	 */
 	Map<String, String> getLabels();
 
+	/**
+	 * A collection of customized environments that are attached to the JobManager and TaskManager Container(s).
+	 */
 	Map<String, String> getEnvironments();
 
 	Tuple2<Volume[], VolumeMount[]> getVolumes();
 
-	String getInternalFlinkConfDir();
+	/**
+	 * Directory in Pod that stores the flink-conf.yaml, log4j.properties, and the logback.xml.
+	 */
+	String getFlinkConfDirInPod();
 
-	String getInternalFlinkLogDir();
+	/**
+	 * Directory in Pod that saves the log files.
+	 */
+	String getFlinkLogDirInPod();
 
-	String getInternalEntrypoint();
+	/**
+	 * The docker entrypoint that starts processes in the container.
+	 */
+	String getContainerEntrypoint();
 
+	/**
+	 * Whether the logback.xml is located.
+	 */
 	boolean hasLogback();
 
+	/**
+	 * Whether the log4j.properties is located.
+	 */
 	boolean hasLog4j();
 }

@@ -33,9 +33,11 @@ import java.util.Map;
 
 import static org.apache.flink.kubernetes.configuration.KubernetesConfigOptions.KUBERNETES_TASKMANAGER_VOLUMES_PREFIX;
 import static org.apache.flink.util.Preconditions.checkArgument;
+import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
- *
+ * A utility class helps parse, verify, and manage the Kubernetes side parameters
+ * that are used for constructing the TaskManager Pod.
  */
 public class KubernetesTaskManagerConf extends AbstractKubernetesComponentConf {
 
@@ -63,7 +65,7 @@ public class KubernetesTaskManagerConf extends AbstractKubernetesComponentConf {
 		this.taskManagerMemoryMB = taskManagerMemoryMB;
 		this.taskManagerCPU = taskManagerCPU;
 		this.dynamicProperties = dynamicProperties;
-		this.containeredTaskManagerParameters = containeredTaskManagerParameters;
+		this.containeredTaskManagerParameters = checkNotNull(containeredTaskManagerParameters);
 	}
 
 	@Override

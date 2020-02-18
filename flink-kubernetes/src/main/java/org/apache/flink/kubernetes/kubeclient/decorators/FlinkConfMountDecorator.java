@@ -100,7 +100,7 @@ public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 		return new ContainerBuilder(container)
 				.addNewVolumeMount()
 				.withName(FLINK_CONF_VOLUME)
-				.withMountPath(kubernetesComponentConf.getInternalFlinkConfDir())
+				.withMountPath(kubernetesComponentConf.getFlinkConfDirInPod())
 				.endVolumeMount()
 				.build();
 	}

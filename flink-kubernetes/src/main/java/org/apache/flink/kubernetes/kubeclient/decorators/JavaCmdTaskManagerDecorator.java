@@ -49,24 +49,24 @@ public class JavaCmdTaskManagerDecorator extends AbstractKubernetesStepDecorator
 	@Override
 	protected Container decorateMainContainer(Container container) {
 		return new ContainerBuilder(container)
-				.withCommand(kubernetesTaskManagerConf.getInternalEntrypoint())
+				.withCommand(kubernetesTaskManagerConf.getContainerEntrypoint())
 				.withArgs(Arrays.asList("/bin/bash", "-c", getTaskManagerStartCommand()))
 				.build();
 	}
 
 	private String getTaskManagerStartCommand() {
-		final String confDir = kubernetesTaskManagerConf.getInternalFlinkConfDir();
+		final String confDirInPod = kubernetesTaskManagerConf.getFlinkConfDirInPod();
 
-		final String logDir = kubernetesTaskManagerConf.getInternalFlinkLogDir();
+		final String logDirInPod = kubernetesTaskManagerConf.getFlinkLogDirInPod();
 
 		final String mainClassArgs = "--" + CommandLineOptions.CONFIG_DIR_OPTION.getLongOpt() + " " +
-			confDir + " " + kubernetesTaskManagerConf.getDynamicProperties();
+			confDirInPod + " " + kubernetesTaskManagerConf.getDynamicProperties();
 
 		return getTaskManagerStartCommand(
 			kubernetesTaskManagerConf.getFlinkConfiguration(),
 			kubernetesTaskManagerConf.getContaineredTaskManagerParameters(),
-			confDir,
-			logDir,
+			confDirInPod,
+			logDirInPod,
 			kubernetesTaskManagerConf.hasLogback(),
 			kubernetesTaskManagerConf.hasLog4j(),
 			KubernetesTaskExecutorRunner.class.getCanonicalName(),

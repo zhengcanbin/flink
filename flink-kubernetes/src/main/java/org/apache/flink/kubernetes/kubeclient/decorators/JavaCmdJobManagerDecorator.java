@@ -45,14 +45,14 @@ public class JavaCmdJobManagerDecorator extends AbstractKubernetesStepDecorator 
 		final String startCommand = getJobManagerStartCommand(
 				configuration,
 				kubernetesJobManagerConf.getJobManagerMemoryMB(),
-				kubernetesJobManagerConf.getInternalFlinkConfDir(),
-				kubernetesJobManagerConf.getInternalFlinkLogDir(),
+				kubernetesJobManagerConf.getFlinkConfDirInPod(),
+				kubernetesJobManagerConf.getFlinkLogDirInPod(),
 				kubernetesJobManagerConf.hasLogback(),
 				kubernetesJobManagerConf.hasLog4j(),
 				kubernetesJobManagerConf.getEntrypointMainClass());
 
 		return new ContainerBuilder(container)
-				.withCommand(kubernetesJobManagerConf.getInternalEntrypoint())
+				.withCommand(kubernetesJobManagerConf.getContainerEntrypoint())
 				.withArgs(Arrays.asList("/bin/bash", "-c", startCommand))
 				.build();
 	}

@@ -30,17 +30,18 @@ import java.util.Map;
 
 import static org.apache.flink.kubernetes.utils.Constants.CONFIG_FILE_LOG4J_NAME;
 import static org.apache.flink.kubernetes.utils.Constants.CONFIG_FILE_LOGBACK_NAME;
+import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
- *
+ * Abstract class for the {@link KubernetesComponentConf}.
  */
 public abstract class AbstractKubernetesComponentConf implements KubernetesComponentConf {
 
 	protected final Configuration flinkConfig;
 
 	public AbstractKubernetesComponentConf(Configuration flinkConfig) {
-		this.flinkConfig = flinkConfig;
+		this.flinkConfig = checkNotNull(flinkConfig);
 	}
 
 	public Configuration getFlinkConfiguration() {
@@ -50,19 +51,25 @@ public abstract class AbstractKubernetesComponentConf implements KubernetesCompo
 	@Override
 	public String getClusterId() {
 		final String clusterId = flinkConfig.getString(KubernetesConfigOptions.CLUSTER_ID);
-		checkNotNull(clusterId, "ClusterId must be specified!");
+		checkNotNull(clusterId, "ClusterId must be specified.");
 
 		return clusterId;
 	}
 
 	@Override
 	public String getNamespace() {
-		return flinkConfig.getString(KubernetesConfigOptions.NAMESPACE);
+		final String namespace = flinkConfig.getString(KubernetesConfigOptions.NAMESPACE);
+		checkArgument(!namespace.trim().isEmpty(), "Invalid " + KubernetesConfigOptions.NAMESPACE + ".");
+
+		return namespace;
 	}
 
 	@Override
 	public String getImage() {
-		return flinkConfig.getString(KubernetesConfigOptions.CONTAINER_IMAGE);
+		final String containerImage = flinkConfig.getString(KubernetesConfigOptions.CONTAINER_IMAGE);
+		checkArgument(!containerImage.trim().isEmpty(),
+			"Invalid " + KubernetesConfigOptions.CONTAINER_IMAGE + ".");
+		return containerImage;
 	}
 
 	@Override
@@ -80,17 +87,17 @@ public abstract class AbstractKubernetesComponentConf implements KubernetesCompo
 	}
 
 	@Override
-	public String getInternalFlinkConfDir() {
+	public String getFlinkConfDirInPod() {
 		return flinkConfig.getString(KubernetesConfigOptions.FLINK_CONF_DIR);
 	}
 
 	@Override
-	public String getInternalFlinkLogDir() {
+	public String getFlinkLogDirInPod() {
 		return flinkConfig.getString(KubernetesConfigOptions.FLINK_LOG_DIR);
 	}
 
 	@Override
-	public String getInternalEntrypoint() {
+	public String getContainerEntrypoint() {
 		return flinkConfig.getString(KubernetesConfigOptions.KUBERNETES_ENTRY_PATH);
 	}
 
@@ -108,6 +115,11 @@ public abstract class AbstractKubernetesComponentConf implements KubernetesCompo
 		return log4jFile.exists();
 	}
 
+	/**
+	 * Extract container customized environment variable properties with a given name prefix.
+	 * @param envPrefix the given property name prefix
+	 * @return a Map storing with customized environment variable key/value pairs.
+	 */
 	protected Map<String, String> getPrefixedEnvironments(String envPrefix) {
 		return BootstrapTools.getEnvironmentVariables(envPrefix, flinkConfig);
 	}
