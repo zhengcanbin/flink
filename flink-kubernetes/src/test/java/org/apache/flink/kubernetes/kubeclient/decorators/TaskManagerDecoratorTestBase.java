@@ -19,6 +19,7 @@
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.MemorySize;
+import org.apache.flink.configuration.ResourceManagerOptions;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.kubernetes.KubernetesTestBase;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
@@ -29,6 +30,9 @@ import org.apache.flink.runtime.clusterframework.TaskExecutorProcessSpec;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
 
 import org.junit.Before;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Base test class for the TaskManager decorators.
@@ -42,6 +46,13 @@ public class TaskManagerDecoratorTestBase extends KubernetesTestBase {
 
 	protected static final int TOTAL_PROCESS_MEMORY = 1024;
 	protected static final double TASK_MANAGER_CPU = 2.0;
+
+	protected final Map<String, String> customizedEnvs = new HashMap<String, String>() {
+		{
+			put("key1", "value1");
+			put("key2", "value2");
+		}
+	};
 
 	protected TaskExecutorProcessSpec taskExecutorProcessSpec;
 
@@ -58,6 +69,8 @@ public class TaskManagerDecoratorTestBase extends KubernetesTestBase {
 		flinkConfig.set(TaskManagerOptions.RPC_PORT, String.valueOf(RPC_PORT));
 		flinkConfig.set(TaskManagerOptions.CPU_CORES, TASK_MANAGER_CPU);
 		flinkConfig.set(TaskManagerOptions.TOTAL_PROCESS_MEMORY, MemorySize.parse(TOTAL_PROCESS_MEMORY + "m"));
+		customizedEnvs.forEach((k, v) ->
+				flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_TASK_MANAGER_ENV_PREFIX + k, v));
 
 		taskExecutorProcessSpec = TaskExecutorProcessUtils.processSpecFromConfig(flinkConfig);
 		containeredTaskManagerParameters = ContaineredTaskManagerParameters.create(flinkConfig, taskExecutorProcessSpec,

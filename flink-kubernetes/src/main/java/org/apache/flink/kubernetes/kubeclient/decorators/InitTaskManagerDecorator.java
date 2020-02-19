@@ -25,7 +25,6 @@ import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
-import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
@@ -34,6 +33,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.apache.flink.kubernetes.utils.Constants.ENV_FLINK_POD_NAME;
+import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * An initializer for the TaskManager {@link org.apache.flink.kubernetes.kubeclient.FlinkPod}.
@@ -44,16 +44,16 @@ public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 
 	public InitTaskManagerDecorator(KubernetesTaskManagerParameters kubernetesTaskManagerParameters) {
 		super(kubernetesTaskManagerParameters.getFlinkConfiguration());
-		this.kubernetesTaskManagerParameters = kubernetesTaskManagerParameters;
+		this.kubernetesTaskManagerParameters = checkNotNull(kubernetesTaskManagerParameters);
 	}
 
 	@Override
 	protected Pod decoratePod(Pod pod) {
 		return new PodBuilder(pod)
 				.editOrNewMetadata()
-				.withName(kubernetesTaskManagerParameters.getPodName())
-				.withLabels(kubernetesTaskManagerParameters.getLabels())
-				.endMetadata()
+					.withName(kubernetesTaskManagerParameters.getPodName())
+					.withLabels(kubernetesTaskManagerParameters.getLabels())
+					.endMetadata()
 				.build();
 	}
 
@@ -63,7 +63,6 @@ public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 				kubernetesTaskManagerParameters.getTaskManagerMemoryMB(),
 				kubernetesTaskManagerParameters.getTaskManagerCPU());
 
-		// todo 缺少 Port 的名字
 		return new ContainerBuilder(container)
 				.withName(kubernetesTaskManagerParameters.getTaskManagerMainContainerName())
 				.withImage(kubernetesTaskManagerParameters.getImage())
@@ -72,22 +71,19 @@ public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 				.withPorts(new ContainerPortBuilder()
 						.withContainerPort(kubernetesTaskManagerParameters.getRPCPort())
 						.build())
-				.withEnv(buildEnvForContainer())
+				.withEnv(getCustomizedEnvs())
+				.addNewEnv()
+					.withName(ENV_FLINK_POD_NAME)
+					.withValue(kubernetesTaskManagerParameters.getPodName())
+					.endEnv()
 				.build();
 	}
 
-	private List<EnvVar> buildEnvForContainer() {
-		final List<EnvVar> envList = kubernetesTaskManagerParameters.getEnvironments()
+	private List<EnvVar> getCustomizedEnvs() {
+		return kubernetesTaskManagerParameters.getEnvironments()
 			.entrySet()
 			.stream()
 			.map(kv -> new EnvVar(kv.getKey(), kv.getValue(), null))
 			.collect(Collectors.toList());
-
-		envList.add(new EnvVarBuilder()
-			.withName(ENV_FLINK_POD_NAME)
-			.withValue(kubernetesTaskManagerParameters.getPodName())
-			.build());
-
-		return envList;
 	}
 }

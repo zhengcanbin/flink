@@ -18,7 +18,6 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import org.apache.flink.configuration.ResourceManagerOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.utils.Constants;
 
@@ -39,30 +38,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 /**
  * General tests for the {@link InitJobManagerDecorator}.
  */
 public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTestBase {
 
-	private final Map<String, String> customizedEnvs = new HashMap<String, String>() {
-		{
-			put("key1", "value1");
-			put("key2", "value2");
-		}
-	};
-
 	private Pod resultPod;
 	private Container resultMainContainer;
 
 	@Before
 	public void setup() throws Exception {
-		customizedEnvs.forEach((k, v) ->
-			flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_TASK_MANAGER_ENV_PREFIX + k, v));
-
 		super.setup();
 
 		final InitTaskManagerDecorator initTaskManagerDecorator =
@@ -110,7 +97,7 @@ public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTestBase {
 				.withContainerPort(RPC_PORT)
 			.build());
 
-		assertThat(expectedContainerPorts, equalTo(this.resultMainContainer.getPorts()));
+		assertEquals(expectedContainerPorts, this.resultMainContainer.getPorts());
 	}
 
 	@Test
@@ -132,13 +119,8 @@ public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTestBase {
 
 	@Test
 	public void testPodLabels() {
-		final Map<String, String> expectedLabels = new HashMap<String, String>() {
-			{
-				put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
-				put(Constants.LABEL_APP_KEY, CLUSTER_ID);
-				put(Constants.LABEL_COMPONENT_KEY, Constants.LABEL_COMPONENT_TASK_MANAGER);
-			}
-		};
+		final Map<String, String> expectedLabels = new HashMap<>(getCommonLabels());
+		expectedLabels.put(Constants.LABEL_COMPONENT_KEY, Constants.LABEL_COMPONENT_TASK_MANAGER);
 
 		assertEquals(expectedLabels, this.resultPod.getMetadata().getLabels());
 	}
