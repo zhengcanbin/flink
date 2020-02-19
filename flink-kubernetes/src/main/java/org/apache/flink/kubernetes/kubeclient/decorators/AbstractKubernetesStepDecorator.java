@@ -44,6 +44,10 @@ public abstract class AbstractKubernetesStepDecorator implements KubernetesStepD
 		this.configuration = checkNotNull(configuration);
 	}
 
+	/**
+	 * Apply transformations on the given FlinkPod in accordance to this feature.
+	 * Note that we should return a FlinkPod that keeps all of the properties of the passed FlinkPod object.
+	 */
 	@Override
 	public FlinkPod decorateFlinkPod(FlinkPod flinkPod) {
 		final Pod decoratedPod = this.decoratePod(flinkPod.getPod());
@@ -55,14 +59,64 @@ public abstract class AbstractKubernetesStepDecorator implements KubernetesStepD
 				.build();
 	}
 
+	/**
+	 * Apply transformations on the given Pod in accordance to this feature.
+	 * Note that we should return a Pod that keeps all of the properties of the passed Pod object.
+	 *
+	 * So this is correct:
+	 * {@code Pod decoratedPod = new PodBuilder(pod) // Keeps the original state
+	 *     .editSpec()
+	 *     ...
+	 *     .build()
+	 *
+	 *   return decoratedPod
+	 * }
+	 *
+	 * And this is the incorrect:
+	 * {@code Pod decoratedPod = new PodBuilder() // Loses the original state
+	 *     .editSpec()
+	 *     ...
+	 *     .build()
+	 *
+	 *   return decoratedPod
+	 * }
+	 *
+	 */
 	protected Pod decoratePod(Pod pod) {
 		return pod;
 	}
 
+	/**
+	 * Apply transformations on the given Container in accordance to this feature.
+	 * Note that we should return a Container that keeps all of the properties of the passed Container object.
+	 *
+	 * So this is correct:
+	 * {@code Container decoratedContainer = new ContainerBuilder(container) // Keeps the original state
+	 *     .editSpec()
+	 *     ...
+	 *     .build()
+	 *
+	 *   return decoratedContainer
+	 * }
+	 *
+	 * And this is the incorrect:
+	 * {@code Container decoratedContainer = new ContainerBuilder() // Loses the original state
+	 *     .withName()
+	 *     ...
+	 *     .build()
+	 *
+	 *   return decoratedContainer
+	 * }
+	 *
+	 */
 	protected Container decorateMainContainer(Container container) {
 		return container;
 	}
 
+	/**
+	 * Note that the method has a side effect of modifying the Flink Configuration object, such as
+	 * update the JobManager address.
+	 */
 	@Override
 	public List<HasMetadata> buildAccompanyingKubernetesResources() throws IOException {
 		return Collections.emptyList();
