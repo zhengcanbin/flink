@@ -31,7 +31,7 @@ import java.util.Arrays;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
- * Creates the command and args for the main container which runs the JobManager code.
+ * Attach the command and args to the main container for running the JobManager code.
  */
 public class JavaCmdJobManagerDecorator extends AbstractKubernetesStepDecorator {
 

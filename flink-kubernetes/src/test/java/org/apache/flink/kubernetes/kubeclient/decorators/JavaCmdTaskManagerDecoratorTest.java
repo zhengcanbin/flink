@@ -18,14 +18,12 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.CoreOptions;
 import org.apache.flink.kubernetes.KubernetesTestUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.taskmanager.KubernetesTaskExecutorRunner;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
-import org.apache.flink.test.util.TestBaseUtils;
 
 import io.fabric8.kubernetes.api.model.Container;
 import org.junit.Before;
@@ -33,19 +31,16 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertThat;
 
 /**
  * General tests for the{@link JavaCmdTaskManagerDecorator}.
  */
 public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTestBase {
+
 	private static final String _KUBERNETES_ENTRY_PATH = "/opt/flink/bin/start.sh";
 	private static final String _INTERNAL_FLINK_CONF_DIR = "/opt/flink/flink-conf-";
 	private static final String _INTERNAL_FLINK_LOG_DIR = "/opt/flink/flink-log-";
@@ -87,11 +82,6 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTestBas
 				TaskExecutorProcessUtils.generateDynamicConfigsStr(taskExecutorProcessSpec),
 				_INTERNAL_FLINK_CONF_DIR);
 
-		this.flinkConfDir = temporaryFolder.newFolder().getAbsoluteFile();
-		Map<String, String> map = new HashMap<>();
-		map.put(ConfigConstants.ENV_FLINK_CONF_DIR, flinkConfDir.toString());
-		TestBaseUtils.setEnv(map);
-
 		this.javaCmdTaskManagerDecorator = new JavaCmdTaskManagerDecorator(this.kubernetesTaskManagerParameters);
 	}
 
@@ -106,12 +96,11 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTestBas
 	public void testStartCommandWithoutLog4jAndLogback() {
 		final Container resultMainContainer =
 			javaCmdTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
-		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+		assertEquals(Collections.singletonList(_KUBERNETES_ENTRY_PATH), resultMainContainer.getCommand());
 
 		final String expectedCommand = getTaskManagerExpectedCommand("", "");
-
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
-		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
+		assertEquals(expectedArgs, resultMainContainer.getArgs());
 	}
 
 	@Test
@@ -121,12 +110,11 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTestBas
 		final Container resultMainContainer =
 			javaCmdTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
 
-		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+		assertEquals(Collections.singletonList(_KUBERNETES_ENTRY_PATH), resultMainContainer.getCommand());
 
 		final String expectedCommand = getTaskManagerExpectedCommand("", log4j);
-
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
-		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
+		assertEquals(expectedArgs, resultMainContainer.getArgs());
 	}
 
 	@Test
@@ -136,12 +124,11 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTestBas
 		final Container resultMainContainer =
 			javaCmdTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
 
-		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+		assertEquals(Collections.singletonList(_KUBERNETES_ENTRY_PATH), resultMainContainer.getCommand());
 
 		final String expectedCommand = getTaskManagerExpectedCommand("", logback);
-
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
-		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
+		assertEquals(expectedArgs, resultMainContainer.getArgs());
 	}
 
 	@Test
@@ -151,12 +138,11 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTestBas
 
 		final Container resultMainContainer =
 			javaCmdTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod).getMainContainer();
-		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+		assertEquals(Collections.singletonList(_KUBERNETES_ENTRY_PATH), resultMainContainer.getCommand());
 
 		final String expectedCommand = getTaskManagerExpectedCommand("", logback + " " + log4j);
-
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
-		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
+		assertEquals(expectedArgs, resultMainContainer.getArgs());
 	}
 
 	@Test
@@ -168,13 +154,12 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTestBas
 		final Container resultMainContainer =
 				javaCmdTaskManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
 
-		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+		assertEquals(Collections.singletonList(_KUBERNETES_ENTRY_PATH), resultMainContainer.getCommand());
 
 		final String expectedCommand =
 				getTaskManagerExpectedCommand(jvmOpts, logback + " " + log4j);
-
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
-		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
+		assertEquals(expectedArgs, resultMainContainer.getArgs());
 	}
 
 	@Test
@@ -186,14 +171,13 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTestBas
 		final Container resultMainContainer =
 				javaCmdTaskManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
 
-		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+		assertEquals(Collections.singletonList(_KUBERNETES_ENTRY_PATH), resultMainContainer.getCommand());
 
 
 		final String expectedCommand =
 				getTaskManagerExpectedCommand(jvmOpts, logback + " " + log4j);
-
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
-		assertThat(expectedArgs, is(resultMainContainer.getArgs()));
+		assertEquals(expectedArgs, resultMainContainer.getArgs());
 	}
 
 	@Test
@@ -212,17 +196,14 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTestBas
 
 		final Container resultMainContainer =
 				javaCmdTaskManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
-
-		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+		assertEquals(Collections.singletonList(_KUBERNETES_ENTRY_PATH), resultMainContainer.getCommand());
 
 		final String expectedCommand = java + " 1 " + classpath + " 2 " + tmJvmMem +
 				" " + jvmOpts + " " + tmJvmOpts +
 				" " + tmLogfile + " " + logback + " " + log4j +
 				" " + mainClass + " " + mainClassArgs + " " + tmLogRedirects;
-
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
-
-		assertThat(resultMainContainer.getArgs(), is(expectedArgs));
+		assertEquals(resultMainContainer.getArgs(), expectedArgs);
 	}
 
 	@Test
@@ -242,16 +223,14 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTestBas
 		final Container resultMainContainer =
 				javaCmdTaskManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
 
-		assertThat(Collections.singletonList(_KUBERNETES_ENTRY_PATH), is(resultMainContainer.getCommand()));
+		assertEquals(Collections.singletonList(_KUBERNETES_ENTRY_PATH), resultMainContainer.getCommand());
 
 		final String expectedCommand = java + " " + tmJvmMem +
 				" " + tmLogfile + " " + logback + " " + log4j +
 				" " + jvmOpts + " " + tmJvmOpts + " " + mainClass +
 				" " + mainClassArgs + " " + tmLogRedirects;
-
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
-
-		assertThat(resultMainContainer.getArgs(), is(expectedArgs));
+		assertEquals(resultMainContainer.getArgs(), expectedArgs);
 	}
 
 	private String getTaskManagerExpectedCommand(String jvmAllOpts, String logging) {

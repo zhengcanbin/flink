@@ -34,8 +34,10 @@ import javax.annotation.Nullable;
 
 import java.util.Arrays;
 
+import static org.apache.flink.util.Preconditions.checkNotNull;
+
 /**
- * Creates the command and args for the main container to run the TaskManager code.
+ * Attach the command and args to the main container for running the TaskManager code.
  */
 public class JavaCmdTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 
@@ -43,7 +45,7 @@ public class JavaCmdTaskManagerDecorator extends AbstractKubernetesStepDecorator
 
 	public JavaCmdTaskManagerDecorator(KubernetesTaskManagerParameters kubernetesTaskManagerParameters) {
 		super(kubernetesTaskManagerParameters.getFlinkConfiguration());
-		this.kubernetesTaskManagerParameters = kubernetesTaskManagerParameters;
+		this.kubernetesTaskManagerParameters = checkNotNull(kubernetesTaskManagerParameters);
 	}
 
 	@Override
