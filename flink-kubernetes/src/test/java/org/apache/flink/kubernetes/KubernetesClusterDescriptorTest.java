@@ -25,7 +25,6 @@ import org.apache.flink.configuration.BlobServerOptions;
 import org.apache.flink.configuration.HighAvailabilityOptions;
 import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.TaskManagerOptions;
-import org.apache.flink.kubernetes.kubeclient.FlinkKubeClient;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.jobmanager.HighAvailabilityMode;
@@ -37,7 +36,6 @@ import io.fabric8.kubernetes.api.model.LoadBalancerStatus;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServiceStatusBuilder;
-import io.fabric8.kubernetes.api.model.WatchEvent;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.junit.Before;
@@ -45,7 +43,6 @@ import org.junit.Test;
 
 import javax.annotation.Nullable;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,16 +55,19 @@ import static org.junit.Assert.assertTrue;
  * Tests for the {@link KubernetesClusterDescriptor}.
  */
 public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
+	private static final String MOCK_SERVICE_HOST_NAME = "mock-host-name-of-service";
+	private static final String MOCK_SERVICE_IP = "192.168.0.1";
 
 	private final ClusterSpecification clusterSpecification =
 			new ClusterSpecification.ClusterSpecificationBuilder().createClusterSpecification();
 
 	@Before
-	public void setup() throws IOException {
-		super.setUp();
-		mockRestServiceWithLoadBalancerOnServerSide(CLUSTER_ID, MOCK_SERVICE_HOST_NAME, MOCK_SERVICE_IP);
-		mockRestServiceAddEventFromServerSide();
-		mockInternalServiceAddEventFromServerSide();
+	public void setup() throws Exception {
+		super.setup();
+
+		mockRestServiceWithLoadBalancer(MOCK_SERVICE_HOST_NAME, MOCK_SERVICE_IP);
+		mockServiceAddEvent(KubernetesUtils.getRestServiceName(CLUSTER_ID));
+		mockServiceAddEvent(KubernetesUtils.getInternalServiceName(CLUSTER_ID));
 	}
 
 	@Test
@@ -78,8 +78,6 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 		assertEquals(String.valueOf(Constants.TASK_MANAGER_RPC_PORT), flinkConfig.getString(TaskManagerOptions.RPC_PORT));
 		assertEquals(KubernetesUtils.getInternalServiceName(CLUSTER_ID) + "." + NAMESPACE,
 				flinkConfig.getString(JobManagerOptions.ADDRESS));
-
-		final KubernetesClient kubeClient = getKubeClient();
 
 		assertEquals(1, kubeClient.apps().deployments().list().getItems().size());
 		assertEquals(1, kubeClient.configMaps().list().getItems().size());
@@ -139,7 +137,6 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 
 	@Test
 	public void testKillCluster() throws Exception {
-		final FlinkKubeClient flinkKubeClient = getFabric8FlinkKubeClient();
 		final KubernetesClusterDescriptor descriptor = new KubernetesClusterDescriptor(flinkConfig, flinkKubeClient);
 
 		final ClusterSpecification clusterSpecification = new ClusterSpecification.ClusterSpecificationBuilder()
@@ -161,7 +158,6 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 	}
 
 	private ClusterClient<String> deploySessionCluster() throws ClusterDeploymentException {
-		final FlinkKubeClient flinkKubeClient = getFabric8FlinkKubeClient();
 		final KubernetesClusterDescriptor descriptor = new KubernetesClusterDescriptor(flinkConfig, flinkKubeClient);
 
 		final ClusterClient<String> clusterClient = descriptor
@@ -175,8 +171,8 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 		return clusterClient;
 	}
 
-	private void mockRestServiceWithLoadBalancerOnServerSide(String clusterId, @Nullable String hostname, @Nullable String ip) {
-		final String restServiceName = KubernetesUtils.getRestServiceName(clusterId);
+	private void mockRestServiceWithLoadBalancer(@Nullable String hostname, @Nullable String ip) {
+		final String restServiceName = KubernetesUtils.getRestServiceName(CLUSTER_ID);
 
 		final String path = String.format("/api/v1/namespaces/%s/services/%s", NAMESPACE, restServiceName);
 		server.expect()
@@ -199,41 +195,5 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 						new LoadBalancerIngress(hostname, ip)))).build());
 
 		return service;
-	}
-
-	private void mockRestServiceAddEventFromServerSide() {
-		final Service mockService = new ServiceBuilder()
-				.editOrNewMetadata()
-				.endMetadata()
-				.build();
-
-		final String path = String.format("/api/v1/namespaces/%s/services?fieldSelector=metadata.name%%3D%s&watch=true",
-				NAMESPACE, KubernetesUtils.getRestServiceName(CLUSTER_ID));
-		server.expect()
-				.withPath(path)
-				.andUpgradeToWebSocket()
-				.open()
-				.waitFor(1000)
-				.andEmit(new WatchEvent(mockService, "ADDED"))
-				.done()
-				.once();
-	}
-
-	private void mockInternalServiceAddEventFromServerSide() {
-		final Service mockService = new ServiceBuilder()
-				.editOrNewMetadata()
-				.endMetadata()
-				.build();
-
-		final String path = String.format("/api/v1/namespaces/%s/services?fieldSelector=metadata.name%%3D%s&watch=true",
-				NAMESPACE, KubernetesUtils.getInternalServiceName(CLUSTER_ID));
-		server.expect()
-				.withPath(path)
-				.andUpgradeToWebSocket()
-				.open()
-				.waitFor(1000)
-				.andEmit(new WatchEvent(mockService, "ADDED"))
-				.done()
-				.once();
 	}
 }
