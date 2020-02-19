@@ -38,7 +38,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 /**
- * Test for {@link JavaCmdJobManagerDecorator}.
+ * General tests for the {@link JavaCmdJobManagerDecorator}.
  */
 public class JavaCmdJobManagerDecoratorTest extends JobManagerDecoratorTestBase {
 	private static final String KUBERNETES_ENTRY_PATH = "/opt/bin/start.sh";

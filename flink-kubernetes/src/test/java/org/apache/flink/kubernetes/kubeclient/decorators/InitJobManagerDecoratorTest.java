@@ -42,13 +42,11 @@ import java.util.Map;
 import static org.apache.flink.kubernetes.utils.Constants.API_VERSION;
 import static org.apache.flink.kubernetes.utils.Constants.ENV_FLINK_POD_IP_ADDRESS;
 import static org.apache.flink.kubernetes.utils.Constants.POD_IP_FIELD_PATH;
-import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Test for {@link InitJobManagerDecorator}.
+ * General tests for the {@link InitJobManagerDecorator}.
  */
 public class InitJobManagerDecoratorTest extends JobManagerDecoratorTestBase {
 	private static final String SERVICE_ACCOUNT_NAME = "service-test";

@@ -36,7 +36,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Test for {@link InternalServiceDecorator}.
+ * General tests for the {@link InternalServiceDecorator}.
  */
 public class InternalServiceDecoratorTest extends JobManagerDecoratorTestBase {
 	private InternalServiceDecorator internalServiceDecorator;

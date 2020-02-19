@@ -43,7 +43,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
 /**
- * Test for {@link JavaCmdTaskManagerDecorator}.
+ * General tests for the{@link JavaCmdTaskManagerDecorator}.
  */
 public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTestBase {
 	private static final String _KUBERNETES_ENTRY_PATH = "/opt/flink/bin/start.sh";

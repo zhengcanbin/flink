@@ -44,7 +44,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 /**
- * Test for {@link InitJobManagerDecorator}.
+ * General tests for the {@link InitJobManagerDecorator}.
  */
 public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTestBase {
 
