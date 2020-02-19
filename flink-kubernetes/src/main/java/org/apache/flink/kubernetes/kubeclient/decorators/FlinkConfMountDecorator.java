@@ -52,6 +52,7 @@ import java.util.stream.Collectors;
 import static org.apache.flink.configuration.GlobalConfiguration.FLINK_CONF_FILENAME;
 import static org.apache.flink.kubernetes.utils.Constants.CONFIG_FILE_LOG4J_NAME;
 import static org.apache.flink.kubernetes.utils.Constants.CONFIG_FILE_LOGBACK_NAME;
+import static org.apache.flink.kubernetes.utils.Constants.CONFIG_MAP_PREFIX;
 import static org.apache.flink.kubernetes.utils.Constants.FLINK_CONF_VOLUME;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
@@ -161,7 +162,7 @@ public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 	}
 
 	@VisibleForTesting
-	String getFlinkConfConfigMapName(String prefix) {
-		return prefix + "-flink-conf";
+	String getFlinkConfConfigMapName(String clusterId) {
+		return CONFIG_MAP_PREFIX + clusterId;
 	}
 }

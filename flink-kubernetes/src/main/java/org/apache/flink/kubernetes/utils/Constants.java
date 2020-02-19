@@ -37,8 +37,6 @@ public class Constants {
 
 	public static final String CONFIG_MAP_PREFIX = "flink-config-";
 
-	public static final String FLINK_INTERNAL_SERVICE_SUFFIX = "-inter";
-
 	public static final String FLINK_REST_SERVICE_SUFFIX = "-rest";
 
 	public static final String NAME_SEPARATOR = "-";

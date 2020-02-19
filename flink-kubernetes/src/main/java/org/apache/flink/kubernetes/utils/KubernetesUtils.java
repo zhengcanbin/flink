@@ -134,15 +134,15 @@ public class KubernetesUtils {
 	/**
 	 * Generate name of the internal Service.
 	 */
-	public static String getInternalServiceName(String prefix) {
-		return prefix + Constants.FLINK_INTERNAL_SERVICE_SUFFIX;
+	public static String getInternalServiceName(String clusterId) {
+		return clusterId;
 	}
 
 	/**
 	 * Generate name of the external Service.
 	 */
-	public static String getRestServiceName(String prefix) {
-		return prefix + Constants.FLINK_REST_SERVICE_SUFFIX;
+	public static String getRestServiceName(String clusterId) {
+		return clusterId + Constants.FLINK_REST_SERVICE_SUFFIX;
 	}
 
 	/**
