@@ -19,6 +19,7 @@
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
+import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerTestBase;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
@@ -39,7 +40,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * General tests for the {@link ExternalServiceDecorator}.
  */
-public class ExternalServiceDecoratorTest extends JobManagerDecoratorTestBase {
+public class ExternalServiceDecoratorTest extends KubernetesJobManagerTestBase {
 
 	private ExternalServiceDecorator externalServiceDecorator;
 

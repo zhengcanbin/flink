@@ -19,6 +19,7 @@
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
+import org.apache.flink.kubernetes.kubeclient.KubernetesTaskManagerTestBase;
 import org.apache.flink.kubernetes.utils.Constants;
 
 import io.fabric8.kubernetes.api.model.Container;
@@ -43,7 +44,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * General tests for the {@link InitJobManagerDecorator}.
  */
-public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTestBase {
+public class InitTaskManagerDecoratorTest extends KubernetesTaskManagerTestBase {
 
 	private Pod resultPod;
 	private Container resultMainContainer;

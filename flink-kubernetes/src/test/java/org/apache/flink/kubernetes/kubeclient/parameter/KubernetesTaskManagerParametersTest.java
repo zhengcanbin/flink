@@ -37,6 +37,7 @@ import static org.junit.Assert.assertEquals;
  * General tests for the {@link KubernetesTaskManagerParameters}.
  */
 public class KubernetesTaskManagerParametersTest {
+
 	private static final int TASK_MANAGER_MEMORY = 1024;
 	private static final double TASK_MANAGER_CPU = 1.2;
 	private static final int RPC_PORT = 13001;

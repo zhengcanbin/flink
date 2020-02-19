@@ -26,6 +26,7 @@ import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 
 import io.fabric8.kubernetes.api.model.Container;
+import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerTestBase;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,7 +41,8 @@ import static org.junit.Assert.assertNotEquals;
 /**
  * General tests for the {@link JavaCmdJobManagerDecorator}.
  */
-public class JavaCmdJobManagerDecoratorTest extends JobManagerDecoratorTestBase {
+public class JavaCmdJobManagerDecoratorTest extends KubernetesJobManagerTestBase {
+
 	private static final String KUBERNETES_ENTRY_PATH = "/opt/bin/start.sh";
 	private static final String FLINK_CONF_DIR_IN_POD = "/opt/flink/flink-conf-";
 	private static final String FLINK_LOG_DIR_IN_POD = "/opt/flink/flink-log-";

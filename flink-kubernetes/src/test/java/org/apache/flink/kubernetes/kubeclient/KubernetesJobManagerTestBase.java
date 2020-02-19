@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators;
+package org.apache.flink.kubernetes.kubeclient;
 
 import org.apache.flink.client.deployment.ClusterSpecification;
 import org.apache.flink.configuration.BlobServerOptions;
@@ -24,16 +24,15 @@ import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.kubernetes.KubernetesTestBase;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
-import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesJobManagerParameters;
 
 import org.junit.Before;
 
 /**
- * Base test class for the JobManager decorators.
+ * Base test class for the JobManager side.
  */
-public class JobManagerDecoratorTestBase extends KubernetesTestBase {
+public class KubernetesJobManagerTestBase extends KubernetesTestBase {
+
 	protected static final double JOB_MANAGER_CPU = 2.0;
 	protected static final int JOB_MANAGER_MEMORY = 768;
 
@@ -43,7 +42,7 @@ public class JobManagerDecoratorTestBase extends KubernetesTestBase {
 
 	protected KubernetesJobManagerParameters kubernetesJobManagerParameters;
 
-	FlinkPod baseFlinkPod;
+	protected FlinkPod baseFlinkPod;
 
 	@Before
 	public void setup() throws Exception {

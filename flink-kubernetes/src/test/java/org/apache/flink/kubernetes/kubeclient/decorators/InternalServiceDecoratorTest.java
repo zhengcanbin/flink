@@ -23,6 +23,7 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import org.apache.flink.configuration.JobManagerOptions;
+import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerTestBase;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.junit.Before;
@@ -38,7 +39,8 @@ import static org.junit.Assert.assertEquals;
 /**
  * General tests for the {@link InternalServiceDecorator}.
  */
-public class InternalServiceDecoratorTest extends JobManagerDecoratorTestBase {
+public class InternalServiceDecoratorTest extends KubernetesJobManagerTestBase {
+
 	private InternalServiceDecorator internalServiceDecorator;
 
 	@Before

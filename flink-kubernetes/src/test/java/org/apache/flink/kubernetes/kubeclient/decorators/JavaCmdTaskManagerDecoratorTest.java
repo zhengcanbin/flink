@@ -22,6 +22,7 @@ import org.apache.flink.configuration.CoreOptions;
 import org.apache.flink.kubernetes.KubernetesTestUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
+import org.apache.flink.kubernetes.kubeclient.KubernetesTaskManagerTestBase;
 import org.apache.flink.kubernetes.taskmanager.KubernetesTaskExecutorRunner;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
 
@@ -39,7 +40,7 @@ import static org.junit.Assert.assertNotEquals;
 /**
  * General tests for the{@link JavaCmdTaskManagerDecorator}.
  */
-public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTestBase {
+public class JavaCmdTaskManagerDecoratorTest extends KubernetesTaskManagerTestBase {
 
 	private static final String _KUBERNETES_ENTRY_PATH = "/opt/flink/bin/start.sh";
 	private static final String _INTERNAL_FLINK_CONF_DIR = "/opt/flink/flink-conf-";

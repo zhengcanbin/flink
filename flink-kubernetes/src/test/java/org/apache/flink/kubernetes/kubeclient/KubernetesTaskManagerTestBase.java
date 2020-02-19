@@ -16,14 +16,12 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.decorators;
+package org.apache.flink.kubernetes.kubeclient;
 
 import org.apache.flink.configuration.MemorySize;
 import org.apache.flink.configuration.ResourceManagerOptions;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.kubernetes.KubernetesTestBase;
-import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesTaskManagerParameters;
 import org.apache.flink.runtime.clusterframework.ContaineredTaskManagerParameters;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessSpec;
@@ -35,9 +33,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Base test class for the TaskManager decorators.
+ * Base test class for the TaskManager side.
  */
-public class TaskManagerDecoratorTestBase extends KubernetesTestBase {
+public class KubernetesTaskManagerTestBase extends KubernetesTestBase {
 
 	protected static final int RPC_PORT = 12345;
 

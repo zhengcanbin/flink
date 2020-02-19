@@ -21,6 +21,7 @@ package org.apache.flink.kubernetes.kubeclient.decorators;
 import org.apache.flink.configuration.ResourceManagerOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
+import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerTestBase;
 import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.Constants;
 
@@ -48,7 +49,8 @@ import static org.junit.Assert.assertTrue;
 /**
  * General tests for the {@link InitJobManagerDecorator}.
  */
-public class InitJobManagerDecoratorTest extends JobManagerDecoratorTestBase {
+public class InitJobManagerDecoratorTest extends KubernetesJobManagerTestBase {
+
 	private static final String SERVICE_ACCOUNT_NAME = "service-test";
 
 	private final Map<String, String> expectedEnvs = new HashMap<String, String>() {

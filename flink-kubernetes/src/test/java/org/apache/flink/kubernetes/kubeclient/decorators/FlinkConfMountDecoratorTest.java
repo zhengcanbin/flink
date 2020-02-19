@@ -21,6 +21,7 @@ package org.apache.flink.kubernetes.kubeclient.decorators;
 import org.apache.flink.kubernetes.KubernetesTestUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
+import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerTestBase;
 import org.apache.flink.kubernetes.utils.Constants;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -48,7 +49,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * General tests for the {@link FlinkConfMountDecorator}.
  */
-public class FlinkConfMountDecoratorTest extends JobManagerDecoratorTestBase {
+public class FlinkConfMountDecoratorTest extends KubernetesJobManagerTestBase {
 
 	private static final String INTERNAL_FLINK_CONF_DIR = "/opt/flink/flink-conf-";
 
