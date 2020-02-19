@@ -146,8 +146,8 @@ public class KubernetesJobManagerParametersTest {
 	@Test
 	public void testGetRestServiceExposedType() {
 		flinkConfig.set(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE,
-			KubernetesConfigOptions.ServiceExposedType.NodePort.toString());
-		assertEquals(KubernetesConfigOptions.ServiceExposedType.NodePort.toString(),
+			KubernetesConfigOptions.ServiceExposedType.NodePort.name());
+		assertEquals(KubernetesConfigOptions.ServiceExposedType.NodePort.name(),
 			kubernetesJobManagerParameters.getRestServiceExposedType());
 	}
 }

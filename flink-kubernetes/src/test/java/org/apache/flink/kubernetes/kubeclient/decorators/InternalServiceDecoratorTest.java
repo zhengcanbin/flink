@@ -30,7 +30,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +44,6 @@ public class InternalServiceDecoratorTest extends JobManagerDecoratorTestBase {
 	@Before
 	public void setup() throws Exception {
 		super.setup();
-
 		this.internalServiceDecorator = new InternalServiceDecorator(this.kubernetesJobManagerParameters);
 	}
 
@@ -62,9 +60,7 @@ public class InternalServiceDecoratorTest extends JobManagerDecoratorTestBase {
 
 		assertEquals(KubernetesUtils.getInternalServiceName(CLUSTER_ID), internalService.getMetadata().getName());
 
-		final Map<String, String> expectedLabels = new HashMap<>();
-		expectedLabels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
-		expectedLabels.put(Constants.LABEL_APP_KEY, CLUSTER_ID);
+		final Map<String, String> expectedLabels = getCommonLabels();
 		assertEquals(expectedLabels, internalService.getMetadata().getLabels());
 
 		assertEquals("ClusterIP", internalService.getSpec().getType());

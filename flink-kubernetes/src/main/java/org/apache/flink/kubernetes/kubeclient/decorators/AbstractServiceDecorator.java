@@ -34,6 +34,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.apache.flink.util.Preconditions.checkNotNull;
+
 /**
  * An abstract class containing some common implementations for the internal/external Services.
  */
@@ -43,7 +45,7 @@ public abstract class AbstractServiceDecorator extends AbstractKubernetesStepDec
 
 	public AbstractServiceDecorator(KubernetesJobManagerParameters kubernetesJobManagerParameters) {
 		super(kubernetesJobManagerParameters.getFlinkConfiguration());
-		this.kubernetesJobManagerParameters = kubernetesJobManagerParameters;
+		this.kubernetesJobManagerParameters = checkNotNull(kubernetesJobManagerParameters);
 	}
 
 	@Override
@@ -56,7 +58,7 @@ public abstract class AbstractServiceDecorator extends AbstractKubernetesStepDec
 			configuration.setString(JobManagerOptions.ADDRESS, serviceName + "." + namespace);
 		}
 
-		final Service restService = new ServiceBuilder()
+		final Service service = new ServiceBuilder()
 			.withNewMetadata()
 				.withName(getServiceName())
 				.withLabels(kubernetesJobManagerParameters.getCommonLabels())
@@ -68,7 +70,7 @@ public abstract class AbstractServiceDecorator extends AbstractKubernetesStepDec
 				.endSpec()
 			.build();
 
-		return Collections.singletonList(restService);
+		return Collections.singletonList(service);
 	}
 
 	protected abstract String getServiceType();

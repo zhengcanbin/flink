@@ -31,7 +31,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +40,7 @@ import static org.junit.Assert.assertEquals;
  * General tests for the {@link ExternalServiceDecorator}.
  */
 public class ExternalServiceDecoratorTest extends JobManagerDecoratorTestBase {
+
 	private ExternalServiceDecorator externalServiceDecorator;
 
 	@Before
@@ -58,9 +58,7 @@ public class ExternalServiceDecoratorTest extends JobManagerDecoratorTestBase {
 
 		assertEquals(KubernetesUtils.getRestServiceName(CLUSTER_ID), restService.getMetadata().getName());
 
-		final Map<String, String> expectedLabels = new HashMap<>();
-		expectedLabels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
-		expectedLabels.put(Constants.LABEL_APP_KEY, CLUSTER_ID);
+		final Map<String, String> expectedLabels = getCommonLabels();
 		assertEquals(expectedLabels, restService.getMetadata().getLabels());
 
 		assertEquals("LoadBalancer", restService.getSpec().getType());

@@ -23,7 +23,7 @@ import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
 /**
  * Creates an external Service to expose the ports of the Flink JobManager(s).
- * This could include the rest port, and the blob server port.
+ * This can include the rest port, and the blob server port.
  */
 public class ExternalServiceDecorator extends AbstractServiceDecorator {
 
