@@ -18,7 +18,6 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import org.apache.flink.configuration.ResourceManagerOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerTestBase;
@@ -53,23 +52,12 @@ public class InitJobManagerDecoratorTest extends KubernetesJobManagerTestBase {
 
 	private static final String SERVICE_ACCOUNT_NAME = "service-test";
 
-	private final Map<String, String> expectedEnvs = new HashMap<String, String>() {
-		{
-			put("key1", "value1");
-			put("key2", "value2");
-		}
-	};
-
 	private Pod resultPod;
-
 	private Container resultMainContainer;
 
 	@Before
 	public void setup() throws Exception {
 		super.setup();
-
-		this.expectedEnvs.forEach((k, v) ->
-			this.flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX + k, v));
 		this.flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_SERVICE_ACCOUNT, SERVICE_ACCOUNT_NAME);
 
 		final InitJobManagerDecorator initJobManagerDecorator =
@@ -126,7 +114,7 @@ public class InitJobManagerDecoratorTest extends KubernetesJobManagerTestBase {
 
 		final Map<String, String> envs = new HashMap<>();
 		envVars.forEach(env -> envs.put(env.getName(), env.getValue()));
-		expectedEnvs.forEach((k, v) -> assertEquals(envs.get(k), v));
+		this.customizedEnvs.forEach((k, v) -> assertEquals(envs.get(k), v));
 
 		assertTrue(envVars.stream().anyMatch(env -> env.getName().equals(ENV_FLINK_POD_IP_ADDRESS)
 			&& env.getValueFrom().getFieldRef().getApiVersion().equals(API_VERSION)
@@ -135,13 +123,8 @@ public class InitJobManagerDecoratorTest extends KubernetesJobManagerTestBase {
 
 	@Test
 	public void testPodLabels() {
-		final Map<String, String> expectedLabels = new HashMap<String, String>() {
-			{
-				put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
-				put(Constants.LABEL_APP_KEY, CLUSTER_ID);
-				put(Constants.LABEL_COMPONENT_KEY, Constants.LABEL_COMPONENT_JOB_MANAGER);
-			}
-		};
+		final Map<String, String> expectedLabels = new HashMap<>(getCommonLabels());
+		expectedLabels.put(Constants.LABEL_COMPONENT_KEY, Constants.LABEL_COMPONENT_JOB_MANAGER);
 
 		assertEquals(expectedLabels, this.resultPod.getMetadata().getLabels());
 	}
