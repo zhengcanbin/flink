@@ -37,6 +37,7 @@ import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -71,7 +72,7 @@ public class KubernetesTestBase extends TestLogger {
 		flinkConfig.setString(KubernetesConfigOptions.CONTAINER_IMAGE_PULL_POLICY, CONTAINER_IMAGE_PULL_POLICY);
 
 		flinkConfDir = temporaryFolder.newFolder().getAbsoluteFile();
-		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "flink-conf.yaml"));
+		writeFlinkConfiguration();
 
 		Map<String, String> map = new HashMap<>();
 		map.put(ConfigConstants.ENV_FLINK_CONF_DIR, flinkConfDir.toString());
@@ -79,6 +80,10 @@ public class KubernetesTestBase extends TestLogger {
 
 		kubeClient = server.getClient().inNamespace(NAMESPACE);
 		flinkKubeClient = new Fabric8FlinkKubeClient(flinkConfig, kubeClient);
+	}
+
+	protected void writeFlinkConfiguration() throws IOException {
+		BootstrapTools.writeConfiguration(this.flinkConfig, new File(flinkConfDir, "flink-conf.yaml"));
 	}
 
 	protected Map<String, String> getCommonLabels() {

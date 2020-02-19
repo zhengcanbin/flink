@@ -53,6 +53,7 @@ import static org.apache.flink.configuration.GlobalConfiguration.FLINK_CONF_FILE
 import static org.apache.flink.kubernetes.utils.Constants.CONFIG_FILE_LOG4J_NAME;
 import static org.apache.flink.kubernetes.utils.Constants.CONFIG_FILE_LOGBACK_NAME;
 import static org.apache.flink.kubernetes.utils.Constants.FLINK_CONF_VOLUME;
+import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * Mounts the log4j.properties, logback.xml, and flink-conf.yaml configuration on the JobManager or TaskManager pod.
@@ -63,7 +64,7 @@ public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 
 	public FlinkConfMountDecorator(AbstractKubernetesParameters kubernetesComponentConf) {
 		super(kubernetesComponentConf.getFlinkConfiguration());
-		this.kubernetesComponentConf = kubernetesComponentConf;
+		this.kubernetesComponentConf = checkNotNull(kubernetesComponentConf);
 	}
 
 	@Override
@@ -82,16 +83,16 @@ public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 		final Volume flinkConfVolume = new VolumeBuilder()
 				.withName(FLINK_CONF_VOLUME)
 				.withNewConfigMap()
-				.withName(getFlinkConfConfigMapName(kubernetesComponentConf.getClusterId()))
-				.withItems(keyToPaths)
-				.endConfigMap()
+					.withName(getFlinkConfConfigMapName(kubernetesComponentConf.getClusterId()))
+					.withItems(keyToPaths)
+					.endConfigMap()
 				.build();
 
 		return new PodBuilder(pod)
 				.editSpec()
-				.addNewVolumeLike(flinkConfVolume)
-				.endVolume()
-				.endSpec()
+					.addNewVolumeLike(flinkConfVolume)
+					.endVolume()
+					.endSpec()
 				.build();
 	}
 
@@ -99,9 +100,9 @@ public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 	protected Container decorateMainContainer(Container container) {
 		return new ContainerBuilder(container)
 				.addNewVolumeMount()
-				.withName(FLINK_CONF_VOLUME)
-				.withMountPath(kubernetesComponentConf.getFlinkConfDirInPod())
-				.endVolumeMount()
+					.withName(FLINK_CONF_VOLUME)
+					.withMountPath(kubernetesComponentConf.getFlinkConfDirInPod())
+					.endVolumeMount()
 				.build();
 	}
 
@@ -148,15 +149,15 @@ public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 		final File logbackFile = new File(confDir, CONFIG_FILE_LOGBACK_NAME);
 		final File log4jFile = new File(confDir, CONFIG_FILE_LOG4J_NAME);
 
-		List<File> localLogFiles = new ArrayList<>();
+		List<File> localLogConfFiles = new ArrayList<>();
 		if (logbackFile.exists()) {
-			localLogFiles.add(logbackFile);
+			localLogConfFiles.add(logbackFile);
 		}
 		if (log4jFile.exists()) {
-			localLogFiles.add(log4jFile);
+			localLogConfFiles.add(log4jFile);
 		}
 
-		return localLogFiles;
+		return localLogConfFiles;
 	}
 
 	@VisibleForTesting
