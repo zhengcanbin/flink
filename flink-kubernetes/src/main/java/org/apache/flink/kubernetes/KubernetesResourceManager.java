@@ -258,7 +258,6 @@ public class KubernetesResourceManager extends ActiveResourceManager<KubernetesW
 			flinkConfig,
 			podName,
 			defaultMemoryMB,
-			defaultCpus,
 			dynamicProperties,
 			taskManagerParameters);
 

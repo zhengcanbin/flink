@@ -63,10 +63,7 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 			"-Xmx251658235 -Xms251658235 -XX:MaxDirectMemorySize=211392922 -XX:MaxMetaspaceSize=100663296";
 
 	private static final String mainClass = KubernetesTaskExecutorRunner.class.getCanonicalName();
-	private final String mainClassArgs = String.format(
-			"%s--configDir %s",
-			TaskExecutorProcessUtils.generateDynamicConfigsStr(taskExecutorProcessSpec),
-			_INTERNAL_FLINK_CONF_DIR);
+	private String mainClassArgs;
 
 	// Logging variables
 	private static final String logback =
@@ -89,10 +86,16 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 
 	@Before
 	public void setup() throws IOException {
-		super.setup();
 		flinkConfig.setString(KubernetesConfigOptions.KUBERNETES_ENTRY_PATH, _KUBERNETES_ENTRY_PATH);
 		flinkConfig.set(KubernetesConfigOptions.FLINK_CONF_DIR, _INTERNAL_FLINK_CONF_DIR);
 		flinkConfig.set(KubernetesConfigOptions.FLINK_LOG_DIR, _INTERNAL_FLINK_LOG_DIR);
+
+		super.setup();
+
+		this.mainClassArgs = String.format(
+				"%s--configDir %s",
+				TaskExecutorProcessUtils.generateDynamicConfigsStr(taskExecutorProcessSpec),
+				_INTERNAL_FLINK_CONF_DIR);
 
 		this.flinkConfDir = temporaryFolder.newFolder().getAbsoluteFile();
 		Map<String, String> map = new HashMap<>();

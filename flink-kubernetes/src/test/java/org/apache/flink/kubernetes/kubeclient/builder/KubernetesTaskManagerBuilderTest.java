@@ -97,7 +97,6 @@ public class KubernetesTaskManagerBuilderTest {
 			flinkConfig,
 			POD_NAME,
 			TOTAL_PROCESS_MEMORY,
-			TASK_MANAGER_CPU,
 			DYNAMIC_PROPERTIES,
 			containeredTaskManagerParameters);
 

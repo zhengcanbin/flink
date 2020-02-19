@@ -20,6 +20,7 @@ package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.MemorySize;
+import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
@@ -31,7 +32,6 @@ import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
 import org.junit.Before;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 /**
  * Base test class for the TaskManager decorators.
@@ -50,22 +50,11 @@ public class TaskManagerDecoratorTest {
 
 	protected final Configuration flinkConfig = new Configuration();
 
-	protected final TaskExecutorProcessSpec taskExecutorProcessSpec = TaskExecutorProcessUtils
-		.newProcessSpecBuilder(flinkConfig)
-		.withCpuCores(TASK_MANAGER_CPU)
-		.withTotalProcessMemory(MemorySize.parse(TOTAL_PROCESS_MEMORY + "mb"))
-		.build();
+	protected TaskExecutorProcessSpec taskExecutorProcessSpec;
 
-	protected final ContaineredTaskManagerParameters containeredTaskManagerParameters =
-		new ContaineredTaskManagerParameters(taskExecutorProcessSpec, 4, new HashMap<>());
+	protected ContaineredTaskManagerParameters containeredTaskManagerParameters;
 
-	protected final KubernetesTaskManagerConf kubernetesTaskManagerConf = new KubernetesTaskManagerConf(
-		flinkConfig,
-		POD_NAME,
-		TOTAL_PROCESS_MEMORY,
-		TASK_MANAGER_CPU,
-		DYNAMIC_PROPERTIES,
-		containeredTaskManagerParameters);
+	protected KubernetesTaskManagerConf kubernetesTaskManagerConf;
 
 	protected final FlinkPod baseFlinkPod = new FlinkPodBuilder().build();
 
@@ -74,5 +63,18 @@ public class TaskManagerDecoratorTest {
 		flinkConfig.set(KubernetesConfigOptions.CLUSTER_ID, CLUSTER_ID);
 		flinkConfig.set(KubernetesConfigOptions.CONTAINER_IMAGE, CONTAINER_IMAGE);
 		flinkConfig.set(KubernetesConfigOptions.CONTAINER_IMAGE_PULL_POLICY, CONTAINER_IMAGE_PULL_POLICY);
+
+		flinkConfig.set(TaskManagerOptions.CPU_CORES, TASK_MANAGER_CPU);
+		flinkConfig.set(TaskManagerOptions.TOTAL_PROCESS_MEMORY, MemorySize.parse(TOTAL_PROCESS_MEMORY + "m"));
+
+		taskExecutorProcessSpec = TaskExecutorProcessUtils.processSpecFromConfig(flinkConfig);
+		containeredTaskManagerParameters = ContaineredTaskManagerParameters.create(flinkConfig, taskExecutorProcessSpec,
+				flinkConfig.getInteger(TaskManagerOptions.NUM_TASK_SLOTS));
+		kubernetesTaskManagerConf = new KubernetesTaskManagerConf(
+				flinkConfig,
+				POD_NAME,
+				TOTAL_PROCESS_MEMORY,
+				DYNAMIC_PROPERTIES,
+				containeredTaskManagerParameters);
 	}
 }

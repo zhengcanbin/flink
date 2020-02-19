@@ -64,11 +64,11 @@ public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 
 	@Before
 	public void setup() throws IOException {
-		super.setup();
-
 		flinkConfig.set(TaskManagerOptions.RPC_PORT, String.valueOf(RPC_PORT));
 		customizedEnvs.forEach((k, v) ->
 			flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_TASK_MANAGER_ENV_PREFIX + k, v));
+
+		super.setup();
 
 		final InitTaskManagerDecorator initTaskManagerDecorator =
 			new InitTaskManagerDecorator(kubernetesTaskManagerConf);

@@ -18,8 +18,91 @@
 
 package org.apache.flink.kubernetes.kubeclient.conf;
 
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.MemorySize;
+import org.apache.flink.configuration.ResourceManagerOptions;
+import org.apache.flink.configuration.TaskManagerOptions;
+import org.apache.flink.runtime.clusterframework.ContaineredTaskManagerParameters;
+import org.apache.flink.runtime.clusterframework.TaskExecutorProcessSpec;
+import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+
 /**
  * General tests for the {@link KubernetesTaskManagerConf}.
  */
 public class KubernetesTaskManagerConfTest {
+	private static final int TASK_MANAGER_MEMORY = 1024;
+	private static final double TASK_MANAGER_CPU = 1.2;
+	private static final int RPC_PORT = 13001;
+
+	private static final String POD_NAME = "task-manager-pod-1";
+	private static final String DYNAMIC_PROPERTIES = "-Dkey.b='b2'";
+
+	private final Map<String, String> customizedEnvs = new HashMap<String, String>() {
+		{
+			put("key1", "value1");
+			put("key2", "value2");
+		}
+	};
+
+	private KubernetesTaskManagerConf kubernetesTaskManagerConf;
+
+	@Before
+	public void setup() {
+		final Configuration flinkConfig = new Configuration();
+		flinkConfig.set(TaskManagerOptions.CPU_CORES, TASK_MANAGER_CPU);
+		flinkConfig.set(TaskManagerOptions.TOTAL_PROCESS_MEMORY, MemorySize.parse(TASK_MANAGER_MEMORY + "m"));
+		flinkConfig.set(TaskManagerOptions.RPC_PORT, String.valueOf(RPC_PORT));
+
+		customizedEnvs.forEach((k, v) ->
+			flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_TASK_MANAGER_ENV_PREFIX + k, v));
+
+		final TaskExecutorProcessSpec taskExecutorProcessSpec =
+			TaskExecutorProcessUtils.processSpecFromConfig(flinkConfig);
+		final ContaineredTaskManagerParameters containeredTaskManagerParameters =
+			ContaineredTaskManagerParameters.create(flinkConfig, taskExecutorProcessSpec,
+				flinkConfig.getInteger(TaskManagerOptions.NUM_TASK_SLOTS));
+
+		this.kubernetesTaskManagerConf = new KubernetesTaskManagerConf(flinkConfig,
+			POD_NAME,
+			TASK_MANAGER_MEMORY,
+			DYNAMIC_PROPERTIES,
+			containeredTaskManagerParameters);
+	}
+
+	@Test
+	public void testGetEnvironments() {
+		assertEquals(customizedEnvs, kubernetesTaskManagerConf.getEnvironments());
+	}
+
+	@Test
+	public void testGetPodName() {
+		assertEquals(POD_NAME, kubernetesTaskManagerConf.getPodName());
+	}
+
+	@Test
+	public void testGetTaskManagerMemoryMB() {
+		assertEquals(TASK_MANAGER_MEMORY, kubernetesTaskManagerConf.getTaskManagerMemoryMB());
+	}
+
+	@Test
+	public void testGetTaskManagerCPU() {
+		assertEquals(TASK_MANAGER_CPU, kubernetesTaskManagerConf.getTaskManagerCPU(), 0.000000000001);
+	}
+
+	@Test
+	public void testGetRpcPort() {
+		assertEquals(RPC_PORT, kubernetesTaskManagerConf.getRPCPort());
+	}
+
+	@Test
+	public void testGetDynamicProperties() {
+		assertEquals(DYNAMIC_PROPERTIES, kubernetesTaskManagerConf.getDynamicProperties());
+	}
 }

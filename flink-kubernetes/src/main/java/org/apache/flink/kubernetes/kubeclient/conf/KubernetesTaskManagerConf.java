@@ -20,7 +20,6 @@ package org.apache.flink.kubernetes.kubeclient.conf;
 
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.ResourceManagerOptions;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.kubernetes.utils.KubernetesVolumeUtils;
@@ -47,8 +46,6 @@ public class KubernetesTaskManagerConf extends AbstractKubernetesComponentConf {
 
 	private final int taskManagerMemoryMB;
 
-	private final double taskManagerCPU;
-
 	private final String dynamicProperties;
 
 	private final ContaineredTaskManagerParameters containeredTaskManagerParameters;
@@ -57,13 +54,11 @@ public class KubernetesTaskManagerConf extends AbstractKubernetesComponentConf {
 			Configuration flinkConfig,
 			String podName,
 			int taskManagerMemoryMB,
-			double taskManagerCPU,
 			String dynamicProperties,
 			ContaineredTaskManagerParameters containeredTaskManagerParameters) {
 		super(flinkConfig);
 		this.podName = podName;
 		this.taskManagerMemoryMB = taskManagerMemoryMB;
-		this.taskManagerCPU = taskManagerCPU;
 		this.dynamicProperties = dynamicProperties;
 		this.containeredTaskManagerParameters = checkNotNull(containeredTaskManagerParameters);
 	}
@@ -75,7 +70,7 @@ public class KubernetesTaskManagerConf extends AbstractKubernetesComponentConf {
 
 	@Override
 	public Map<String, String> getEnvironments() {
-		return getPrefixedEnvironments(ResourceManagerOptions.CONTAINERIZED_TASK_MANAGER_ENV_PREFIX);
+		return this.containeredTaskManagerParameters.taskManagerEnv();
 	}
 
 	@Override
@@ -99,7 +94,7 @@ public class KubernetesTaskManagerConf extends AbstractKubernetesComponentConf {
 	}
 
 	public double getTaskManagerCPU() {
-		return taskManagerCPU;
+		return containeredTaskManagerParameters.getTaskExecutorProcessSpec().getCpuCores().getValue().doubleValue();
 	}
 
 	public int getRPCPort() {
