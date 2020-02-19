@@ -67,7 +67,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 	private final Configuration flinkConfig;
 	private final KubernetesClient internalClient;
 	private final String clusterId;
-	private final String nameSpace;	// todo felix
+	private final String nameSpace;
 
 	public Fabric8FlinkKubeClient(Configuration flinkConfig, KubernetesClient client) {
 		this.flinkConfig = checkNotNull(flinkConfig);
@@ -80,7 +80,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 	@Override
 	public void createFlinkMasterComponent(KubernetesJobManagerSpecification spec) throws Exception {
 		final Deployment deployment = spec.getDeployment();
-		final List<HasMetadata> additionalResources = spec.getAccompanyingResources();
+		final List<HasMetadata> accompanyingResources = spec.getAccompanyingResources();
 
 		// create Deployment
 		LOG.debug("Start to create deployment with spec {}", deployment.getSpec().toString());
@@ -90,17 +90,18 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 			.inNamespace(this.nameSpace)
 			.create(deployment);
 
-		// set Deployment as the OwnerReference of all other Resources, including ConfigMaps, Services.
-		setOwnerReference(createdDeployment, additionalResources);
+		// set Deployment as the OwnerReference of all other Resources, including the ConfigMaps and the Services.
+		setOwnerReference(createdDeployment, accompanyingResources);
 
 		// create other Resources, including ConfigMaps, Services.
-		for (HasMetadata resource : additionalResources) {
+		for (HasMetadata resource: accompanyingResources) {
 			if (resource instanceof ConfigMap) {
 				this.internalClient.configMaps().inNamespace(this.nameSpace).create((ConfigMap) resource);
 			} else if (resource instanceof Service) {
 				createServiceInternal((Service) resource).get();
 			} else {
-				throw new UnsupportedOperationException("");
+				throw new UnsupportedOperationException(
+						"Do not support accompanying resources other than ConfigMap/Service");
 			}
 		}
 	}
@@ -139,10 +140,9 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 			.withName(clusterId)
 			.get();
 
-		// todo 可能要抛出异常
 		if (masterDeployment == null) {
-			LOG.error("Failed to find Deployment");
-			return;
+			throw new RuntimeException(
+					"Failed to find Deployment named " + clusterId + " in namespace " + this.nameSpace);
 		}
 
 		setOwnerReference(masterDeployment, Collections.singletonList(pod.getInternalResource()));

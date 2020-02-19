@@ -66,7 +66,7 @@ public class Constants {
 	public static final String KUBERNETES_VOLUMES_OPTIONS_SIZE_LIMIT_KEY = "options.sizeLimit";
 
 	// Use fixed port in kubernetes, it needs to be exposed.
-	public static final int BLOB_SERVER_PORT = 6124; // todo bug
+	public static final int BLOB_SERVER_PORT = 6124;
 	public static final int TASK_MANAGER_RPC_PORT = 6122;
 
 	public static final String RESOURCE_NAME_MEMORY = "memory";
