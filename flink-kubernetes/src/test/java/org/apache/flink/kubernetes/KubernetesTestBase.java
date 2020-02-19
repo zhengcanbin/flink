@@ -18,9 +18,6 @@
 
 package org.apache.flink.kubernetes;
 
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.WatchEvent;
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
@@ -31,6 +28,9 @@ import org.apache.flink.runtime.clusterframework.BootstrapTools;
 import org.apache.flink.test.util.TestBaseUtils;
 import org.apache.flink.util.TestLogger;
 
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.WatchEvent;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.junit.Before;
 import org.junit.Rule;
@@ -45,9 +45,10 @@ import java.util.Map;
  * Base test class for Kubernetes.
  */
 public class KubernetesTestBase extends TestLogger {
-    protected static final String NAMESPACE = "test";
-    protected static final String CLUSTER_ID = "my-flink-cluster1";
-    protected static final String CONTAINER_IMAGE = "flink-k8s-test:latest";
+
+	protected static final String NAMESPACE = "test";
+	protected static final String CLUSTER_ID = "my-flink-cluster1";
+	protected static final String CONTAINER_IMAGE = "flink-k8s-test:latest";
 	protected static final String CONTAINER_IMAGE_PULL_POLICY = "IfNotPresent";
 
 	@Rule

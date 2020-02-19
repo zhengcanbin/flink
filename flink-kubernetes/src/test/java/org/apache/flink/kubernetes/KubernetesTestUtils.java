@@ -30,7 +30,6 @@ import java.nio.charset.StandardCharsets;
 public class KubernetesTestUtils {
 
 	public static void createTemporyFile(String data, File directory, String fileName) throws IOException {
-		Files.write(data, new File(directory,fileName), StandardCharsets.UTF_8);
+		Files.write(data, new File(directory, fileName), StandardCharsets.UTF_8);
 	}
-
 }

@@ -24,9 +24,9 @@ import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
 import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
+import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerTestBase;
 
 import io.fabric8.kubernetes.api.model.Container;
-import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerTestBase;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -155,7 +155,6 @@ public class JavaCmdJobManagerDecoratorTest extends KubernetesJobManagerTestBase
 
 		assertEquals(Collections.singletonList(KUBERNETES_ENTRY_PATH), resultMainContainer.getCommand());
 
-
 		final String expectedCommand =
 				getJobManagerExpectedCommand(jvmOpts, logback + " " + log4j);
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
@@ -172,10 +171,7 @@ public class JavaCmdJobManagerDecoratorTest extends KubernetesJobManagerTestBase
 				javaCmdJobManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
 
 		assertEquals(Collections.singletonList(KUBERNETES_ENTRY_PATH), resultMainContainer.getCommand());
-
-
-		final String expectedCommand =
-				getJobManagerExpectedCommand(jvmOpts, logback + " " + log4j);
+		final String expectedCommand = getJobManagerExpectedCommand(jvmOpts, logback + " " + log4j);
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
 		assertEquals(expectedArgs, resultMainContainer.getArgs());
 	}

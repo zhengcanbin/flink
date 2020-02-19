@@ -29,6 +29,7 @@ import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
 import io.fabric8.kubernetes.api.model.Container;
 import org.junit.Before;
 import org.junit.Test;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -173,10 +174,7 @@ public class JavaCmdTaskManagerDecoratorTest extends KubernetesTaskManagerTestBa
 				javaCmdTaskManagerDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
 
 		assertEquals(Collections.singletonList(_KUBERNETES_ENTRY_PATH), resultMainContainer.getCommand());
-
-
-		final String expectedCommand =
-				getTaskManagerExpectedCommand(jvmOpts, logback + " " + log4j);
+		final String expectedCommand = getTaskManagerExpectedCommand(jvmOpts, logback + " " + log4j);
 		final List<String> expectedArgs = Arrays.asList("/bin/bash", "-c", expectedCommand);
 		assertEquals(expectedArgs, resultMainContainer.getArgs());
 	}

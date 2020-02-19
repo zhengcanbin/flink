@@ -63,24 +63,31 @@ public abstract class AbstractKubernetesStepDecorator implements KubernetesStepD
 	 * Apply transformations on the given Pod in accordance to this feature.
 	 * Note that we should return a Pod that keeps all of the properties of the passed Pod object.
 	 *
-	 * So this is correct:
-	 * {@code Pod decoratedPod = new PodBuilder(pod) // Keeps the original state
+	 * <p>So this is correct:
+	 *
+	 * <pre>
+	 * {@code
+	 * Pod decoratedPod = new PodBuilder(pod) // Keeps the original state
+	 *     .editSpec()
+	 *     ...
+	 *     .build()
+	 *
+	 * return decoratedPod
+	 * }
+	 * </pre>
+	 *
+	 * <p>And this is the incorrect:
+	 *
+	 * <pre>
+	 * {@code
+	 * Pod decoratedPod = new PodBuilder() // Loses the original state
 	 *     .editSpec()
 	 *     ...
 	 *     .build()
 	 *
 	 *   return decoratedPod
 	 * }
-	 *
-	 * And this is the incorrect:
-	 * {@code Pod decoratedPod = new PodBuilder() // Loses the original state
-	 *     .editSpec()
-	 *     ...
-	 *     .build()
-	 *
-	 *   return decoratedPod
-	 * }
-	 *
+	 * </pre>
 	 */
 	protected Pod decoratePod(Pod pod) {
 		return pod;
@@ -90,23 +97,30 @@ public abstract class AbstractKubernetesStepDecorator implements KubernetesStepD
 	 * Apply transformations on the given Container in accordance to this feature.
 	 * Note that we should return a Container that keeps all of the properties of the passed Container object.
 	 *
-	 * So this is correct:
-	 * {@code Container decoratedContainer = new ContainerBuilder(container) // Keeps the original state
+	 * <p>So this is correct:
+	 *
+	 * <pre>
+	 * {@code
+	 * Container decoratedContainer = new ContainerBuilder(container) // Keeps the original state
 	 *     .editSpec()
 	 *     ...
 	 *     .build()
 	 *
 	 *   return decoratedContainer
 	 * }
+	 * </pre>
 	 *
-	 * And this is the incorrect:
-	 * {@code Container decoratedContainer = new ContainerBuilder() // Loses the original state
+	 * <p>And this is the incorrect:
+	 * <pre>
+	 * {@code
+	 * Container decoratedContainer = new ContainerBuilder() // Loses the original state
 	 *     .withName()
 	 *     ...
 	 *     .build()
 	 *
 	 *   return decoratedContainer
 	 * }
+	 * </pre>
 	 *
 	 */
 	protected Container decorateMainContainer(Container container) {
