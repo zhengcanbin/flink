@@ -25,16 +25,12 @@ import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
 import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 import org.apache.flink.test.util.TestBaseUtils;
 
 import io.fabric8.kubernetes.api.model.Container;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,8 +46,7 @@ import static org.junit.Assert.assertThat;
 /**
  * Test for {@link JavaCmdJobManagerDecorator}.
  */
-public class JavaCmdJobManagerDecoratorTest extends JobManagerDecoratorTest {
-
+public class JavaCmdJobManagerDecoratorTest extends JobManagerDecoratorTestBase {
 	private static final String _KUBERNETES_ENTRY_PATH = "/opt/bin/start.sh";
 	private static final String _INTERNAL_FLINK_CONF_DIR = "/opt/flink/flink-conf-";
 	private static final String _INTERNAL_FLINK_LOG_DIR = "/opt/flink/flink-log-";
@@ -75,17 +70,10 @@ public class JavaCmdJobManagerDecoratorTest extends JobManagerDecoratorTest {
 	private static final String jmJvmMem = String.format("-Xms%dm -Xmx%dm",
 			JOB_MANAGER_MEMORY - 600, JOB_MANAGER_MEMORY - 600);
 
-	private final FlinkPod baseFlinkPod = new FlinkPodBuilder().build();
-
-	@Rule
-	public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-	private File flinkConfDir;
-
 	private JavaCmdJobManagerDecorator javaCmdJobManagerDecorator;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() throws Exception {
 		super.setup();
 
 		this.flinkConfDir = temporaryFolder.newFolder().getAbsoluteFile();

@@ -22,10 +22,7 @@ import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
-import org.apache.flink.configuration.BlobServerOptions;
 import org.apache.flink.configuration.JobManagerOptions;
-import org.apache.flink.configuration.RestOptions;
-import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.junit.Before;
@@ -42,24 +39,12 @@ import static org.junit.Assert.assertEquals;
 /**
  * Test for {@link InternalServiceDecorator}.
  */
-public class InternalServiceDecoratorTest extends JobManagerDecoratorTest {
-
-	private static final String _NAMESPACE = "default-test";
-
-	private static final int _REST_PORT = 9081;
-	private static final int _RPC_PORT = 7123;
-	private static final int _BLOB_SERVER_PORT = 8346;
-
+public class InternalServiceDecoratorTest extends JobManagerDecoratorTestBase {
 	private InternalServiceDecorator internalServiceDecorator;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() throws Exception {
 		super.setup();
-
-		this.flinkConfig.set(KubernetesConfigOptions.NAMESPACE, _NAMESPACE);
-		this.flinkConfig.set(RestOptions.PORT, _REST_PORT);
-		this.flinkConfig.set(JobManagerOptions.PORT, _RPC_PORT);
-		this.flinkConfig.set(BlobServerOptions.PORT, Integer.toString(_BLOB_SERVER_PORT));
 
 		this.internalServiceDecorator = new InternalServiceDecorator(this.kubernetesJobManagerParameters);
 	}
@@ -70,16 +55,16 @@ public class InternalServiceDecoratorTest extends JobManagerDecoratorTest {
 		assertEquals(1, resources.size());
 
 		assertEquals(
-			KubernetesUtils.getInternalServiceName(_CLUSTER_ID) + "." + _NAMESPACE,
+			KubernetesUtils.getInternalServiceName(CLUSTER_ID) + "." + NAMESPACE,
 			this.flinkConfig.getString(JobManagerOptions.ADDRESS));
 
 		final Service internalService = (Service) resources.get(0);
 
-		assertEquals(KubernetesUtils.getInternalServiceName(_CLUSTER_ID), internalService.getMetadata().getName());
+		assertEquals(KubernetesUtils.getInternalServiceName(CLUSTER_ID), internalService.getMetadata().getName());
 
 		final Map<String, String> expectedLabels = new HashMap<>();
 		expectedLabels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
-		expectedLabels.put(Constants.LABEL_APP_KEY, _CLUSTER_ID);
+		expectedLabels.put(Constants.LABEL_APP_KEY, CLUSTER_ID);
 		assertEquals(expectedLabels, internalService.getMetadata().getLabels());
 
 		assertEquals("ClusterIP", internalService.getSpec().getType());
@@ -87,15 +72,15 @@ public class InternalServiceDecoratorTest extends JobManagerDecoratorTest {
 		List<ServicePort> expectedServicePorts = Arrays.asList(
 			new ServicePortBuilder()
 				.withName("rest-port")
-				.withPort(_REST_PORT)
+				.withPort(REST_PORT)
 				.build(),
 			new ServicePortBuilder()
 				.withName("jobmanager-rpc-port")
-				.withPort(_RPC_PORT)
+				.withPort(RPC_PORT)
 				.build(),
 			new ServicePortBuilder()
 				.withName("blob-server-port")
-				.withPort(_BLOB_SERVER_PORT)
+				.withPort(BLOB_SERVER_PORT)
 				.build());
 		assertEquals(expectedServicePorts, internalService.getSpec().getPorts());
 

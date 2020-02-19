@@ -19,7 +19,10 @@
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.client.deployment.ClusterSpecification;
-import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.BlobServerOptions;
+import org.apache.flink.configuration.JobManagerOptions;
+import org.apache.flink.configuration.RestOptions;
+import org.apache.flink.kubernetes.KubernetesTestBase;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
@@ -27,27 +30,29 @@ import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesJobManagerPara
 
 import org.junit.Before;
 
-import java.io.IOException;
-
 /**
  * Base test class for the JobManager decorators.
  */
-public class JobManagerDecoratorTest {
+public class JobManagerDecoratorTestBase extends KubernetesTestBase {
+	protected static final double JOB_MANAGER_CPU = 2.0;
+	protected static final int JOB_MANAGER_MEMORY = 768;
 
-	static final String _CLUSTER_ID = "cluster-id-test";
-
-	static final int JOB_MANAGER_MEMORY = 768;
-
-	protected Configuration flinkConfig;
+	protected static final int REST_PORT = 9081;
+	protected static final int RPC_PORT = 7123;
+	protected static final int BLOB_SERVER_PORT = 8346;
 
 	KubernetesJobManagerParameters kubernetesJobManagerParameters;
 
 	FlinkPod baseFlinkPod;
 
 	@Before
-	public void setup() throws IOException {
-		this.flinkConfig = new Configuration();
-		flinkConfig.set(KubernetesConfigOptions.CLUSTER_ID, _CLUSTER_ID);
+	public void setup() throws Exception {
+		super.setup();
+
+		this.flinkConfig.set(RestOptions.PORT, REST_PORT);
+		this.flinkConfig.set(JobManagerOptions.PORT, RPC_PORT);
+		this.flinkConfig.set(BlobServerOptions.PORT, Integer.toString(BLOB_SERVER_PORT));
+		this.flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_CPU, JOB_MANAGER_CPU);
 
 		final ClusterSpecification clusterSpecification = new ClusterSpecification.ClusterSpecificationBuilder()
 			.setMasterMemoryMB(JOB_MANAGER_MEMORY)

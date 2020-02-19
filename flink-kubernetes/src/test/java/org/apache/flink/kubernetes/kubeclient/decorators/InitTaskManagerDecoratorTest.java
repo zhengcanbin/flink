@@ -19,7 +19,6 @@
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.ResourceManagerOptions;
-import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.utils.Constants;
 
@@ -34,7 +33,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -48,9 +46,7 @@ import static org.junit.Assert.assertThat;
 /**
  * Test for {@link InitJobManagerDecorator}.
  */
-public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
-
-	private static final int RPC_PORT = 12345;
+public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTestBase {
 
 	private final Map<String, String> customizedEnvs = new HashMap<String, String>() {
 		{
@@ -63,8 +59,7 @@ public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 	private Container resultMainContainer;
 
 	@Before
-	public void setup() throws IOException {
-		flinkConfig.set(TaskManagerOptions.RPC_PORT, String.valueOf(RPC_PORT));
+	public void setup() throws Exception {
 		customizedEnvs.forEach((k, v) ->
 			flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_TASK_MANAGER_ENV_PREFIX + k, v));
 

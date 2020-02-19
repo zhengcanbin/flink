@@ -18,10 +18,9 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.MemorySize;
 import org.apache.flink.configuration.TaskManagerOptions;
-import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
+import org.apache.flink.kubernetes.KubernetesTestBase;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesTaskManagerParameters;
@@ -31,16 +30,12 @@ import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
 
 import org.junit.Before;
 
-import java.io.IOException;
-
 /**
  * Base test class for the TaskManager decorators.
  */
-public class TaskManagerDecoratorTest {
+public class TaskManagerDecoratorTestBase extends KubernetesTestBase {
 
-	protected static final String CLUSTER_ID = "cluster-id-test";
-	protected static final String CONTAINER_IMAGE = "flink:latest";
-	protected static final String CONTAINER_IMAGE_PULL_POLICY = "IfNotPresent";
+	protected static final int RPC_PORT = 12345;
 
 	protected static final String POD_NAME = "taskmanager-pod-1";
 	protected static final String DYNAMIC_PROPERTIES = "";
@@ -48,22 +43,19 @@ public class TaskManagerDecoratorTest {
 	protected static final int TOTAL_PROCESS_MEMORY = 1024;
 	protected static final double TASK_MANAGER_CPU = 2.0;
 
-	protected final Configuration flinkConfig = new Configuration();
-
 	protected TaskExecutorProcessSpec taskExecutorProcessSpec;
 
 	protected ContaineredTaskManagerParameters containeredTaskManagerParameters;
 
 	protected KubernetesTaskManagerParameters kubernetesTaskManagerParameters;
 
-	protected final FlinkPod baseFlinkPod = new FlinkPodBuilder().build();
+	protected FlinkPod baseFlinkPod = new FlinkPodBuilder().build();
 
 	@Before
-	public void setup() throws IOException {
-		flinkConfig.set(KubernetesConfigOptions.CLUSTER_ID, CLUSTER_ID);
-		flinkConfig.set(KubernetesConfigOptions.CONTAINER_IMAGE, CONTAINER_IMAGE);
-		flinkConfig.set(KubernetesConfigOptions.CONTAINER_IMAGE_PULL_POLICY, CONTAINER_IMAGE_PULL_POLICY);
+	public void setup() throws Exception {
+		super.setup();
 
+		flinkConfig.set(TaskManagerOptions.RPC_PORT, String.valueOf(RPC_PORT));
 		flinkConfig.set(TaskManagerOptions.CPU_CORES, TASK_MANAGER_CPU);
 		flinkConfig.set(TaskManagerOptions.TOTAL_PROCESS_MEMORY, MemorySize.parse(TOTAL_PROCESS_MEMORY + "m"));
 

@@ -18,16 +18,10 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import org.apache.flink.client.deployment.ClusterSpecification;
-import org.apache.flink.configuration.ConfigConstants;
-import org.apache.flink.configuration.Configuration;
+import org.apache.flink.kubernetes.KubernetesTestUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
-import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.Constants;
-import org.apache.flink.runtime.clusterframework.BootstrapTools;
-import org.apache.flink.test.util.TestBaseUtils;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
@@ -39,11 +33,8 @@ import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -60,42 +51,15 @@ import static org.junit.Assert.assertThat;
 /**
  * Test for {@link FlinkConfMountDecorator}.
  */
-public class FlinkConfMountDecoratorTest {
-
-	private static final String CLUSTER_ID = "cluster-id-test";
-	private static final int JOB_MANAGER_MEMORY = 768;
+public class FlinkConfMountDecoratorTest extends JobManagerDecoratorTestBase {
 	private static final String INTERNAL_FLINK_CONF_DIR = "/opt/flink/flink-conf-";
 
-	private final FlinkPod baseFlinkPod = new FlinkPodBuilder().build();
-
-	@Rule
-	public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-	private File flinkConfDir;
-
-	private Configuration flinkConfig;
-	private KubernetesJobManagerParameters kubernetesJobManagerParameters;
 	private FlinkConfMountDecorator flinkConfMountDecorator;
 
 	@Before
-	public void setup() throws IOException {
-		this.flinkConfig = new Configuration();
-		flinkConfig.set(KubernetesConfigOptions.CLUSTER_ID, CLUSTER_ID);
-		flinkConfig.set(KubernetesConfigOptions.FLINK_CONF_DIR, INTERNAL_FLINK_CONF_DIR);
-
-		flinkConfDir = temporaryFolder.newFolder().getAbsoluteFile();
-		Map<String, String> map = new HashMap<>();
-		map.put(ConfigConstants.ENV_FLINK_CONF_DIR, flinkConfDir.toString());
-		TestBaseUtils.setEnv(map);
-
-		final ClusterSpecification clusterSpecification = new ClusterSpecification.ClusterSpecificationBuilder()
-			.setMasterMemoryMB(JOB_MANAGER_MEMORY)
-			.setTaskManagerMemoryMB(1024)
-			.setSlotsPerTaskManager(3)
-			.createClusterSpecification();
-
-		this.kubernetesJobManagerParameters = new KubernetesJobManagerParameters(flinkConfig, clusterSpecification);
-
+	public void setup() throws Exception {
+		super.setup();
+		this.flinkConfig.set(KubernetesConfigOptions.FLINK_CONF_DIR, INTERNAL_FLINK_CONF_DIR);
 		this.flinkConfMountDecorator = new FlinkConfMountDecorator(kubernetesJobManagerParameters);
 	}
 
@@ -108,16 +72,16 @@ public class FlinkConfMountDecoratorTest {
 
 	@Test
 	public void testConfigMap() throws IOException {
-		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "log4j.properties"));
-		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "logback.xml"));
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
 
 		final List<HasMetadata> additionalResources = flinkConfMountDecorator.buildAccompanyingKubernetesResources();
 		assertEquals(1, additionalResources.size());
 
 		final Map<String, String> expectedDatas = new HashMap<>();
 		expectedDatas.put(FLINK_CONF_FILENAME, flinkConfMountDecorator.getFlinkConfData(this.flinkConfig));
-		expectedDatas.put("logback.xml", "");
-		expectedDatas.put("log4j.properties", "");
+		expectedDatas.put("logback.xml", "some data");
+		expectedDatas.put("log4j.properties", "some data");
 		final List<ConfigMap> expectedConfigMaps = Collections.singletonList(new ConfigMapBuilder()
 			.withNewMetadata()
 				.withName(flinkConfMountDecorator.getFlinkConfConfigMapName(CLUSTER_ID))
@@ -163,7 +127,7 @@ public class FlinkConfMountDecoratorTest {
 
 	@Test
 	public void testDecoratedFlinkPodWithLog4j() throws IOException {
-		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "log4j.properties"));
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
 
 		final FlinkPod decoratedFlinkPod = flinkConfMountDecorator.decorateFlinkPod(baseFlinkPod);
 
@@ -189,7 +153,7 @@ public class FlinkConfMountDecoratorTest {
 
 	@Test
 	public void testDecoratedFlinkPodWithLogback() throws IOException {
-		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "logback.xml"));
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
 
 		final FlinkPod decoratedFlinkPod = flinkConfMountDecorator.decorateFlinkPod(baseFlinkPod);
 
@@ -215,8 +179,8 @@ public class FlinkConfMountDecoratorTest {
 
 	@Test
 	public void testDecoratedFlinkPodWithLog4jAndLogback() throws IOException {
-		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "log4j.properties"));
-		BootstrapTools.writeConfiguration(new Configuration(), new File(flinkConfDir, "logback.xml"));
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
+		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
 
 		final FlinkPod decoratedFlinkPod = flinkConfMountDecorator.decorateFlinkPod(baseFlinkPod);
 

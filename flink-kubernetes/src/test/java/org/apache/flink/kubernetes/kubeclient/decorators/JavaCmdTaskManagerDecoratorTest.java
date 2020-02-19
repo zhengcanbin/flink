@@ -29,11 +29,7 @@ import org.apache.flink.test.util.TestBaseUtils;
 
 import io.fabric8.kubernetes.api.model.Container;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,8 +45,7 @@ import static org.junit.Assert.assertThat;
 /**
  * Test for {@link JavaCmdTaskManagerDecorator}.
  */
-public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
-
+public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTestBase {
 	private static final String _KUBERNETES_ENTRY_PATH = "/opt/flink/bin/start.sh";
 	private static final String _INTERNAL_FLINK_CONF_DIR = "/opt/flink/flink-conf-";
 	private static final String _INTERNAL_FLINK_LOG_DIR = "/opt/flink/flink-log-";
@@ -77,20 +72,15 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 			_INTERNAL_FLINK_LOG_DIR,
 			_INTERNAL_FLINK_LOG_DIR);
 
-	@Rule
-	public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-	private File flinkConfDir;
-
 	private JavaCmdTaskManagerDecorator javaCmdTaskManagerDecorator;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() throws Exception {
+		super.setup();
+
 		flinkConfig.setString(KubernetesConfigOptions.KUBERNETES_ENTRY_PATH, _KUBERNETES_ENTRY_PATH);
 		flinkConfig.set(KubernetesConfigOptions.FLINK_CONF_DIR, _INTERNAL_FLINK_CONF_DIR);
 		flinkConfig.set(KubernetesConfigOptions.FLINK_LOG_DIR, _INTERNAL_FLINK_LOG_DIR);
-
-		super.setup();
 
 		this.mainClassArgs = String.format(
 				"%s--configDir %s",

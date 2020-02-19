@@ -18,10 +18,7 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import org.apache.flink.configuration.BlobServerOptions;
-import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.ResourceManagerOptions;
-import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesJobManagerParameters;
@@ -37,7 +34,6 @@ import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -54,18 +50,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Test for {@link InitJobManagerDecorator}.
  */
-public class InitJobManagerDecoratorTest extends JobManagerDecoratorTest {
-
-	private static final String _CONTAINER_IMAGE = "flink:latest";
-	private static final String _CONTAINER_IMAGE_PULL_POLICY = "IfNotPresent";
-
-	private static final int _REST_PORT = 9081;
-	private static final int _RPC_PORT = 7123;
-	private static final int _BLOB_SERVER_PORT = 8346;
-
-	private static final double _JOB_MANAGER_CPU = 2.0;
-	private static final int _JOB_MANAGER_MEMORY = 768;
-
+public class InitJobManagerDecoratorTest extends JobManagerDecoratorTestBase {
 	private static final String _SERVICE_ACCOUNT_NAME = "service-test";
 
 	private final Map<String, String> expectedEnvs = new HashMap<String, String>() {
@@ -80,19 +65,12 @@ public class InitJobManagerDecoratorTest extends JobManagerDecoratorTest {
 	private Container resultMainContainer;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() throws Exception {
 		super.setup();
-
-		this.flinkConfig.set(KubernetesConfigOptions.CONTAINER_IMAGE, _CONTAINER_IMAGE);
-		this.flinkConfig.set(KubernetesConfigOptions.CONTAINER_IMAGE_PULL_POLICY, _CONTAINER_IMAGE_PULL_POLICY);
-		this.flinkConfig.set(RestOptions.PORT, _REST_PORT);
-		this.flinkConfig.set(JobManagerOptions.PORT, _RPC_PORT);
-		this.flinkConfig.set(BlobServerOptions.PORT, Integer.toString(_BLOB_SERVER_PORT));
 
 		expectedEnvs.forEach((k, v) ->
 			flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX + k, v));
 
-		this.flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_CPU, _JOB_MANAGER_CPU);
 		this.flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_SERVICE_ACCOUNT, _SERVICE_ACCOUNT_NAME);
 
 		final InitJobManagerDecorator initJobManagerDecorator =
@@ -110,8 +88,8 @@ public class InitJobManagerDecoratorTest extends JobManagerDecoratorTest {
 
 	@Test
 	public void testMainContainerImage() {
-		assertEquals(_CONTAINER_IMAGE, this.resultMainContainer.getImage());
-		assertEquals(_CONTAINER_IMAGE_PULL_POLICY, this.resultMainContainer.getImagePullPolicy());
+		assertEquals(CONTAINER_IMAGE, this.resultMainContainer.getImage());
+		assertEquals(CONTAINER_IMAGE_PULL_POLICY, this.resultMainContainer.getImagePullPolicy());
 	}
 
 	@Test
@@ -119,25 +97,25 @@ public class InitJobManagerDecoratorTest extends JobManagerDecoratorTest {
 		final ResourceRequirements resourceRequirements = this.resultMainContainer.getResources();
 
 		final Map<String, Quantity> requests = resourceRequirements.getRequests();
-		assertEquals(Double.toString(_JOB_MANAGER_CPU), requests.get("cpu").getAmount());
-		assertEquals(_JOB_MANAGER_MEMORY + "Mi", requests.get("memory").getAmount());
+		assertEquals(Double.toString(JOB_MANAGER_CPU), requests.get("cpu").getAmount());
+		assertEquals(JOB_MANAGER_MEMORY + "Mi", requests.get("memory").getAmount());
 
 		final Map<String, Quantity> limits = resourceRequirements.getLimits();
-		assertEquals(Double.toString(_JOB_MANAGER_CPU), limits.get("cpu").getAmount());
-		assertEquals(_JOB_MANAGER_MEMORY + "Mi", limits.get("memory").getAmount());
+		assertEquals(Double.toString(JOB_MANAGER_CPU), limits.get("cpu").getAmount());
+		assertEquals(JOB_MANAGER_MEMORY + "Mi", limits.get("memory").getAmount());
 	}
 
 	@Test
 	public void testMainContainerPorts() {
 		final List<ContainerPort> expectedContainerPorts = Arrays.asList(
 			new ContainerPortBuilder()
-				.withContainerPort(_REST_PORT)
+				.withContainerPort(REST_PORT)
 			.build(),
 			new ContainerPortBuilder()
-				.withContainerPort(_RPC_PORT)
+				.withContainerPort(RPC_PORT)
 			.build(),
 			new ContainerPortBuilder()
-				.withContainerPort(_BLOB_SERVER_PORT)
+				.withContainerPort(BLOB_SERVER_PORT)
 			.build());
 
 		assertThat(expectedContainerPorts, equalTo(this.resultMainContainer.getPorts()));
@@ -161,7 +139,7 @@ public class InitJobManagerDecoratorTest extends JobManagerDecoratorTest {
 		final Map<String, String> expectedLabels = new HashMap<String, String>() {
 			{
 				put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
-				put(Constants.LABEL_APP_KEY, _CLUSTER_ID);
+				put(Constants.LABEL_APP_KEY, CLUSTER_ID);
 				put(Constants.LABEL_COMPONENT_KEY, Constants.LABEL_COMPONENT_JOB_MANAGER);
 			}
 		};

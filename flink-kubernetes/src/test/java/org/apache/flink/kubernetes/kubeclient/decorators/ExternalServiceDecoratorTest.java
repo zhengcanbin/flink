@@ -18,9 +18,6 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import org.apache.flink.configuration.BlobServerOptions;
-import org.apache.flink.configuration.JobManagerOptions;
-import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
@@ -43,24 +40,12 @@ import static org.junit.Assert.assertEquals;
 /**
  * General tests for the {@link ExternalServiceDecorator}.
  */
-public class ExternalServiceDecoratorTest extends JobManagerDecoratorTest {
-	private static final String _NAMESPACE = "default-test";
-
-	private static final int _REST_PORT = 9081;
-	private static final int _RPC_PORT = 7123;
-	private static final int _BLOB_SERVER_PORT = 8346;
-
+public class ExternalServiceDecoratorTest extends JobManagerDecoratorTestBase {
 	private ExternalServiceDecorator externalServiceDecorator;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() throws Exception {
 		super.setup();
-
-		this.flinkConfig.set(KubernetesConfigOptions.NAMESPACE, _NAMESPACE);
-		this.flinkConfig.set(RestOptions.PORT, _REST_PORT);
-		this.flinkConfig.set(JobManagerOptions.PORT, _RPC_PORT);
-		this.flinkConfig.set(BlobServerOptions.PORT, Integer.toString(_BLOB_SERVER_PORT));
-
 		this.externalServiceDecorator = new ExternalServiceDecorator(this.kubernetesJobManagerParameters);
 	}
 
@@ -71,11 +56,11 @@ public class ExternalServiceDecoratorTest extends JobManagerDecoratorTest {
 
 		final Service restService = (Service) resources.get(0);
 
-		assertEquals(KubernetesUtils.getRestServiceName(_CLUSTER_ID), restService.getMetadata().getName());
+		assertEquals(KubernetesUtils.getRestServiceName(CLUSTER_ID), restService.getMetadata().getName());
 
 		final Map<String, String> expectedLabels = new HashMap<>();
 		expectedLabels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
-		expectedLabels.put(Constants.LABEL_APP_KEY, _CLUSTER_ID);
+		expectedLabels.put(Constants.LABEL_APP_KEY, CLUSTER_ID);
 		assertEquals(expectedLabels, restService.getMetadata().getLabels());
 
 		assertEquals("LoadBalancer", restService.getSpec().getType());
@@ -83,7 +68,7 @@ public class ExternalServiceDecoratorTest extends JobManagerDecoratorTest {
 		List<ServicePort> expectedServicePorts = Collections.singletonList(
 			new ServicePortBuilder()
 				.withName("rest-port")
-				.withPort(_REST_PORT)
+				.withPort(REST_PORT)
 				.build());
 		assertEquals(expectedServicePorts, restService.getSpec().getPorts());
 
