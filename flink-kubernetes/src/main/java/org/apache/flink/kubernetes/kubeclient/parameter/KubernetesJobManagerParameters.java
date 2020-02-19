@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.conf;
+package org.apache.flink.kubernetes.kubeclient.parameter;
 
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.client.deployment.ClusterSpecification;
@@ -45,13 +45,13 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * that are used for constructing the JobManager Pod and all accompanying resources
  * connected to it.
  */
-public class KubernetesJobManagerConf extends AbstractKubernetesComponentConf {
+public class KubernetesJobManagerParameters extends AbstractKubernetesParameters {
 
 	public static final String JOB_MANAGER_MAIN_CONTAINER_NAME = "flink-job-manager";
 
 	private final ClusterSpecification clusterSpecification;
 
-	public KubernetesJobManagerConf(Configuration flinkConfig, ClusterSpecification clusterSpecification) {
+	public KubernetesJobManagerParameters(Configuration flinkConfig, ClusterSpecification clusterSpecification) {
 		super(flinkConfig);
 		this.clusterSpecification = checkNotNull(clusterSpecification);
 	}

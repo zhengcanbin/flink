@@ -24,7 +24,7 @@ import org.apache.flink.configuration.MemorySize;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.kubernetes.KubernetesTestUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesTaskManagerConf;
+import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesTaskManagerParameters;
 import org.apache.flink.runtime.clusterframework.ContaineredTaskManagerParameters;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessSpec;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
@@ -93,7 +93,7 @@ public class KubernetesTaskManagerBuilderTest {
 		final ContaineredTaskManagerParameters containeredTaskManagerParameters =
 			new ContaineredTaskManagerParameters(taskExecutorProcessSpec, 4, new HashMap<>());
 
-		final KubernetesTaskManagerConf kubernetesTaskManagerConf = new KubernetesTaskManagerConf(
+		final KubernetesTaskManagerParameters kubernetesTaskManagerParameters = new KubernetesTaskManagerParameters(
 			flinkConfig,
 			POD_NAME,
 			TOTAL_PROCESS_MEMORY,
@@ -101,7 +101,7 @@ public class KubernetesTaskManagerBuilderTest {
 			containeredTaskManagerParameters);
 
 		this.resultedPod =
-			KubernetesTaskManagerBuilder.buildTaskManagerComponent(kubernetesTaskManagerConf).getInternalResource();
+			KubernetesTaskManagerBuilder.buildTaskManagerComponent(kubernetesTaskManagerParameters).getInternalResource();
 	}
 
 	@Test
@@ -118,7 +118,7 @@ public class KubernetesTaskManagerBuilderTest {
 
 		final Container resultedMainContainer = resultedContainers.get(0);
 		assertEquals(
-			KubernetesTaskManagerConf.TASK_MANAGER_MAIN_CONTAINER_NAME,
+			KubernetesTaskManagerParameters.TASK_MANAGER_MAIN_CONTAINER_NAME,
 			resultedMainContainer.getName());
 		assertEquals(_CONTAINER_IMAGE, resultedMainContainer.getImage());
 		assertEquals(_CONTAINER_IMAGE_PULL_POLICY, resultedMainContainer.getImagePullPolicy());

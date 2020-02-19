@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.conf;
+package org.apache.flink.kubernetes.kubeclient.parameter;
 
 import org.apache.flink.client.cli.CliFrontend;
 import org.apache.flink.configuration.Configuration;
@@ -34,13 +34,13 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
- * Abstract class for the {@link KubernetesComponentConf}.
+ * Abstract class for the {@link KubernetesParameters}.
  */
-public abstract class AbstractKubernetesComponentConf implements KubernetesComponentConf {
+public abstract class AbstractKubernetesParameters implements KubernetesParameters {
 
 	protected final Configuration flinkConfig;
 
-	public AbstractKubernetesComponentConf(Configuration flinkConfig) {
+	public AbstractKubernetesParameters(Configuration flinkConfig) {
 		this.flinkConfig = checkNotNull(flinkConfig);
 	}
 

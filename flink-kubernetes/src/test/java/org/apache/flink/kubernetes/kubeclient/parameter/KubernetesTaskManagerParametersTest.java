@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.conf;
+package org.apache.flink.kubernetes.kubeclient.parameter;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.MemorySize;
@@ -34,9 +34,9 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 
 /**
- * General tests for the {@link KubernetesTaskManagerConf}.
+ * General tests for the {@link KubernetesTaskManagerParameters}.
  */
-public class KubernetesTaskManagerConfTest {
+public class KubernetesTaskManagerParametersTest {
 	private static final int TASK_MANAGER_MEMORY = 1024;
 	private static final double TASK_MANAGER_CPU = 1.2;
 	private static final int RPC_PORT = 13001;
@@ -51,7 +51,7 @@ public class KubernetesTaskManagerConfTest {
 		}
 	};
 
-	private KubernetesTaskManagerConf kubernetesTaskManagerConf;
+	private KubernetesTaskManagerParameters kubernetesTaskManagerParameters;
 
 	@Before
 	public void setup() {
@@ -69,7 +69,7 @@ public class KubernetesTaskManagerConfTest {
 			ContaineredTaskManagerParameters.create(flinkConfig, taskExecutorProcessSpec,
 				flinkConfig.getInteger(TaskManagerOptions.NUM_TASK_SLOTS));
 
-		this.kubernetesTaskManagerConf = new KubernetesTaskManagerConf(flinkConfig,
+		this.kubernetesTaskManagerParameters = new KubernetesTaskManagerParameters(flinkConfig,
 			POD_NAME,
 			TASK_MANAGER_MEMORY,
 			DYNAMIC_PROPERTIES,
@@ -78,31 +78,31 @@ public class KubernetesTaskManagerConfTest {
 
 	@Test
 	public void testGetEnvironments() {
-		assertEquals(customizedEnvs, kubernetesTaskManagerConf.getEnvironments());
+		assertEquals(customizedEnvs, kubernetesTaskManagerParameters.getEnvironments());
 	}
 
 	@Test
 	public void testGetPodName() {
-		assertEquals(POD_NAME, kubernetesTaskManagerConf.getPodName());
+		assertEquals(POD_NAME, kubernetesTaskManagerParameters.getPodName());
 	}
 
 	@Test
 	public void testGetTaskManagerMemoryMB() {
-		assertEquals(TASK_MANAGER_MEMORY, kubernetesTaskManagerConf.getTaskManagerMemoryMB());
+		assertEquals(TASK_MANAGER_MEMORY, kubernetesTaskManagerParameters.getTaskManagerMemoryMB());
 	}
 
 	@Test
 	public void testGetTaskManagerCPU() {
-		assertEquals(TASK_MANAGER_CPU, kubernetesTaskManagerConf.getTaskManagerCPU(), 0.000000000001);
+		assertEquals(TASK_MANAGER_CPU, kubernetesTaskManagerParameters.getTaskManagerCPU(), 0.000000000001);
 	}
 
 	@Test
 	public void testGetRpcPort() {
-		assertEquals(RPC_PORT, kubernetesTaskManagerConf.getRPCPort());
+		assertEquals(RPC_PORT, kubernetesTaskManagerParameters.getRPCPort());
 	}
 
 	@Test
 	public void testGetDynamicProperties() {
-		assertEquals(DYNAMIC_PROPERTIES, kubernetesTaskManagerConf.getDynamicProperties());
+		assertEquals(DYNAMIC_PROPERTIES, kubernetesTaskManagerParameters.getDynamicProperties());
 	}
 }

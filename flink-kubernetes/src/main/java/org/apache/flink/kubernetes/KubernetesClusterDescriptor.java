@@ -38,7 +38,7 @@ import org.apache.flink.kubernetes.kubeclient.Endpoint;
 import org.apache.flink.kubernetes.kubeclient.FlinkKubeClient;
 import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerSpecification;
 import org.apache.flink.kubernetes.kubeclient.builder.KubernetesJobManagerBuilder;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesJobManagerConf;
+import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.entrypoint.ClusterEntrypoint;
@@ -175,9 +175,9 @@ public class KubernetesClusterDescriptor implements ClusterDescriptor<String> {
 		}
 
 		try {
-			final KubernetesJobManagerConf kubernetesJobManagerConf = new KubernetesJobManagerConf(flinkConfig, clusterSpecification);
+			final KubernetesJobManagerParameters kubernetesJobManagerParameters = new KubernetesJobManagerParameters(flinkConfig, clusterSpecification);
 			final KubernetesJobManagerSpecification kubernetesMasterSpec =
-				KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesJobManagerConf);
+				KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesJobManagerParameters);
 			client.createFlinkMasterComponent(kubernetesMasterSpec);
 			return createClusterClientProvider(clusterId);
 		} catch (Exception e) {

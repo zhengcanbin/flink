@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.conf;
+package org.apache.flink.kubernetes.kubeclient.parameter;
 
 import org.apache.flink.api.java.tuple.Tuple2;
 
@@ -29,7 +29,7 @@ import java.util.Map;
  * A common collection of parameters that is used to construct the JobManager/TaskManager Pods,
  * including the accompanying Kubernetes resources that together represent a Flink application.
  */
-public interface KubernetesComponentConf {
+public interface KubernetesParameters {
 
 	String getClusterId();
 

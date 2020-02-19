@@ -21,7 +21,7 @@ package org.apache.flink.kubernetes.kubeclient.decorators;
 import org.apache.flink.configuration.BlobServerOptions;
 import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.RestOptions;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesJobManagerConf;
+import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesJobManagerParameters;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Service;
@@ -39,11 +39,11 @@ import java.util.List;
  */
 public abstract class AbstractServiceDecorator extends AbstractKubernetesStepDecorator {
 
-	protected final KubernetesJobManagerConf kubernetesJobManagerConf;
+	protected final KubernetesJobManagerParameters kubernetesJobManagerParameters;
 
-	public AbstractServiceDecorator(KubernetesJobManagerConf kubernetesJobManagerConf) {
-		super(kubernetesJobManagerConf.getFlinkConfiguration());
-		this.kubernetesJobManagerConf = kubernetesJobManagerConf;
+	public AbstractServiceDecorator(KubernetesJobManagerParameters kubernetesJobManagerParameters) {
+		super(kubernetesJobManagerParameters.getFlinkConfiguration());
+		this.kubernetesJobManagerParameters = kubernetesJobManagerParameters;
 	}
 
 	@Override
@@ -52,19 +52,19 @@ public abstract class AbstractServiceDecorator extends AbstractKubernetesStepDec
 
 		if (isInternalService()) {
 			// Set jobmanager address to namespaced service name
-			final String namespace = kubernetesJobManagerConf.getNamespace();
+			final String namespace = kubernetesJobManagerParameters.getNamespace();
 			configuration.setString(JobManagerOptions.ADDRESS, serviceName + "." + namespace);
 		}
 
 		final Service restService = new ServiceBuilder()
 			.withNewMetadata()
 				.withName(getServiceName())
-				.withLabels(kubernetesJobManagerConf.getCommonLabels())
+				.withLabels(kubernetesJobManagerParameters.getCommonLabels())
 				.endMetadata()
 			.withNewSpec()
 				.withType(getServiceType())
 				.withPorts(getServicePorts())
-				.withSelector(kubernetesJobManagerConf.getLabels())
+				.withSelector(kubernetesJobManagerParameters.getLabels())
 				.endSpec()
 			.build();
 
@@ -83,15 +83,15 @@ public abstract class AbstractServiceDecorator extends AbstractKubernetesStepDec
 		final List<ServicePort> servicePorts = new ArrayList<>();
 		servicePorts.add(getServicePort(
 			getPortName(RestOptions.PORT.key()),
-			kubernetesJobManagerConf.getRestPort()));
+			kubernetesJobManagerParameters.getRestPort()));
 
 		if (!isRestPortOnly()) {
 			servicePorts.add(getServicePort(
 				getPortName(JobManagerOptions.PORT.key()),
-				kubernetesJobManagerConf.getRPCPort()));
+				kubernetesJobManagerParameters.getRPCPort()));
 			servicePorts.add(getServicePort(
 				getPortName(BlobServerOptions.PORT.key()),
-				kubernetesJobManagerConf.getBlobServerPort()));
+				kubernetesJobManagerParameters.getBlobServerPort()));
 		}
 
 		return servicePorts;

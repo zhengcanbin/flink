@@ -21,7 +21,7 @@ package org.apache.flink.kubernetes.kubeclient.decorators;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.client.cli.CliFrontend;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.kubernetes.kubeclient.conf.AbstractKubernetesComponentConf;
+import org.apache.flink.kubernetes.kubeclient.parameter.AbstractKubernetesParameters;
 
 import org.apache.flink.shaded.guava18.com.google.common.io.Files;
 
@@ -59,9 +59,9 @@ import static org.apache.flink.kubernetes.utils.Constants.FLINK_CONF_VOLUME;
  */
 public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 
-	private final AbstractKubernetesComponentConf kubernetesComponentConf;
+	private final AbstractKubernetesParameters kubernetesComponentConf;
 
-	public FlinkConfMountDecorator(AbstractKubernetesComponentConf kubernetesComponentConf) {
+	public FlinkConfMountDecorator(AbstractKubernetesParameters kubernetesComponentConf) {
 		super(kubernetesComponentConf.getFlinkConfiguration());
 		this.kubernetesComponentConf = kubernetesComponentConf;
 	}

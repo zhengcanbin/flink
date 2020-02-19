@@ -71,7 +71,7 @@ public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 		super.setup();
 
 		final InitTaskManagerDecorator initTaskManagerDecorator =
-			new InitTaskManagerDecorator(kubernetesTaskManagerConf);
+			new InitTaskManagerDecorator(kubernetesTaskManagerParameters);
 
 		final FlinkPod resultFlinkPod = initTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod);
 		this.resultPod = resultFlinkPod.getPod();
@@ -81,7 +81,7 @@ public class InitTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 	@Test
 	public void testMainContainerName() {
 		Assert.assertEquals(
-			kubernetesTaskManagerConf.getTaskManagerMainContainerName(),
+			kubernetesTaskManagerParameters.getTaskManagerMainContainerName(),
 			this.resultMainContainer.getName());
 	}
 

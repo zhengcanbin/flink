@@ -20,7 +20,7 @@ package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.conf.AbstractKubernetesComponentConf;
+import org.apache.flink.kubernetes.kubeclient.parameter.AbstractKubernetesParameters;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
@@ -34,9 +34,9 @@ import io.fabric8.kubernetes.api.model.VolumeMount;
  */
 public class VolumesMountDecorator extends AbstractKubernetesStepDecorator {
 
-	private final AbstractKubernetesComponentConf kubernetesComponentConf;
+	private final AbstractKubernetesParameters kubernetesComponentConf;
 
-	public VolumesMountDecorator(AbstractKubernetesComponentConf kubernetesComponentConf) {
+	public VolumesMountDecorator(AbstractKubernetesParameters kubernetesComponentConf) {
 		super(kubernetesComponentConf.getFlinkConfiguration());
 		this.kubernetesComponentConf = kubernetesComponentConf;
 	}

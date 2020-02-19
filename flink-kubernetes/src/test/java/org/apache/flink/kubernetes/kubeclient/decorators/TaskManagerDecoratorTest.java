@@ -24,7 +24,7 @@ import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesTaskManagerConf;
+import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesTaskManagerParameters;
 import org.apache.flink.runtime.clusterframework.ContaineredTaskManagerParameters;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessSpec;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
@@ -54,7 +54,7 @@ public class TaskManagerDecoratorTest {
 
 	protected ContaineredTaskManagerParameters containeredTaskManagerParameters;
 
-	protected KubernetesTaskManagerConf kubernetesTaskManagerConf;
+	protected KubernetesTaskManagerParameters kubernetesTaskManagerParameters;
 
 	protected final FlinkPod baseFlinkPod = new FlinkPodBuilder().build();
 
@@ -70,7 +70,7 @@ public class TaskManagerDecoratorTest {
 		taskExecutorProcessSpec = TaskExecutorProcessUtils.processSpecFromConfig(flinkConfig);
 		containeredTaskManagerParameters = ContaineredTaskManagerParameters.create(flinkConfig, taskExecutorProcessSpec,
 				flinkConfig.getInteger(TaskManagerOptions.NUM_TASK_SLOTS));
-		kubernetesTaskManagerConf = new KubernetesTaskManagerConf(
+		kubernetesTaskManagerParameters = new KubernetesTaskManagerParameters(
 				flinkConfig,
 				POD_NAME,
 				TOTAL_PROCESS_MEMORY,

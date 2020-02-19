@@ -61,7 +61,7 @@ public class InternalServiceDecoratorTest extends JobManagerDecoratorTest {
 		this.flinkConfig.set(JobManagerOptions.PORT, _RPC_PORT);
 		this.flinkConfig.set(BlobServerOptions.PORT, Integer.toString(_BLOB_SERVER_PORT));
 
-		this.internalServiceDecorator = new InternalServiceDecorator(this.kubernetesJobManagerConf);
+		this.internalServiceDecorator = new InternalServiceDecorator(this.kubernetesJobManagerParameters);
 	}
 
 	@Test

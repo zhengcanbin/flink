@@ -25,7 +25,7 @@ import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkKubeClient;
 import org.apache.flink.kubernetes.kubeclient.KubeClientFactory;
 import org.apache.flink.kubernetes.kubeclient.builder.KubernetesTaskManagerBuilder;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesTaskManagerConf;
+import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesTaskManagerParameters;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.clusterframework.ApplicationStatus;
@@ -254,7 +254,7 @@ public class KubernetesResourceManager extends ActiveResourceManager<KubernetesW
 		final String dynamicProperties =
 			BootstrapTools.getDynamicPropertiesAsString(flinkClientConfig, flinkConfig);
 
-		final KubernetesTaskManagerConf kubernetesTaskManagerConf = new KubernetesTaskManagerConf(
+		final KubernetesTaskManagerParameters kubernetesTaskManagerParameters = new KubernetesTaskManagerParameters(
 			flinkConfig,
 			podName,
 			defaultMemoryMB,
@@ -262,7 +262,7 @@ public class KubernetesResourceManager extends ActiveResourceManager<KubernetesW
 			taskManagerParameters);
 
 		final KubernetesPod taskManagerPod =
-			KubernetesTaskManagerBuilder.buildTaskManagerComponent(kubernetesTaskManagerConf);
+			KubernetesTaskManagerBuilder.buildTaskManagerComponent(kubernetesTaskManagerParameters);
 
 		log.info("TaskManager {} will be started with {}.", podName, taskExecutorProcessSpec);
 		kubeClient.createTaskManagerPod(taskManagerPod);

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.conf;
+package org.apache.flink.kubernetes.kubeclient.parameter;
 
 import org.apache.flink.client.deployment.ClusterSpecification;
 import org.apache.flink.configuration.BlobServerOptions;
@@ -39,9 +39,9 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 /**
- * General tests for the {@link KubernetesJobManagerConf}.
+ * General tests for the {@link KubernetesJobManagerParameters}.
  */
-public class KubernetesJobManagerConfTest {
+public class KubernetesJobManagerParametersTest {
 
 	private static final int JOB_MANAGER_MEMORY = 768;
 	private static final double JOB_MANAGER_CPU = 2.0;
@@ -54,8 +54,8 @@ public class KubernetesJobManagerConfTest {
 		.setSlotsPerTaskManager(1)
 		.createClusterSpecification();
 
-	private final KubernetesJobManagerConf kubernetesJobManagerConf =
-		new KubernetesJobManagerConf(flinkConfig, clusterSpecification);
+	private final KubernetesJobManagerParameters kubernetesJobManagerParameters =
+		new KubernetesJobManagerParameters(flinkConfig, clusterSpecification);
 
 	@Test
 	public void testGetEnvironments() {
@@ -66,38 +66,38 @@ public class KubernetesJobManagerConfTest {
 		expectedEnvironments.forEach((k, v) ->
 			flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX + k, v));
 
-		final Map<String, String> resultEnvironments = kubernetesJobManagerConf.getEnvironments();
+		final Map<String, String> resultEnvironments = kubernetesJobManagerParameters.getEnvironments();
 
 		assertEquals(expectedEnvironments, resultEnvironments);
 	}
 
 	@Test
 	public void testGetJobManagerMemoryMB() {
-		assertEquals(JOB_MANAGER_MEMORY, kubernetesJobManagerConf.getJobManagerMemoryMB());
+		assertEquals(JOB_MANAGER_MEMORY, kubernetesJobManagerParameters.getJobManagerMemoryMB());
 	}
 
 	@Test
 	public void testGetJobManagerCPU() {
 		flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_CPU, JOB_MANAGER_CPU);
-		assertEquals(JOB_MANAGER_CPU, kubernetesJobManagerConf.getJobManagerCPU(), 0.00001);
+		assertEquals(JOB_MANAGER_CPU, kubernetesJobManagerParameters.getJobManagerCPU(), 0.00001);
 	}
 
 	@Test
 	public void testGetRestPort() {
 		flinkConfig.set(RestOptions.PORT, 12345);
-		assertEquals(12345, kubernetesJobManagerConf.getRestPort());
+		assertEquals(12345, kubernetesJobManagerParameters.getRestPort());
 	}
 
 	@Test
 	public void testGetRpcPort() {
 		flinkConfig.set(JobManagerOptions.PORT, 1234);
-		assertEquals(1234, kubernetesJobManagerConf.getRPCPort());
+		assertEquals(1234, kubernetesJobManagerParameters.getRPCPort());
 	}
 
 	@Test
 	public void testGetBlobServerPort() {
 		flinkConfig.set(BlobServerOptions.PORT, "2345");
-		assertEquals(2345, kubernetesJobManagerConf.getBlobServerPort());
+		assertEquals(2345, kubernetesJobManagerParameters.getBlobServerPort());
 	}
 
 	@Test
@@ -105,7 +105,7 @@ public class KubernetesJobManagerConfTest {
 		flinkConfig.set(BlobServerOptions.PORT, "1000-2000");
 
 		try {
-			kubernetesJobManagerConf.getBlobServerPort();
+			kubernetesJobManagerParameters.getBlobServerPort();
 			fail("Should fail with an exception.");
 		} catch (FlinkRuntimeException e) {
 				assertThat(
@@ -120,7 +120,7 @@ public class KubernetesJobManagerConfTest {
 		flinkConfig.set(BlobServerOptions.PORT, "0");
 
 		try {
-			kubernetesJobManagerConf.getBlobServerPort();
+			kubernetesJobManagerParameters.getBlobServerPort();
 			fail("Should fail with an exception.");
 		} catch (IllegalArgumentException e) {
 			assertThat(
@@ -133,14 +133,14 @@ public class KubernetesJobManagerConfTest {
 	@Test
 	public void testGetServiceAccount() {
 		flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_SERVICE_ACCOUNT, "flink");
-		assertEquals("flink", kubernetesJobManagerConf.getServiceAccount());
+		assertEquals("flink", kubernetesJobManagerParameters.getServiceAccount());
 	}
 
 	@Test
 	public void testGetEntrypointMainClass() {
 		final String entrypointClass = "org.flink.kubernetes.Entrypoint";
 		flinkConfig.set(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS, entrypointClass);
-		assertEquals(entrypointClass, kubernetesJobManagerConf.getEntrypointMainClass());
+		assertEquals(entrypointClass, kubernetesJobManagerParameters.getEntrypointMainClass());
 	}
 
 	@Test
@@ -148,6 +148,6 @@ public class KubernetesJobManagerConfTest {
 		flinkConfig.set(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE,
 			KubernetesConfigOptions.ServiceExposedType.NodePort.toString());
 		assertEquals(KubernetesConfigOptions.ServiceExposedType.NodePort.toString(),
-			kubernetesJobManagerConf.getRestServiceExposedType());
+			kubernetesJobManagerParameters.getRestServiceExposedType());
 	}
 }

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.conf;
+package org.apache.flink.kubernetes.kubeclient.parameter;
 
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
@@ -38,7 +38,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * A utility class helps parse, verify, and manage the Kubernetes side parameters
  * that are used for constructing the TaskManager Pod.
  */
-public class KubernetesTaskManagerConf extends AbstractKubernetesComponentConf {
+public class KubernetesTaskManagerParameters extends AbstractKubernetesParameters {
 
 	public static final String TASK_MANAGER_MAIN_CONTAINER_NAME = "flink-task-manager";
 
@@ -50,7 +50,7 @@ public class KubernetesTaskManagerConf extends AbstractKubernetesComponentConf {
 
 	private final ContaineredTaskManagerParameters containeredTaskManagerParameters;
 
-	public KubernetesTaskManagerConf(
+	public KubernetesTaskManagerParameters(
 			Configuration flinkConfig,
 			String podName,
 			int taskManagerMemoryMB,

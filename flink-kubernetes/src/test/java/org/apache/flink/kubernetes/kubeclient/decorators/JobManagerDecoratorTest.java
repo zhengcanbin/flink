@@ -23,7 +23,7 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesJobManagerConf;
+import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesJobManagerParameters;
 
 import org.junit.Before;
 
@@ -40,7 +40,7 @@ public class JobManagerDecoratorTest {
 
 	protected Configuration flinkConfig;
 
-	KubernetesJobManagerConf kubernetesJobManagerConf;
+	KubernetesJobManagerParameters kubernetesJobManagerParameters;
 
 	FlinkPod baseFlinkPod;
 
@@ -55,7 +55,7 @@ public class JobManagerDecoratorTest {
 			.setSlotsPerTaskManager(3)
 			.createClusterSpecification();
 
-		this.kubernetesJobManagerConf = new KubernetesJobManagerConf(flinkConfig, clusterSpecification);
+		this.kubernetesJobManagerParameters = new KubernetesJobManagerParameters(flinkConfig, clusterSpecification);
 
 		this.baseFlinkPod = new FlinkPodBuilder().build();
 	}

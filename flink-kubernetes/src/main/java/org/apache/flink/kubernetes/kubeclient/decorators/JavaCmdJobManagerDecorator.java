@@ -19,7 +19,7 @@
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesJobManagerConf;
+import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.clusterframework.BootstrapTools;
 
@@ -33,26 +33,26 @@ import java.util.Arrays;
  */
 public class JavaCmdJobManagerDecorator extends AbstractKubernetesStepDecorator {
 
-	private final KubernetesJobManagerConf kubernetesJobManagerConf;
+	private final KubernetesJobManagerParameters kubernetesJobManagerParameters;
 
-	public JavaCmdJobManagerDecorator(KubernetesJobManagerConf kubernetesJobManagerConf) {
-		super(kubernetesJobManagerConf.getFlinkConfiguration());
-		this.kubernetesJobManagerConf = kubernetesJobManagerConf;
+	public JavaCmdJobManagerDecorator(KubernetesJobManagerParameters kubernetesJobManagerParameters) {
+		super(kubernetesJobManagerParameters.getFlinkConfiguration());
+		this.kubernetesJobManagerParameters = kubernetesJobManagerParameters;
 	}
 
 	@Override
 	protected Container decorateMainContainer(Container container) {
 		final String startCommand = getJobManagerStartCommand(
 				configuration,
-				kubernetesJobManagerConf.getJobManagerMemoryMB(),
-				kubernetesJobManagerConf.getFlinkConfDirInPod(),
-				kubernetesJobManagerConf.getFlinkLogDirInPod(),
-				kubernetesJobManagerConf.hasLogback(),
-				kubernetesJobManagerConf.hasLog4j(),
-				kubernetesJobManagerConf.getEntrypointMainClass());
+				kubernetesJobManagerParameters.getJobManagerMemoryMB(),
+				kubernetesJobManagerParameters.getFlinkConfDirInPod(),
+				kubernetesJobManagerParameters.getFlinkLogDirInPod(),
+				kubernetesJobManagerParameters.hasLogback(),
+				kubernetesJobManagerParameters.hasLog4j(),
+				kubernetesJobManagerParameters.getEntrypointMainClass());
 
 		return new ContainerBuilder(container)
-				.withCommand(kubernetesJobManagerConf.getContainerEntrypoint())
+				.withCommand(kubernetesJobManagerParameters.getContainerEntrypoint())
 				.withArgs(Arrays.asList("/bin/bash", "-c", startCommand))
 				.build();
 	}

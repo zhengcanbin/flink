@@ -61,7 +61,7 @@ public class ExternalServiceDecoratorTest extends JobManagerDecoratorTest {
 		this.flinkConfig.set(JobManagerOptions.PORT, _RPC_PORT);
 		this.flinkConfig.set(BlobServerOptions.PORT, Integer.toString(_BLOB_SERVER_PORT));
 
-		this.externalServiceDecorator = new ExternalServiceDecorator(this.kubernetesJobManagerConf);
+		this.externalServiceDecorator = new ExternalServiceDecorator(this.kubernetesJobManagerParameters);
 	}
 
 	@Test

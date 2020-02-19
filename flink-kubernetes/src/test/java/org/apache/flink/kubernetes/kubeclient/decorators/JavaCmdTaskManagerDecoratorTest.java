@@ -102,7 +102,7 @@ public class JavaCmdTaskManagerDecoratorTest extends TaskManagerDecoratorTest {
 		map.put(ConfigConstants.ENV_FLINK_CONF_DIR, flinkConfDir.toString());
 		TestBaseUtils.setEnv(map);
 
-		this.javaCmdTaskManagerDecorator = new JavaCmdTaskManagerDecorator(this.kubernetesTaskManagerConf);
+		this.javaCmdTaskManagerDecorator = new JavaCmdTaskManagerDecorator(this.kubernetesTaskManagerParameters);
 	}
 
 	@Test

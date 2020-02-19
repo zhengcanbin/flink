@@ -45,7 +45,7 @@ import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
 import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint;
 import org.apache.flink.kubernetes.kubeclient.builder.KubernetesJobManagerBuilder;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesJobManagerConf;
+import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.test.util.TestBaseUtils;
@@ -136,9 +136,9 @@ public class Fabric8FlinkKubeClientTest {
 				.setSlotsPerTaskManager(3)
 				.createClusterSpecification();
 
-		final KubernetesJobManagerConf kubernetesJobManagerConf = new KubernetesJobManagerConf(flinkConfig, clusterSpecification);
+		final KubernetesJobManagerParameters kubernetesJobManagerParameters = new KubernetesJobManagerParameters(flinkConfig, clusterSpecification);
 
-		this.kubernetesJobManagerSpecification = KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesJobManagerConf);
+		this.kubernetesJobManagerSpecification = KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesJobManagerParameters);
 
 		this.kubeClient = server.getClient();
 		this.flinkKubeClient = new Fabric8FlinkKubeClient(flinkConfig, this.kubeClient);

@@ -19,7 +19,7 @@
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.kubernetes.kubeclient.conf.KubernetesTaskManagerConf;
+import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesTaskManagerParameters;
 import org.apache.flink.kubernetes.taskmanager.KubernetesTaskExecutorRunner;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.clusterframework.ContaineredTaskManagerParameters;
@@ -39,36 +39,36 @@ import java.util.Arrays;
  */
 public class JavaCmdTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 
-	private final KubernetesTaskManagerConf kubernetesTaskManagerConf;
+	private final KubernetesTaskManagerParameters kubernetesTaskManagerParameters;
 
-	public JavaCmdTaskManagerDecorator(KubernetesTaskManagerConf kubernetesTaskManagerConf) {
-		super(kubernetesTaskManagerConf.getFlinkConfiguration());
-		this.kubernetesTaskManagerConf = kubernetesTaskManagerConf;
+	public JavaCmdTaskManagerDecorator(KubernetesTaskManagerParameters kubernetesTaskManagerParameters) {
+		super(kubernetesTaskManagerParameters.getFlinkConfiguration());
+		this.kubernetesTaskManagerParameters = kubernetesTaskManagerParameters;
 	}
 
 	@Override
 	protected Container decorateMainContainer(Container container) {
 		return new ContainerBuilder(container)
-				.withCommand(kubernetesTaskManagerConf.getContainerEntrypoint())
+				.withCommand(kubernetesTaskManagerParameters.getContainerEntrypoint())
 				.withArgs(Arrays.asList("/bin/bash", "-c", getTaskManagerStartCommand()))
 				.build();
 	}
 
 	private String getTaskManagerStartCommand() {
-		final String confDirInPod = kubernetesTaskManagerConf.getFlinkConfDirInPod();
+		final String confDirInPod = kubernetesTaskManagerParameters.getFlinkConfDirInPod();
 
-		final String logDirInPod = kubernetesTaskManagerConf.getFlinkLogDirInPod();
+		final String logDirInPod = kubernetesTaskManagerParameters.getFlinkLogDirInPod();
 
 		final String mainClassArgs = "--" + CommandLineOptions.CONFIG_DIR_OPTION.getLongOpt() + " " +
-			confDirInPod + " " + kubernetesTaskManagerConf.getDynamicProperties();
+			confDirInPod + " " + kubernetesTaskManagerParameters.getDynamicProperties();
 
 		return getTaskManagerStartCommand(
-			kubernetesTaskManagerConf.getFlinkConfiguration(),
-			kubernetesTaskManagerConf.getContaineredTaskManagerParameters(),
+			kubernetesTaskManagerParameters.getFlinkConfiguration(),
+			kubernetesTaskManagerParameters.getContaineredTaskManagerParameters(),
 			confDirInPod,
 			logDirInPod,
-			kubernetesTaskManagerConf.hasLogback(),
-			kubernetesTaskManagerConf.hasLog4j(),
+			kubernetesTaskManagerParameters.hasLogback(),
+			kubernetesTaskManagerParameters.hasLog4j(),
 			KubernetesTaskExecutorRunner.class.getCanonicalName(),
 			mainClassArgs);
 	}
