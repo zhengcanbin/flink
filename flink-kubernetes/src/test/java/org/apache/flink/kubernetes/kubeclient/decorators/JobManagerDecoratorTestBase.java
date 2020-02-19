@@ -41,7 +41,7 @@ public class JobManagerDecoratorTestBase extends KubernetesTestBase {
 	protected static final int RPC_PORT = 7123;
 	protected static final int BLOB_SERVER_PORT = 8346;
 
-	KubernetesJobManagerParameters kubernetesJobManagerParameters;
+	protected KubernetesJobManagerParameters kubernetesJobManagerParameters;
 
 	FlinkPod baseFlinkPod;
 

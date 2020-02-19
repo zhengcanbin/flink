@@ -18,22 +18,16 @@
 
 package org.apache.flink.kubernetes.kubeclient.builder;
 
-import org.apache.flink.client.deployment.ClusterSpecification;
-import org.apache.flink.configuration.BlobServerOptions;
-import org.apache.flink.configuration.ConfigConstants;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.ResourceManagerOptions;
-import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.kubernetes.KubernetesTestUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
 import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint;
 import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerSpecification;
+import org.apache.flink.kubernetes.kubeclient.decorators.JobManagerDecoratorTestBase;
 import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
-import org.apache.flink.test.util.TestBaseUtils;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Container;
@@ -44,17 +38,14 @@ import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.apache.flink.configuration.GlobalConfiguration.FLINK_CONF_FILENAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -62,23 +53,10 @@ import static org.junit.Assert.assertTrue;
 /**
  * General tests for the {@link KubernetesJobManagerBuilder}.
  */
-public class KubernetesJobManagerBuilderTest {
+public class KubernetesJobManagerBuilderTest extends JobManagerDecoratorTestBase {
 
-	private static final String _CLUSTER_ID = "cluster-id-test";
-	private static final String _NAMESPACE = "default-test";
-	private static final String _CONTAINER_IMAGE = "flink:latest";
-	private static final String _CONTAINER_IMAGE_PULL_POLICY = "IfNotPresent";
-
-	private static final int _REST_PORT = 9081;
-	private static final int _RPC_PORT = 7123;
-	private static final int _BLOB_SERVER_PORT = 8346;
-
-	private static final double _JOB_MANAGER_CPU = 2.0;
-	private static final int _JOB_MANAGER_MEMORY = 768;
-
-	private static final String _SERVICE_ACCOUNT_NAME = "service-test";
-
-	private static final String _ENTRY_POINT_CLASS = KubernetesSessionClusterEntrypoint.class.getCanonicalName();
+	private static final String SERVICE_ACCOUNT_NAME = "service-test";
+	private static final String ENTRY_POINT_CLASS = KubernetesSessionClusterEntrypoint.class.getCanonicalName();
 
 	private final Map<String, String> customizedEnvs = new HashMap<String, String>() {
 		{
@@ -87,85 +65,58 @@ public class KubernetesJobManagerBuilderTest {
 		}
 	};
 
-	@Rule
-	public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
 	private KubernetesJobManagerSpecification kubernetesJobManagerSpecification;
 
 	@Before
-	public void setup() throws IOException {
-		final File flinkConfDir = temporaryFolder.newFolder().getAbsoluteFile();
-		final Map<String, String> map = new HashMap<>();
-		map.put(ConfigConstants.ENV_FLINK_CONF_DIR, flinkConfDir.toString());
-		TestBaseUtils.setEnv(map);
+	public void setup() throws Exception {
+		super.setup();
 
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
 
-		final Configuration flinkConfig = new Configuration();
-		flinkConfig.set(KubernetesConfigOptions.CLUSTER_ID, _CLUSTER_ID);
-		flinkConfig.set(KubernetesConfigOptions.NAMESPACE, _NAMESPACE);
-		flinkConfig.set(KubernetesConfigOptions.CONTAINER_IMAGE, _CONTAINER_IMAGE);
-		flinkConfig.set(KubernetesConfigOptions.CONTAINER_IMAGE_PULL_POLICY, _CONTAINER_IMAGE_PULL_POLICY);
-		flinkConfig.set(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS, _ENTRY_POINT_CLASS);
-		flinkConfig.set(RestOptions.PORT, _REST_PORT);
-		flinkConfig.set(JobManagerOptions.PORT, _RPC_PORT);
-		flinkConfig.set(BlobServerOptions.PORT, Integer.toString(_BLOB_SERVER_PORT));
-		flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_CPU, _JOB_MANAGER_CPU);
-		flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_SERVICE_ACCOUNT, _SERVICE_ACCOUNT_NAME);
+		flinkConfig.set(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS, ENTRY_POINT_CLASS);
+		flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_SERVICE_ACCOUNT, SERVICE_ACCOUNT_NAME);
 		customizedEnvs.forEach((k, v) ->
 			flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX + k, v));
 
-		final ClusterSpecification clusterSpecification = new ClusterSpecification.ClusterSpecificationBuilder()
-			.setMasterMemoryMB(_JOB_MANAGER_MEMORY)
-			.setTaskManagerMemoryMB(1000)
-			.setSlotsPerTaskManager(3)
-			.createClusterSpecification();
-
-		final KubernetesJobManagerParameters kubernetesJobManagerParameters = new KubernetesJobManagerParameters(flinkConfig, clusterSpecification);
-
-		this.kubernetesJobManagerSpecification = KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesJobManagerParameters);
+		this.kubernetesJobManagerSpecification =
+			KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesJobManagerParameters);
 	}
 
 	@Test
-	public void testDeploymentMetadata() throws IOException {
-		final Deployment deployment = this.kubernetesJobManagerSpecification.getDeployment();
-		assertEquals(_CLUSTER_ID, deployment.getMetadata().getName());
-
-		final Map<String, String> commonLabels =  new HashMap<>();
-		commonLabels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
-		commonLabels.put(Constants.LABEL_APP_KEY, _CLUSTER_ID);
-		assertEquals(commonLabels, deployment.getMetadata().getLabels());
+	public void testDeploymentMetadata() {
+		final Deployment resultDeployment = this.kubernetesJobManagerSpecification.getDeployment();
+		assertEquals(CLUSTER_ID, resultDeployment.getMetadata().getName());
+		assertEquals(getCommonLabels(), resultDeployment.getMetadata().getLabels());
 	}
 
 	@Test
 	public void testDeploymentSpec() {
-		final DeploymentSpec deploymentSpec = this.kubernetesJobManagerSpecification.getDeployment().getSpec();
-		assertEquals(1, deploymentSpec.getReplicas().intValue());
+		final DeploymentSpec resultDeploymentSpec = this.kubernetesJobManagerSpecification.getDeployment().getSpec();
+		assertEquals(1, resultDeploymentSpec.getReplicas().intValue());
 
-		final Map<String, String> expectedLabels =  new HashMap<>();
-		expectedLabels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
-		expectedLabels.put(Constants.LABEL_APP_KEY, _CLUSTER_ID);
+		final Map<String, String> expectedLabels =  new HashMap<>(getCommonLabels());
 		expectedLabels.put(Constants.LABEL_COMPONENT_KEY, Constants.LABEL_COMPONENT_JOB_MANAGER);
 
-		assertEquals(expectedLabels, deploymentSpec.getTemplate().getMetadata().getLabels());
-		assertEquals(expectedLabels, deploymentSpec.getSelector().getMatchLabels());
+		assertEquals(expectedLabels, resultDeploymentSpec.getTemplate().getMetadata().getLabels());
+		assertEquals(expectedLabels, resultDeploymentSpec.getSelector().getMatchLabels());
 
-		assertNotNull(deploymentSpec.getTemplate().getSpec());
+		assertNotNull(resultDeploymentSpec.getTemplate().getSpec());
 	}
 
 	@Test
 	public void testPodSpec() {
-		final PodSpec resultedPodSpec = this.kubernetesJobManagerSpecification.getDeployment().getSpec().getTemplate().getSpec();
+		final PodSpec resultPodSpec =
+			this.kubernetesJobManagerSpecification.getDeployment().getSpec().getTemplate().getSpec();
 
-		assertEquals(1, resultedPodSpec.getContainers().size());
-		assertEquals(_SERVICE_ACCOUNT_NAME, resultedPodSpec.getServiceAccountName());
-		assertEquals(1, resultedPodSpec.getVolumes().size());
+		assertEquals(1, resultPodSpec.getContainers().size());
+		assertEquals(SERVICE_ACCOUNT_NAME, resultPodSpec.getServiceAccountName());
+		assertEquals(1, resultPodSpec.getVolumes().size());
 
-		final Container resultedMainContainer = resultedPodSpec.getContainers().get(0);
+		final Container resultedMainContainer = resultPodSpec.getContainers().get(0);
 		assertEquals(KubernetesJobManagerParameters.JOB_MANAGER_MAIN_CONTAINER_NAME, resultedMainContainer.getName());
-		assertEquals(_CONTAINER_IMAGE, resultedMainContainer.getImage());
-		assertEquals(_CONTAINER_IMAGE_PULL_POLICY, resultedMainContainer.getImagePullPolicy());
+		assertEquals(CONTAINER_IMAGE, resultedMainContainer.getImage());
+		assertEquals(CONTAINER_IMAGE_PULL_POLICY, resultedMainContainer.getImagePullPolicy());
 
 		assertEquals(3, resultedMainContainer.getEnv().size());
 		assertTrue(resultedMainContainer.getEnv()
@@ -175,8 +126,8 @@ public class KubernetesJobManagerBuilderTest {
 		assertEquals(3, resultedMainContainer.getPorts().size());
 
 		final Map<String, Quantity> requests = resultedMainContainer.getResources().getRequests();
-		assertEquals(Double.toString(_JOB_MANAGER_CPU), requests.get("cpu").getAmount());
-		assertEquals(_JOB_MANAGER_MEMORY + "Mi", requests.get("memory").getAmount());
+		assertEquals(Double.toString(JOB_MANAGER_CPU), requests.get("cpu").getAmount());
+		assertEquals(JOB_MANAGER_MEMORY + "Mi", requests.get("memory").getAmount());
 
 		assertEquals(1, resultedMainContainer.getCommand().size());
 		assertEquals(3, resultedMainContainer.getArgs().size());
@@ -186,74 +137,74 @@ public class KubernetesJobManagerBuilderTest {
 
 	@Test
 	public void testAdditionalResourcesSize() {
-		final List<HasMetadata> resultedAdditionalResources = this.kubernetesJobManagerSpecification.getAccompanyingResources();
-		assertEquals(3, resultedAdditionalResources.size());
+		final List<HasMetadata> resultAdditionalResources = this.kubernetesJobManagerSpecification.getAccompanyingResources();
+		assertEquals(3, resultAdditionalResources.size());
 
-		final List<HasMetadata> resultedServices = resultedAdditionalResources
+		final List<HasMetadata> resultServices = resultAdditionalResources
 			.stream()
 			.filter(x -> x instanceof Service)
 			.collect(Collectors.toList());
-		assertEquals(2, resultedServices.size());
+		assertEquals(2, resultServices.size());
 
-		final List<HasMetadata> resultedConfigMaps = resultedAdditionalResources
+		final List<HasMetadata> resultConfigMaps = resultAdditionalResources
 			.stream()
 			.filter(x -> x instanceof ConfigMap)
 			.collect(Collectors.toList());
-		assertEquals(1, resultedConfigMaps.size());
+		assertEquals(1, resultConfigMaps.size());
 	}
 
 	@Test
 	public void testServices() {
-		final List<Service> services = this.kubernetesJobManagerSpecification.getAccompanyingResources()
+		final List<Service> resultServices = this.kubernetesJobManagerSpecification.getAccompanyingResources()
 			.stream()
 			.filter(x -> x instanceof Service)
 			.map(x -> (Service) x)
 			.collect(Collectors.toList());
 
-		assertEquals(2, services.size());
+		assertEquals(2, resultServices.size());
 
-		final List<Service> internalServiceCandidates = services
+		final List<Service> internalServiceCandidates = resultServices
 				.stream()
-				.filter(x -> x.getMetadata().getName().equals(KubernetesUtils.getInternalServiceName(_CLUSTER_ID)))
+				.filter(x -> x.getMetadata().getName().equals(KubernetesUtils.getInternalServiceName(CLUSTER_ID)))
 				.collect(Collectors.toList());
 		assertEquals(1, internalServiceCandidates.size());
 
-		final List<Service> restServiceCandidates = services
+		final List<Service> restServiceCandidates = resultServices
 				.stream()
-				.filter(x -> x.getMetadata().getName().equals(KubernetesUtils.getRestServiceName(_CLUSTER_ID)))
+				.filter(x -> x.getMetadata().getName().equals(KubernetesUtils.getRestServiceName(CLUSTER_ID)))
 				.collect(Collectors.toList());
 		assertEquals(1, restServiceCandidates.size());
 
-		final Service resultedInternalService = internalServiceCandidates.get(0);
-		assertEquals(2, resultedInternalService.getMetadata().getLabels().size());
+		final Service resultInternalService = internalServiceCandidates.get(0);
+		assertEquals(2, resultInternalService.getMetadata().getLabels().size());
 
-		assertEquals(resultedInternalService.getSpec().getType(), "ClusterIP");
-		assertEquals(3, resultedInternalService.getSpec().getPorts().size());
-		assertEquals(3, resultedInternalService.getSpec().getSelector().size());
+		assertEquals(resultInternalService.getSpec().getType(), "ClusterIP");
+		assertEquals(3, resultInternalService.getSpec().getPorts().size());
+		assertEquals(3, resultInternalService.getSpec().getSelector().size());
 
-		final Service resultedRestService = restServiceCandidates.get(0);
-		assertEquals(2, resultedRestService.getMetadata().getLabels().size());
+		final Service resultRestService = restServiceCandidates.get(0);
+		assertEquals(2, resultRestService.getMetadata().getLabels().size());
 
-		assertEquals(resultedRestService.getSpec().getType(), "LoadBalancer");
-		assertEquals(1, resultedRestService.getSpec().getPorts().size());
-		assertEquals(3, resultedRestService.getSpec().getSelector().size());
+		assertEquals(resultRestService.getSpec().getType(), "LoadBalancer");
+		assertEquals(1, resultRestService.getSpec().getPorts().size());
+		assertEquals(3, resultRestService.getSpec().getSelector().size());
 	}
 
 	@Test
 	public void testFlinkConfConfigMap() {
-		final ConfigMap resultedConfigMap = (ConfigMap) this.kubernetesJobManagerSpecification.getAccompanyingResources()
+		final ConfigMap resultConfigMap = (ConfigMap) this.kubernetesJobManagerSpecification.getAccompanyingResources()
 			.stream()
 			.filter(x -> x instanceof ConfigMap)
 			.collect(Collectors.toList())
 			.get(0);
 
-		assertEquals(2, resultedConfigMap.getMetadata().getLabels().size());
+		assertEquals(2, resultConfigMap.getMetadata().getLabels().size());
 
-		final Map<String, String> resultedDataMap = resultedConfigMap.getData();
-		assertEquals(3, resultedDataMap.size());
-		assertEquals("some data", resultedDataMap.get("log4j.properties"));
-		assertEquals("some data", resultedDataMap.get("logback.xml"));
-		// todo compare the flink configuration datas
+		final Map<String, String> resultDatas = resultConfigMap.getData();
+		assertEquals(3, resultDatas.size());
+		assertEquals("some data", resultDatas.get("log4j.properties"));
+		assertEquals("some data", resultDatas.get("logback.xml"));
+		assertTrue(resultDatas.get(FLINK_CONF_FILENAME)
+			.contains(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS.key() + ": " + ENTRY_POINT_CLASS));
 	}
-
 }

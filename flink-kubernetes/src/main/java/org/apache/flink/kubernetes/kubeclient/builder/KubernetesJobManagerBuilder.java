@@ -96,7 +96,7 @@ public class KubernetesJobManagerBuilder {
 				.withReplicas(1)
 				.editOrNewTemplate()
 					.editOrNewMetadata()
-						.withLabels(labels)	// todo 这里是否需要使用 Pod 的呢？？？
+						.withLabels(labels)
 						.endMetadata()
 					.withSpec(resolvedPod.getSpec())
 					.endTemplate()
