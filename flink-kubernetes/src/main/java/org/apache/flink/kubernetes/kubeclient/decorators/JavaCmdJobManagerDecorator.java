@@ -28,6 +28,8 @@ import io.fabric8.kubernetes.api.model.ContainerBuilder;
 
 import java.util.Arrays;
 
+import static org.apache.flink.util.Preconditions.checkNotNull;
+
 /**
  * Creates the command and args for the main container which runs the JobManager code.
  */
@@ -37,7 +39,7 @@ public class JavaCmdJobManagerDecorator extends AbstractKubernetesStepDecorator 
 
 	public JavaCmdJobManagerDecorator(KubernetesJobManagerParameters kubernetesJobManagerParameters) {
 		super(kubernetesJobManagerParameters.getFlinkConfiguration());
-		this.kubernetesJobManagerParameters = kubernetesJobManagerParameters;
+		this.kubernetesJobManagerParameters = checkNotNull(kubernetesJobManagerParameters);
 	}
 
 	@Override
