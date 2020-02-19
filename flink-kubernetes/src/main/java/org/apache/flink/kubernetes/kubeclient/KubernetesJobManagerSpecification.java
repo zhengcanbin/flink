@@ -16,18 +16,32 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.resources;
+package org.apache.flink.kubernetes.kubeclient;
 
-import org.apache.flink.configuration.Configuration;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
+import java.util.List;
 
 /**
- * Represent KubernetesConfigMap resource in kubernetes.
+ *	Composition of the created Kubernetes components that represents a Flink application.
  */
-public class KubernetesConfigMap extends KubernetesResource<ConfigMap> {
+public class KubernetesJobManagerSpecification {
 
-	public KubernetesConfigMap(Configuration flinkConfig) {
-		super(flinkConfig, new ConfigMap());
+	private Deployment deployment;
+
+	private List<HasMetadata> accompanyingResources;
+
+	public KubernetesJobManagerSpecification(Deployment deployment, List<HasMetadata> accompanyingResources) {
+		this.deployment = deployment;
+		this.accompanyingResources = accompanyingResources;
+	}
+
+	public Deployment getDeployment() {
+		return deployment;
+	}
+
+	public List<HasMetadata> getAccompanyingResources() {
+		return accompanyingResources;
 	}
 }

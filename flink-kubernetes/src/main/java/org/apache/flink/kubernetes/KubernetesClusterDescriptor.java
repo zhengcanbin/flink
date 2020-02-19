@@ -36,7 +36,9 @@ import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal
 import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint;
 import org.apache.flink.kubernetes.kubeclient.Endpoint;
 import org.apache.flink.kubernetes.kubeclient.FlinkKubeClient;
-import org.apache.flink.kubernetes.kubeclient.resources.KubernetesService;
+import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerSpecification;
+import org.apache.flink.kubernetes.kubeclient.builder.KubernetesJobManagerBuilder;
+import org.apache.flink.kubernetes.kubeclient.parameter.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.entrypoint.ClusterEntrypoint;
@@ -164,10 +166,6 @@ public class KubernetesClusterDescriptor implements ClusterDescriptor<String> {
 			TaskManagerOptions.RPC_PORT,
 			Constants.TASK_MANAGER_RPC_PORT);
 
-		// Set jobmanager address to namespaced service name
-		final String nameSpace = flinkConfig.getString(KubernetesConfigOptions.NAMESPACE);
-		flinkConfig.setString(JobManagerOptions.ADDRESS, clusterId + "." + nameSpace);
-
 		if (HighAvailabilityMode.isHighAvailabilityModeActivated(flinkConfig)) {
 			flinkConfig.setString(HighAvailabilityOptions.HA_CLUSTER_ID, clusterId);
 			KubernetesUtils.checkAndUpdatePortConfigOption(
@@ -177,24 +175,10 @@ public class KubernetesClusterDescriptor implements ClusterDescriptor<String> {
 		}
 
 		try {
-			final KubernetesService internalSvc = client.createInternalService(clusterId).get();
-			// Update the service id in Flink config, it will be used for gc.
-			final String serviceId = internalSvc.getInternalResource().getMetadata().getUid();
-			if (serviceId != null) {
-				flinkConfig.setString(KubernetesConfigOptionsInternal.SERVICE_ID, serviceId);
-			} else {
-				throw new ClusterDeploymentException("Get service id failed.");
-			}
-
-			// Create the rest service when exposed type is not ClusterIp.
-			final String restSvcExposedType = flinkConfig.getString(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE);
-			if (!restSvcExposedType.equals(KubernetesConfigOptions.ServiceExposedType.ClusterIP.toString())) {
-				client.createRestService(clusterId).get();
-			}
-
-			client.createConfigMap();
-			client.createFlinkMasterDeployment(clusterSpecification);
-
+			final KubernetesJobManagerParameters kubernetesJobManagerParameters = new KubernetesJobManagerParameters(flinkConfig, clusterSpecification);
+			final KubernetesJobManagerSpecification kubernetesJobManagerSpec =
+				KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesJobManagerParameters);
+			client.createFlinkJobManagerComponent(kubernetesJobManagerSpec);
 			return createClusterClientProvider(clusterId);
 		} catch (Exception e) {
 			client.handleException(e);

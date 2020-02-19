@@ -16,31 +16,20 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.resources;
+package org.apache.flink.kubernetes;
 
-import io.fabric8.kubernetes.api.model.Pod;
+import org.apache.flink.shaded.guava18.com.google.common.io.Files;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
- * Represent KubernetesPod resource in kubernetes.
+ * Utilities for the Kubernetes tests.
  */
-public class KubernetesPod extends KubernetesResource<Pod> {
+public class KubernetesTestUtils {
 
-	public KubernetesPod(Pod pod) {
-		super(pod);
-	}
-
-	public String getName() {
-		return this.getInternalResource().getMetadata().getName();
-	}
-
-	public boolean isTerminated() {
-		if (getInternalResource().getStatus() != null) {
-			return getInternalResource()
-				.getStatus()
-				.getContainerStatuses()
-				.stream()
-				.anyMatch(e -> e.getState() != null && e.getState().getTerminated() != null);
-		}
-		return false;
+	public static void createTemporyFile(String data, File directory, String fileName) throws IOException {
+		Files.write(data, new File(directory, fileName), StandardCharsets.UTF_8);
 	}
 }
