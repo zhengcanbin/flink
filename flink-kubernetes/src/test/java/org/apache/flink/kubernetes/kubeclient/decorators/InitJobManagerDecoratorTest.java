@@ -51,7 +51,7 @@ import static org.junit.Assert.assertTrue;
  * Test for {@link InitJobManagerDecorator}.
  */
 public class InitJobManagerDecoratorTest extends JobManagerDecoratorTestBase {
-	private static final String _SERVICE_ACCOUNT_NAME = "service-test";
+	private static final String SERVICE_ACCOUNT_NAME = "service-test";
 
 	private final Map<String, String> expectedEnvs = new HashMap<String, String>() {
 		{
@@ -68,10 +68,9 @@ public class InitJobManagerDecoratorTest extends JobManagerDecoratorTestBase {
 	public void setup() throws Exception {
 		super.setup();
 
-		expectedEnvs.forEach((k, v) ->
-			flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX + k, v));
-
-		this.flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_SERVICE_ACCOUNT, _SERVICE_ACCOUNT_NAME);
+		this.expectedEnvs.forEach((k, v) ->
+			this.flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX + k, v));
+		this.flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_SERVICE_ACCOUNT, SERVICE_ACCOUNT_NAME);
 
 		final InitJobManagerDecorator initJobManagerDecorator =
 			new InitJobManagerDecorator(this.kubernetesJobManagerParameters);
@@ -118,7 +117,7 @@ public class InitJobManagerDecoratorTest extends JobManagerDecoratorTestBase {
 				.withContainerPort(BLOB_SERVER_PORT)
 			.build());
 
-		assertThat(expectedContainerPorts, equalTo(this.resultMainContainer.getPorts()));
+		assertEquals(expectedContainerPorts, this.resultMainContainer.getPorts());
 	}
 
 	@Test
@@ -149,7 +148,6 @@ public class InitJobManagerDecoratorTest extends JobManagerDecoratorTestBase {
 
 	@Test
 	public void testPodServiceAccountName() {
-		assertEquals(_SERVICE_ACCOUNT_NAME, this.resultPod.getSpec().getServiceAccountName());
+		assertEquals(SERVICE_ACCOUNT_NAME, this.resultPod.getSpec().getServiceAccountName());
 	}
-
 }

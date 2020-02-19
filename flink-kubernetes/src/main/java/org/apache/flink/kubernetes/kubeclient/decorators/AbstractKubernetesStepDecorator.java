@@ -33,7 +33,7 @@ import java.util.List;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
- * An abstract {@link KubernetesStepDecorator} containing some common implementations for different plug-in features
+ * An abstract {@link KubernetesStepDecorator} contains common implementations for different plug-in features
  * while providing two additional methods.
  */
 public abstract class AbstractKubernetesStepDecorator implements KubernetesStepDecorator {

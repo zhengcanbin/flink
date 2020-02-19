@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import static org.apache.flink.kubernetes.utils.Constants.API_VERSION;
 import static org.apache.flink.kubernetes.utils.Constants.ENV_FLINK_POD_IP_ADDRESS;
 import static org.apache.flink.kubernetes.utils.Constants.POD_IP_FIELD_PATH;
+import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * An initializer for the JobManager {@link org.apache.flink.kubernetes.kubeclient.FlinkPod}.
@@ -49,20 +50,18 @@ public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 
 	public InitJobManagerDecorator(KubernetesJobManagerParameters kubernetesJobManagerParameters) {
 		super(kubernetesJobManagerParameters.getFlinkConfiguration());
-		this.kubernetesJobManagerParameters = kubernetesJobManagerParameters;
+		this.kubernetesJobManagerParameters = checkNotNull(kubernetesJobManagerParameters);
 	}
 
 	@Override
 	protected Pod decoratePod(Pod pod) {
 		return new PodBuilder(pod)
 				.editOrNewMetadata()
-				.withLabels(kubernetesJobManagerParameters.getLabels())
-				.endMetadata()
+					.withLabels(kubernetesJobManagerParameters.getLabels())
+					.endMetadata()
 				.editOrNewSpec()
-				// todo code base 没有设置 ServiceAccount
-				.withServiceAccount(kubernetesJobManagerParameters.getServiceAccount())
-				.withServiceAccountName(kubernetesJobManagerParameters.getServiceAccount())
-				.endSpec()
+					.withServiceAccountName(kubernetesJobManagerParameters.getServiceAccount())
+					.endSpec()
 				.build();
 	}
 
@@ -77,13 +76,18 @@ public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 				.withImage(kubernetesJobManagerParameters.getImage())
 				.withImagePullPolicy(kubernetesJobManagerParameters.getImagePullPolicy())
 				.withResources(requirements)
-				.withPorts(buildContainerPortForContainer())
-				.withEnv(buildEnvForContainer())
+				.withPorts(getContainerPorts())
+				.withEnv(getCustomizedEnvs())
+				.addNewEnv()
+					.withName(ENV_FLINK_POD_IP_ADDRESS)
+					.withValueFrom(new EnvVarSourceBuilder()
+						.withNewFieldRef(API_VERSION, POD_IP_FIELD_PATH)
+						.build())
+					.endEnv()
 				.build();
 	}
 
-	// todo 缺少 Port 的名字啊
-	private List<ContainerPort> buildContainerPortForContainer() {
+	private List<ContainerPort> getContainerPorts() {
 		return Arrays.asList(
 			new ContainerPortBuilder()
 				.withContainerPort(kubernetesJobManagerParameters.getRestPort())
@@ -96,21 +100,14 @@ public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 				.build());
 	}
 
-	private List<EnvVar> buildEnvForContainer() {
-		final List<EnvVar> envList = kubernetesJobManagerParameters.getEnvironments()
+	private List<EnvVar> getCustomizedEnvs() {
+		return kubernetesJobManagerParameters.getEnvironments()
 			.entrySet()
 			.stream()
-			.map(kv -> new EnvVar(kv.getKey(), kv.getValue(), null))
+			.map(kv -> new EnvVarBuilder()
+					.withName(kv.getKey())
+					.withValue(kv.getValue())
+					.build())
 			.collect(Collectors.toList());
-
-		envList.add(new EnvVarBuilder()
-			.withName(ENV_FLINK_POD_IP_ADDRESS)
-			.withValueFrom(new EnvVarSourceBuilder()
-				.withNewFieldRef(API_VERSION, POD_IP_FIELD_PATH)
-				.build())
-			.build());
-
-		return envList;
 	}
-
 }
