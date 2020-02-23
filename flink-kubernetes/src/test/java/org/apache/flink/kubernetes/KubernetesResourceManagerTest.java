@@ -63,6 +63,8 @@ import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.PodStatusBuilder;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -90,25 +92,30 @@ import static org.junit.Assert.assertTrue;
 public class KubernetesResourceManagerTest extends KubernetesTestBase {
 
 	private static final Time TIMEOUT = Time.seconds(10L);
+	private static final String JOB_MANAGER_HOST = "jm-host1";
 
 	private TestingFatalErrorHandler testingFatalErrorHandler;
 
-	private final String jobManagerHost = "jm-host1";
-
-	private Configuration flinkConfig;
-
 	private TestingKubernetesResourceManager resourceManager;
-
-	private FlinkKubeClient flinkKubeClient;
 
 	@Before
 	public void setup() throws Exception {
-		testingFatalErrorHandler = new TestingFatalErrorHandler();
-		flinkConfig = new Configuration(FLINK_CONFIG);
-		flinkConfig.set(TaskManagerOptions.TOTAL_PROCESS_MEMORY, MemorySize.parse("1024m"));
+		super.setup();
 
-		flinkKubeClient = getFabric8FlinkKubeClient();
+		flinkConfig.set(TaskManagerOptions.TOTAL_PROCESS_MEMORY, MemorySize.parse("1024m"));
+		flinkConfig.setString(TaskManagerOptions.RPC_PORT, String.valueOf(Constants.TASK_MANAGER_RPC_PORT));
+
+		testingFatalErrorHandler = new TestingFatalErrorHandler();
+
 		resourceManager = createAndStartResourceManager(flinkConfig);
+
+		final Deployment mockDeployment = new DeploymentBuilder()
+			.editOrNewMetadata()
+				.withName(CLUSTER_ID)
+				.withUid(CLUSTER_ID)
+				.endMetadata()
+			.build();
+		kubeClient.apps().deployments().inNamespace(NAMESPACE).create(mockDeployment);
 	}
 
 	@After
@@ -341,7 +348,7 @@ public class KubernetesResourceManagerTest extends KubernetesTestBase {
 	private void registerSlotRequest() throws Exception {
 		CompletableFuture<?> registerSlotRequestFuture = resourceManager.runInMainThread(() -> {
 			resourceManager.getSlotManager().registerSlotRequest(
-				new SlotRequest(new JobID(), new AllocationID(), ResourceProfile.UNKNOWN, jobManagerHost));
+				new SlotRequest(new JobID(), new AllocationID(), ResourceProfile.UNKNOWN, JOB_MANAGER_HOST));
 			return null;
 		});
 		registerSlotRequestFuture.get();
