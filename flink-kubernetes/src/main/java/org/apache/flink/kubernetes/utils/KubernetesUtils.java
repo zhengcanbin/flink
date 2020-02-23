@@ -301,32 +301,7 @@ public class KubernetesUtils {
 			.build();
 	}
 
-	private static String getJavaOpts(Configuration flinkConfig, ConfigOption<String> configOption) {
-		String baseJavaOpts = flinkConfig.getString(CoreOptions.FLINK_JVM_OPTIONS);
-
-		if (flinkConfig.getString(configOption).length() > 0) {
-			return baseJavaOpts + " " + flinkConfig.getString(configOption);
-		} else {
-			return baseJavaOpts;
-		}
-	}
-
-	private static String getLogging(String logFile, String confDir, boolean hasLogback, boolean hasLog4j) {
-		StringBuilder logging = new StringBuilder();
-		if (hasLogback || hasLog4j) {
-			logging.append("-Dlog.file=").append(logFile);
-			if (hasLogback) {
-				logging.append(" -Dlogback.configurationFile=file:").append(confDir).append("/logback.xml");
-			}
-			if (hasLog4j) {
-				logging.append(" -Dlog4j.configuration=file:").append(confDir).append("/log4j.properties");
-				logging.append(" -Dlog4j.configurationFile=file:").append(confDir).append("/log4j.properties");
-			}
-		}
-		return logging.toString();
-	}
-
-	private static String getCommonStartCommand(
+	public static String getCommonStartCommand(
 			Configuration flinkConfig,
 			ClusterComponent mode,
 			String jvmMemOpts,
@@ -368,7 +343,34 @@ public class KubernetesUtils {
 		return BootstrapTools.getStartCommand(commandTemplate, startCommandValues);
 	}
 
-	private enum ClusterComponent {
+	private static String getJavaOpts(Configuration flinkConfig, ConfigOption<String> configOption) {
+		String baseJavaOpts = flinkConfig.getString(CoreOptions.FLINK_JVM_OPTIONS);
+
+		if (flinkConfig.getString(configOption).length() > 0) {
+			return baseJavaOpts + " " + flinkConfig.getString(configOption);
+		} else {
+			return baseJavaOpts;
+		}
+	}
+
+	private static String getLogging(String logFile, String confDir, boolean hasLogback, boolean hasLog4j) {
+		StringBuilder logging = new StringBuilder();
+		if (hasLogback || hasLog4j) {
+			logging.append("-Dlog.file=").append(logFile);
+			if (hasLogback) {
+				logging.append(" -Dlogback.configurationFile=file:").append(confDir).append("/logback.xml");
+			}
+			if (hasLog4j) {
+				logging.append(" -Dlog4j.configurationFile=file:").append(confDir).append("/log4j.properties");
+			}
+		}
+		return logging.toString();
+	}
+
+	/**
+	 * Cluster components.
+	 */
+	public enum ClusterComponent {
 		JOB_MANAGER,
 		TASK_MANAGER
 	}
