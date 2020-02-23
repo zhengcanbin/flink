@@ -27,16 +27,24 @@ import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkKubeClient;
 import org.apache.flink.kubernetes.utils.Constants;
+import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.jobmanager.HighAvailabilityMode;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.LoadBalancerIngress;
+import io.fabric8.kubernetes.api.model.LoadBalancerStatus;
 import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.ServiceStatusBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
+import javax.annotation.Nullable;
+
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 import static org.apache.flink.kubernetes.utils.Constants.ENV_FLINK_POD_IP_ADDRESS;
@@ -47,19 +55,29 @@ import static org.junit.Assert.assertTrue;
  * Tests for the {@link KubernetesClusterDescriptor}.
  */
 public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
-
+	private static final String MOCK_SERVICE_HOST_NAME = "mock-host-name-of-service";
 	private static final String MOCK_SERVICE_IP = "192.168.0.1";
 
 	private final ClusterSpecification clusterSpecification = new ClusterSpecification.ClusterSpecificationBuilder()
 		.createClusterSpecification();
 
+	@Before
+	public void setup() throws Exception {
+		super.setup();
+
+		mockRestServiceWithLoadBalancer(MOCK_SERVICE_HOST_NAME, MOCK_SERVICE_IP);
+	}
+
 	@Test
 	public void testDeploySessionCluster() throws Exception {
+		mockRestServiceWithLoadBalancer(MOCK_SERVICE_HOST_NAME, MOCK_SERVICE_IP);
+
 		final ClusterClient<String> clusterClient = deploySessionCluster();
 		// Check updated flink config options
 		assertEquals(String.valueOf(Constants.BLOB_SERVER_PORT), flinkConfig.getString(BlobServerOptions.PORT));
 		assertEquals(String.valueOf(Constants.TASK_MANAGER_RPC_PORT), flinkConfig.getString(TaskManagerOptions.RPC_PORT));
-		assertEquals(CLUSTER_ID + "." + NAMESPACE, flinkConfig.getString(JobManagerOptions.ADDRESS));
+		assertEquals(KubernetesUtils.getInternalServiceName(CLUSTER_ID) + "." +
+			NAMESPACE, flinkConfig.getString(JobManagerOptions.ADDRESS));
 
 		final Deployment jmDeployment = kubeClient
 			.apps()
@@ -87,8 +105,8 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 
 	@Test
 	public void testDeployHighAvailabilitySessionCluster() throws ClusterDeploymentException {
+		mockRestServiceWithLoadBalancer(MOCK_SERVICE_HOST_NAME, MOCK_SERVICE_IP);
 		flinkConfig.setString(HighAvailabilityOptions.HA_MODE, HighAvailabilityMode.ZOOKEEPER.toString());
-
 		final ClusterClient<String> clusterClient = deploySessionCluster();
 
 		final KubernetesClient kubeClient = server.getClient();
@@ -115,6 +133,8 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 
 	@Test
 	public void testKillCluster() throws Exception {
+		mockRestServiceWithLoadBalancer(MOCK_SERVICE_HOST_NAME, MOCK_SERVICE_IP);
+
 		final FlinkKubeClient flinkKubeClient = getFabric8FlinkKubeClient();
 		final KubernetesClusterDescriptor descriptor = new KubernetesClusterDescriptor(flinkConfig, flinkKubeClient);
 
@@ -124,13 +144,19 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 		descriptor.deploySessionCluster(clusterSpecification);
 
 		final KubernetesClient kubeClient = server.getClient();
-		assertEquals(2, kubeClient.services().list().getItems().size());
+
+		// we could list only the internal Service since we mock the external Service
+		// but the MixedDispatcher do not return that mock Service.
+		assertEquals(1, kubeClient.services().list().getItems().size());
+
+		assertEquals(1, kubeClient.configMaps().list().getItems().size());
 
 		descriptor.killCluster(CLUSTER_ID);
 
-		// Mock kubernetes server do not delete the rest service by gc, so the rest service still exist.
-		final List<Service> services = kubeClient.services().list().getItems();
-		assertEquals(1, services.size());
+		// Mock kubernetes server do not delete the accompanying resources by gc.
+		assertTrue(kubeClient.apps().deployments().list().getItems().isEmpty());
+		assertEquals(1, kubeClient.services().list().getItems().size());
+		assertEquals(1, kubeClient.configMaps().list().getItems().size());
 	}
 
 	private ClusterClient<String> deploySessionCluster() throws ClusterDeploymentException {
@@ -146,5 +172,31 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 		assertEquals(String.format("http://%s:8081", MOCK_SERVICE_IP), clusterClient.getWebInterfaceURL());
 
 		return clusterClient;
+	}
+
+	private void mockRestServiceWithLoadBalancer(@Nullable String hostname, @Nullable String ip) {
+		final String restServiceName = KubernetesUtils.getRestServiceName(CLUSTER_ID);
+
+		final String path = String.format("/api/v1/namespaces/%s/services/%s", NAMESPACE, restServiceName);
+		server.expect()
+			.withPath(path)
+			.andReturn(200, buildMockRestService(hostname, ip))
+			.always();
+	}
+
+	private Service buildMockRestService(@Nullable String hostname, @Nullable String ip) {
+		final Service service = new ServiceBuilder()
+			.editOrNewMetadata()
+				.withName(KubernetesUtils.getRestServiceName(CLUSTER_ID))
+				.endMetadata()
+			.editOrNewSpec()
+				.endSpec()
+			.build();
+
+		service.setStatus(new ServiceStatusBuilder()
+			.withLoadBalancer(new LoadBalancerStatus(Collections.singletonList(
+				new LoadBalancerIngress(hostname, ip)))).build());
+
+		return service;
 	}
 }
