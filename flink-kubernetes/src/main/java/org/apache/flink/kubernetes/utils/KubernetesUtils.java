@@ -113,43 +113,6 @@ public class KubernetesUtils {
 	}
 
 	/**
-	 * Generates the shell command to start a job manager for kubernetes.
-	 *
-	 * @param flinkConfig The Flink configuration.
-	 * @param jobManagerMemoryMb JobManager heap size.
-	 * @param configDirectory The configuration directory for the flink-conf.yaml
-	 * @param logDirectory The log directory.
-	 * @param hasLogback Uses logback?
-	 * @param hasLog4j Uses log4j?
-	 * @param mainClass The main class to start with.
-	 * @param mainArgs The args for main class.
-	 * @return A String containing the job manager startup command.
-	 */
-	public static String getJobManagerStartCommand(
-			Configuration flinkConfig,
-			int jobManagerMemoryMb,
-			String configDirectory,
-			String logDirectory,
-			boolean hasLogback,
-			boolean hasLog4j,
-			String mainClass,
-			@Nullable String mainArgs) {
-		final int heapSize = BootstrapTools.calculateHeapSize(jobManagerMemoryMb, flinkConfig);
-		final String jvmMemOpts = String.format("-Xms%sm -Xmx%sm", heapSize, heapSize);
-		return getCommonStartCommand(
-			flinkConfig,
-			ClusterComponent.JOB_MANAGER,
-			jvmMemOpts,
-			configDirectory,
-			logDirectory,
-			hasLogback,
-			hasLog4j,
-			mainClass,
-			mainArgs
-		);
-	}
-
-	/**
 	 * Generate name of the internal Service.
 	 */
 	public static String getInternalServiceName(String clusterId) {
