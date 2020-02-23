@@ -28,9 +28,13 @@ import org.apache.flink.runtime.clusterframework.TaskExecutorProcessSpec;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
 import org.apache.flink.util.FlinkRuntimeException;
 
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.OwnerReference;
+import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.ResourceRequirementsBuilder;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +46,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
@@ -154,6 +160,19 @@ public class KubernetesUtils {
 			mainClass,
 			args
 		);
+	}
+
+	public static void setOwnerReference(Deployment deployment, List<HasMetadata> resources) {
+		final OwnerReference deploymentOwnerReference = new OwnerReferenceBuilder()
+			.withName(deployment.getMetadata().getName())
+			.withApiVersion(deployment.getApiVersion())
+			.withUid(deployment.getMetadata().getUid())
+			.withKind(deployment.getKind())
+			.withController(true)
+			.withBlockOwnerDeletion(true)
+			.build();
+		resources.forEach(resource ->
+			resource.getMetadata().setOwnerReferences(Collections.singletonList(deploymentOwnerReference)));
 	}
 
 	/**
