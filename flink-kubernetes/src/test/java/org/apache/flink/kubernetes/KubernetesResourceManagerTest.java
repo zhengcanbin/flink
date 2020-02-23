@@ -25,9 +25,9 @@ import org.apache.flink.configuration.MemorySize;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkKubeClient;
-import org.apache.flink.kubernetes.kubeclient.TaskManagerPodParameter;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
 import org.apache.flink.kubernetes.utils.Constants;
+import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.clusterframework.types.AllocationID;
 import org.apache.flink.runtime.clusterframework.types.ResourceID;
 import org.apache.flink.runtime.clusterframework.types.ResourceProfile;
@@ -61,6 +61,7 @@ import io.fabric8.kubernetes.api.model.ContainerStateBuilder;
 import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.PodList;
 import io.fabric8.kubernetes.api.model.PodStatusBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -72,9 +73,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -268,14 +267,18 @@ public class KubernetesResourceManagerTest extends KubernetesTestBase {
 	public void testGetWorkerNodesFromPreviousAttempts() throws Exception {
 		// Prepare pod of previous attempt
 		final String previewPodName = CLUSTER_ID + "-taskmanager-1-1";
-		flinkKubeClient.createTaskManagerPod(new TaskManagerPodParameter(
-			previewPodName,
-			new ArrayList<>(),
-			1024,
-			1,
-			new HashMap<>()));
-		final KubernetesClient client = getKubeClient();
-		assertEquals(1, client.pods().list().getItems().size());
+
+		final Pod mockTaskManagerPod = new PodBuilder()
+			.editOrNewMetadata()
+				.withName(previewPodName)
+				.withLabels(KubernetesUtils.getTaskManagerLabels(CLUSTER_ID))
+				.endMetadata()
+			.editOrNewSpec()
+				.endSpec()
+			.build();
+
+		flinkKubeClient.createTaskManagerPod(new KubernetesPod(mockTaskManagerPod));
+		assertEquals(1, kubeClient.pods().list().getItems().size());
 
 		// Call initialize method to recover worker nodes from previous attempt.
 		resourceManager.initialize();
@@ -284,12 +287,12 @@ public class KubernetesResourceManagerTest extends KubernetesTestBase {
 		// Register the previous taskmanager, no new pod should be created
 		registerTaskExecutor(new ResourceID(previewPodName));
 		registerSlotRequest();
-		assertEquals(1, client.pods().list().getItems().size());
+		assertEquals(1, kubeClient.pods().list().getItems().size());
 
 		// Register a new slot request, a new taskmanger pod will be created with attempt2
 		registerSlotRequest();
-		assertEquals(2, client.pods().list().getItems().size());
-		assertThat(client.pods().list().getItems().stream()
+		assertEquals(2, kubeClient.pods().list().getItems().size());
+		assertThat(kubeClient.pods().list().getItems().stream()
 				.map(e -> e.getMetadata().getName())
 				.collect(Collectors.toList()),
 			Matchers.containsInAnyOrder(taskManagerPrefix + "1-1", taskManagerPrefix + "2-1"));
