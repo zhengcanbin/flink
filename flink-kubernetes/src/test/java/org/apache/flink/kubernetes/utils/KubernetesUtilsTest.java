@@ -27,15 +27,12 @@ import org.apache.flink.configuration.CoreOptions;
 import org.apache.flink.configuration.HighAvailabilityOptions;
 import org.apache.flink.configuration.MemorySize;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
-import org.apache.flink.runtime.clusterframework.ContaineredTaskManagerParameters;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessSpec;
 import org.apache.flink.runtime.clusterframework.TaskExecutorProcessUtils;
 import org.apache.flink.util.FlinkRuntimeException;
 import org.apache.flink.util.TestLogger;
 
 import org.junit.Test;
-
-import java.util.HashMap;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
@@ -60,8 +57,6 @@ public class KubernetesUtilsTest extends TestLogger {
 	private static final String log4j = String.format("-Dlog4j.configuration=file:%s/log4j.properties", confDirInPod);
 	private static final String jmLogfile = String.format("-Dlog.file=%s/jobmanager.log", logDirInPod);
 	private static final String jmLogRedirects = String.format("1> %s/jobmanager.out 2> %s/jobmanager.err", logDirInPod, logDirInPod);
-	private static final String tmLogfile = String.format("-Dlog.file=%s/taskmanager.log", logDirInPod);
-	private static final String tmLogRedirects = String.format("1> %s/taskmanager.out 2> %s/taskmanager.err", logDirInPod, logDirInPod);
 
 	// Memory variables
 	private static final int jobManagerMem = 768;
@@ -77,10 +72,6 @@ public class KubernetesUtilsTest extends TestLogger {
 		new MemorySize(0), // managedMemorySize
 		new MemorySize(333), // jvmMetaspaceSize
 		new MemorySize(0)); // jvmOverheadSize
-
-	private static final String tmJvmMem = "-Xmx111 -Xms111 -XX:MaxDirectMemorySize=222 -XX:MaxMetaspaceSize=333";
-	private static final String tmMemDynamicProperties =
-		TaskExecutorProcessUtils.generateDynamicConfigsStr(TASK_EXECUTOR_PROCESS_SPEC).trim();
 
 	@Test
 	public void testGetJobManagerStartCommand() {
@@ -147,70 +138,6 @@ public class KubernetesUtilsTest extends TestLogger {
 	}
 
 	@Test
-	public void testGetTaskManagerStartCommand() {
-		final Configuration cfg = new Configuration();
-
-		final String tmJvmOpts = "-DtmJvm"; // if set
-
-		assertEquals(
-			getTaskManagerExpectedCommand("", "", mainClassArgs),
-			getTaskManagerStartCommand(cfg, false, false, mainClassArgs));
-
-		// logback only
-		assertEquals(
-			getTaskManagerExpectedCommand("", logback, mainClassArgs),
-			getTaskManagerStartCommand(cfg, true, false, mainClassArgs));
-
-		// log4j only
-		assertEquals(
-			getTaskManagerExpectedCommand("", log4j, mainClassArgs),
-			getTaskManagerStartCommand(cfg, false, true, mainClassArgs));
-
-		// logback + log4j
-		assertEquals(
-			getTaskManagerExpectedCommand("", logback + " " + log4j, mainClassArgs),
-			getTaskManagerStartCommand(cfg, true, true, mainClassArgs));
-
-		// logback + log4j, different JVM opts
-		cfg.setString(CoreOptions.FLINK_JVM_OPTIONS, jvmOpts);
-		assertEquals(
-			getTaskManagerExpectedCommand(jvmOpts, logback + " " + log4j, mainClassArgs),
-			getTaskManagerStartCommand(cfg, true, true, mainClassArgs));
-
-		// logback + log4j, different TM JVM opts
-		cfg.setString(CoreOptions.FLINK_TM_JVM_OPTIONS, tmJvmOpts);
-		assertEquals(
-			getTaskManagerExpectedCommand(jvmOpts + " " + tmJvmOpts, logback + " " + log4j, mainClassArgs),
-			getTaskManagerStartCommand(cfg, true, true, mainClassArgs));
-
-		// no args
-		assertEquals(
-			getTaskManagerExpectedCommand(jvmOpts + " " + tmJvmOpts, logback + " " + log4j, ""),
-			getTaskManagerStartCommand(cfg, true, true, null));
-
-		// now try some configurations with different container-start-command-template
-
-		cfg.setString(KubernetesConfigOptions.CONTAINER_START_COMMAND_TEMPLATE,
-			"%java% 1 %classpath% 2 %jvmmem% %jvmopts% %logging% %class% %args% %redirects%");
-		assertEquals(
-			java + " 1 " + classpath + " 2 " + tmJvmMem +
-				" " + jvmOpts + " " + tmJvmOpts + // jvmOpts
-				" " + tmLogfile + " " + logback + " " + log4j +
-				" " + mainClass + " " + tmMemDynamicProperties + " " + mainClassArgs + " " + tmLogRedirects,
-			getTaskManagerStartCommand(cfg, true, true, mainClassArgs));
-
-		cfg.setString(KubernetesConfigOptions.CONTAINER_START_COMMAND_TEMPLATE,
-			"%java% %jvmmem% %logging% %jvmopts% %class% %redirects%");
-		assertEquals(
-			java + " " + tmJvmMem +
-				" " + tmLogfile + " " + logback + " " + log4j +
-				" " + jvmOpts + " " + tmJvmOpts + // jvmOpts
-				" " + mainClass + " " + tmLogRedirects,
-			getTaskManagerStartCommand(cfg, true, true, mainClassArgs));
-
-	}
-
-	@Test
 	public void testParsePortRange() {
 		final Configuration cfg = new Configuration();
 		cfg.set(BlobServerOptions.PORT, "50100-50200");
@@ -265,13 +192,6 @@ public class KubernetesUtilsTest extends TestLogger {
 			" " + mainClass + (mainClassArgs.isEmpty() ? "" : " " + mainClassArgs) + " " + jmLogRedirects;
 	}
 
-	private String getTaskManagerExpectedCommand(String jvmAllOpts, String logging, String mainClassArgs) {
-		return java + " " + classpath + " " + tmJvmMem +
-			(jvmAllOpts.isEmpty() ? "" : " " + jvmAllOpts) +
-			(logging.isEmpty() ? "" : " " + tmLogfile + " " + logging) +
-			" " + mainClass + " " + tmMemDynamicProperties + (mainClassArgs.isEmpty() ? "" : " " + mainClassArgs) + " " + tmLogRedirects;
-	}
-
 	private String getJobManagerStartCommand(
 		Configuration cfg,
 		boolean hasLogBack,
@@ -280,27 +200,6 @@ public class KubernetesUtilsTest extends TestLogger {
 		return KubernetesUtils.getJobManagerStartCommand(
 			cfg,
 			jobManagerMem,
-			confDirInPod,
-			logDirInPod,
-			hasLogBack,
-			hasLog4j,
-			mainClass,
-			mainClassArgs
-		);
-	}
-
-	private String getTaskManagerStartCommand(
-			Configuration cfg,
-			boolean hasLogBack,
-			boolean hasLog4j,
-			String mainClassArgs) {
-
-		final ContaineredTaskManagerParameters containeredParams =
-			new ContaineredTaskManagerParameters(TASK_EXECUTOR_PROCESS_SPEC, 4, new HashMap<>());
-
-		return KubernetesUtils.getTaskManagerStartCommand(
-			cfg,
-			containeredParams,
 			confDirInPod,
 			logDirInPod,
 			hasLogBack,
