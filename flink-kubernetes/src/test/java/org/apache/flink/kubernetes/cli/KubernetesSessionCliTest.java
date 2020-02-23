@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes;
+package org.apache.flink.kubernetes.cli;
 
 import org.apache.flink.client.cli.CliArgsException;
 import org.apache.flink.client.deployment.ClusterClientFactory;
