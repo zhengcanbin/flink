@@ -74,6 +74,6 @@ public class KubernetesJobManagerTestBase extends KubernetesTestBase {
 
 		this.kubernetesJobManagerParameters = new KubernetesJobManagerParameters(flinkConfig, clusterSpecification);
 
-		this.baseFlinkPod = new FlinkPodBuilder().build();
+		this.baseFlinkPod = new FlinkPod.Builder().build();
 	}
 }
