@@ -28,9 +28,6 @@ import org.apache.flink.runtime.clusterframework.BootstrapTools;
 import org.apache.flink.test.util.TestBaseUtils;
 import org.apache.flink.util.TestLogger;
 
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.WatchEvent;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.junit.Before;
 import org.junit.Rule;
@@ -104,24 +101,5 @@ public class KubernetesTestBase extends TestLogger {
 		labels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
 		labels.put(Constants.LABEL_APP_KEY, CLUSTER_ID);
 		return labels;
-	}
-
-	protected void mockServiceAddEvent(String serviceName) {
-		final Service mockService = new ServiceBuilder()
-			.editOrNewMetadata()
-			.endMetadata()
-			.build();
-
-		final String path = String.format("/api/v1/namespaces/%s/services?fieldSelector=metadata.name%%3D%s&watch=true",
-			NAMESPACE, serviceName);
-
-		server.expect()
-			.withPath(path)
-			.andUpgradeToWebSocket()
-			.open()
-			.waitFor(1000)
-			.andEmit(new WatchEvent(mockService, "ADDED"))
-			.done()
-			.once();
 	}
 }

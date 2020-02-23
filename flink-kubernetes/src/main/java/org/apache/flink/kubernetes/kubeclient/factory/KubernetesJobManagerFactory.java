@@ -28,7 +28,6 @@ import org.apache.flink.kubernetes.kubeclient.decorators.JavaCmdJobManagerDecora
 import org.apache.flink.kubernetes.kubeclient.decorators.KubernetesStepDecorator;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.Constants;
-import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -67,8 +66,6 @@ public class KubernetesJobManagerFactory {
 
 		final Deployment deployment = createJobManagerDeployment(flinkPod, kubernetesJobManagerParameters);
 
-		KubernetesUtils.setOwnerReference(deployment, accompanyingResources);
-
 		return new KubernetesJobManagerSpecification(deployment, accompanyingResources);
 	}
 
@@ -90,7 +87,6 @@ public class KubernetesJobManagerFactory {
 			.editOrNewMetadata()
 				.withName(kubernetesJobManagerParameters.getClusterId())
 				.withLabels(kubernetesJobManagerParameters.getCommonLabels())
-				.withUid(kubernetesJobManagerParameters.getClusterId())
 				.endMetadata()
 			.editOrNewSpec()
 				.withReplicas(1)
