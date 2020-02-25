@@ -19,6 +19,8 @@
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.kubernetes.kubeclient.FlinkPod;
+import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.clusterframework.BootstrapTools;
@@ -42,7 +44,7 @@ public class JavaCmdJobManagerDecorator extends AbstractKubernetesStepDecorator 
 	}
 
 	@Override
-	protected Container decorateMainContainer(Container container) {
+	public FlinkPod decorateFlinkPod(FlinkPod flinkPod) {
 		final String startCommand = getJobManagerStartCommand(
 				kubernetesJobManagerParameters.getFlinkConfiguration(),
 				kubernetesJobManagerParameters.getJobManagerMemoryMB(),
@@ -52,10 +54,14 @@ public class JavaCmdJobManagerDecorator extends AbstractKubernetesStepDecorator 
 				kubernetesJobManagerParameters.hasLog4j(),
 				kubernetesJobManagerParameters.getEntrypointClass());
 
-		return new ContainerBuilder(container)
+		final Container mainContainerWithStartCmd = new ContainerBuilder(flinkPod.getMainContainer())
 				.withCommand(kubernetesJobManagerParameters.getContainerEntrypoint())
 				.withArgs(Arrays.asList("/bin/bash", "-c", startCommand))
 				.build();
+
+		return new FlinkPodBuilder(flinkPod)
+			.withMainContainer(mainContainerWithStartCmd)
+			.build();
 	}
 
 	/**

@@ -18,6 +18,8 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
+import org.apache.flink.kubernetes.kubeclient.FlinkPod;
+import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesTaskManagerParameters;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
@@ -47,8 +49,8 @@ public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 	}
 
 	@Override
-	protected Pod decoratePod(Pod pod) {
-		return new PodBuilder(pod)
+	public FlinkPod decorateFlinkPod(FlinkPod flinkPod) {
+		final Pod basicPod = new PodBuilder(flinkPod.getPod())
 				.editOrNewMetadata()
 					.withName(kubernetesTaskManagerParameters.getPodName())
 					.withLabels(kubernetesTaskManagerParameters.getLabels())
@@ -57,10 +59,16 @@ public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 					.withImagePullSecrets(kubernetesTaskManagerParameters.getImagePullSecrets())
 					.endSpec()
 				.build();
+
+		final Container basicMainContainer = decorateMainContainer(flinkPod.getMainContainer());
+
+		return new FlinkPodBuilder(flinkPod)
+			.withPod(basicPod)
+			.withMainContainer(basicMainContainer)
+			.build();
 	}
 
-	@Override
-	protected Container decorateMainContainer(Container container) {
+	private Container decorateMainContainer(Container container) {
 		final ResourceRequirements resourceRequirements = KubernetesUtils.getResourceRequirements(
 				kubernetesTaskManagerParameters.getTaskManagerMemoryMB(),
 				kubernetesTaskManagerParameters.getTaskManagerCPU());

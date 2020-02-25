@@ -18,6 +18,8 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
+import org.apache.flink.kubernetes.kubeclient.FlinkPod;
+import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
@@ -53,8 +55,8 @@ public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 	}
 
 	@Override
-	protected Pod decoratePod(Pod pod) {
-		return new PodBuilder(pod)
+	public FlinkPod decorateFlinkPod(FlinkPod flinkPod) {
+		final Pod basicPod = new PodBuilder(flinkPod.getPod())
 				.editOrNewMetadata()
 					.withLabels(kubernetesJobManagerParameters.getLabels())
 					.endMetadata()
@@ -63,10 +65,16 @@ public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 					.withImagePullSecrets(kubernetesJobManagerParameters.getImagePullSecrets())
 					.endSpec()
 				.build();
+
+		final Container basicMainContainer = decorateMainContainer(flinkPod.getMainContainer());
+
+		return new FlinkPodBuilder(flinkPod)
+			.withPod(basicPod)
+			.withMainContainer(basicMainContainer)
+			.build();
 	}
 
-	@Override
-	protected Container decorateMainContainer(Container container) {
+	private Container decorateMainContainer(Container container) {
 		final ResourceRequirements requirements = KubernetesUtils.getResourceRequirements(
 				kubernetesJobManagerParameters.getJobManagerMemoryMB(),
 				kubernetesJobManagerParameters.getJobManagerCPU());

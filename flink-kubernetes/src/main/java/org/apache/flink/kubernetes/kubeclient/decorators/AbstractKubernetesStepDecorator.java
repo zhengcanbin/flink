@@ -19,11 +19,8 @@
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Service;
 
 import java.io.IOException;
@@ -39,84 +36,50 @@ public abstract class AbstractKubernetesStepDecorator implements KubernetesStepD
 	/**
 	 * Apply transformations on the given FlinkPod in accordance to this feature.
 	 * Note that we should return a FlinkPod that keeps all of the properties of the passed FlinkPod object.
+	 *
+	 * <p>So this is correct:
+	 *
+	 * <pre>
+	 * {@code
+	 *
+	 * Pod decoratedPod = new PodBuilder(pod) // Keeps the original state
+	 *     ...
+	 *     .build()
+	 *
+	 * Container decoratedContainer = new ContainerBuilder(container) // Keeps the original state
+	 *     ...
+	 *     .build()
+	 *
+	 * FlinkPod decoratedFlinkPod = new FlinkPodBuilder(flinkPod) // Keeps the original state
+	 *     ...
+	 *     .build()
+	 *
+	 * }
+	 * </pre>
+	 *
+	 * <p>And this is the incorrect:
+	 *
+	 * <pre>
+	 * {@code
+	 *
+	 * Pod decoratedPod = new PodBuilder() // Loses the original state
+	 *     ...
+	 *     .build()
+	 *
+	 * Container decoratedContainer = new ContainerBuilder() // Loses the original state
+	 *     ...
+	 *     .build()
+	 *
+	 * FlinkPod decoratedFlinkPod = new FlinkPodBuilder() // Loses the original state
+	 *     ...
+	 *     .build()
+	 *
+	 * }
+	 * </pre>
 	 */
 	@Override
 	public FlinkPod decorateFlinkPod(FlinkPod flinkPod) {
-		final Pod decoratedPod = this.decoratePod(flinkPod.getPod());
-		final Container decoratedMainContainer = this.decorateMainContainer(flinkPod.getMainContainer());
-
-		return new FlinkPodBuilder()
-				.withPod(decoratedPod)
-				.withMainContainer(decoratedMainContainer)
-				.build();
-	}
-
-	/**
-	 * Apply transformations on the given Pod in accordance to this feature.
-	 * Note that we should return a Pod that keeps all of the properties of the passed Pod object.
-	 *
-	 * <p>So this is correct:
-	 *
-	 * <pre>
-	 * {@code
-	 * Pod decoratedPod = new PodBuilder(pod) // Keeps the original state
-	 *     .editSpec()
-	 *     ...
-	 *     .build()
-	 *
-	 * return decoratedPod
-	 * }
-	 * </pre>
-	 *
-	 * <p>And this is the incorrect:
-	 *
-	 * <pre>
-	 * {@code
-	 * Pod decoratedPod = new PodBuilder() // Loses the original state
-	 *     .editSpec()
-	 *     ...
-	 *     .build()
-	 *
-	 *   return decoratedPod
-	 * }
-	 * </pre>
-	 */
-	protected Pod decoratePod(Pod pod) {
-		return pod;
-	}
-
-	/**
-	 * Apply transformations on the given Container in accordance to this feature.
-	 * Note that we should return a Container that keeps all of the properties of the passed Container object.
-	 *
-	 * <p>So this is correct:
-	 *
-	 * <pre>
-	 * {@code
-	 * Container decoratedContainer = new ContainerBuilder(container) // Keeps the original state
-	 *     .editSpec()
-	 *     ...
-	 *     .build()
-	 *
-	 *   return decoratedContainer
-	 * }
-	 * </pre>
-	 *
-	 * <p>And this is the incorrect:
-	 * <pre>
-	 * {@code
-	 * Container decoratedContainer = new ContainerBuilder() // Loses the original state
-	 *     .withName()
-	 *     ...
-	 *     .build()
-	 *
-	 *   return decoratedContainer
-	 * }
-	 * </pre>
-	 *
-	 */
-	protected Container decorateMainContainer(Container container) {
-		return container;
+		return flinkPod;
 	}
 
 	@Override
