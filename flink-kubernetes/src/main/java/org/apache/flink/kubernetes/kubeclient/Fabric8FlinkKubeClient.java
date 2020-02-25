@@ -30,7 +30,6 @@ import org.apache.flink.util.TimeUtils;
 import org.apache.flink.util.function.FunctionUtils;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -114,7 +113,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 				"Failed to find Deployment named " + clusterId + " in namespace " + this.nameSpace);
 		}
 
-		setOwnerReference(masterDeployment, Collections.singletonList(kubernetesPod.getInternalResource()));
+		setOwnerReference(masterDeployment, kubernetesPod.getInternalResource());
 
 		LOG.debug("Start to create pod with metadata {}, spec {}",
 			kubernetesPod.getInternalResource().getMetadata(),
@@ -245,7 +244,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 		this.internalClient.close();
 	}
 
-	private void setOwnerReference(Deployment deployment, List<HasMetadata> resources) {
+	private void setOwnerReference(Deployment deployment, Pod pod) {
 		final OwnerReference deploymentOwnerReference = new OwnerReferenceBuilder()
 			.withName(deployment.getMetadata().getName())
 			.withApiVersion(deployment.getApiVersion())
@@ -254,8 +253,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 			.withController(true)
 			.withBlockOwnerDeletion(true)
 			.build();
-		resources.forEach(resource ->
-			resource.getMetadata().setOwnerReferences(Collections.singletonList(deploymentOwnerReference)));
+		pod.getMetadata().setOwnerReferences(Collections.singletonList(deploymentOwnerReference));
 	}
 
 	private void createConfigMapInternal(List<ConfigMap> configMaps) {
