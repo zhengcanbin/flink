@@ -19,7 +19,11 @@
 package org.apache.flink.kubernetes.kubeclient;
 
 import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodBuilder;
+
+import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * A collection of variables that composes a JobManager/TaskManager Pod. This can include
@@ -50,5 +54,45 @@ public class FlinkPod {
 
 	public void setMainContainer(Container mainContainer) {
 		this.mainContainer = mainContainer;
+	}
+
+	/**
+	 * Builder for creating a {@link FlinkPod}.
+	 */
+	public static class Builder {
+
+		private Pod pod;
+		private Container mainContainer;
+
+		public Builder() {
+			this.pod = new PodBuilder()
+				.withNewMetadata()
+				.endMetadata()
+				.withNewSpec()
+				.endSpec()
+				.build();
+
+			this.mainContainer = new ContainerBuilder().build();
+		}
+
+		public Builder(FlinkPod flinkPod) {
+			checkNotNull(flinkPod);
+			this.pod = checkNotNull(flinkPod.getPod());
+			this.mainContainer = checkNotNull(flinkPod.getMainContainer());
+		}
+
+		public Builder withPod(Pod pod) {
+			this.pod = checkNotNull(pod);
+			return this;
+		}
+
+		public Builder withMainContainer(Container mainContainer) {
+			this.mainContainer = checkNotNull(mainContainer);
+			return this;
+		}
+
+		public FlinkPod build() {
+			return new FlinkPod(this.pod, this.mainContainer);
+		}
 	}
 }

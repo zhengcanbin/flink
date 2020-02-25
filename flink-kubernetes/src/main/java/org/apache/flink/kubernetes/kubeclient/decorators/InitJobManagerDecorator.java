@@ -19,7 +19,6 @@
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
@@ -68,7 +67,7 @@ public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 
 		final Container basicMainContainer = decorateMainContainer(flinkPod.getMainContainer());
 
-		return new FlinkPodBuilder(flinkPod)
+		return new FlinkPod.Builder(flinkPod)
 			.withPod(basicPod)
 			.withMainContainer(basicMainContainer)
 			.build();

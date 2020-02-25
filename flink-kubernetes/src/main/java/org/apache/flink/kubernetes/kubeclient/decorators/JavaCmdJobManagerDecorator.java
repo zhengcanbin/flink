@@ -20,7 +20,6 @@ package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.clusterframework.BootstrapTools;
@@ -59,7 +58,7 @@ public class JavaCmdJobManagerDecorator extends AbstractKubernetesStepDecorator 
 				.withArgs(Arrays.asList("/bin/bash", "-c", startCommand))
 				.build();
 
-		return new FlinkPodBuilder(flinkPod)
+		return new FlinkPod.Builder(flinkPod)
 			.withMainContainer(mainContainerWithStartCmd)
 			.build();
 	}

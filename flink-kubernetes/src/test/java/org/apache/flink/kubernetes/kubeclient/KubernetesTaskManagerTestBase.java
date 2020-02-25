@@ -58,7 +58,7 @@ public class KubernetesTaskManagerTestBase extends KubernetesTestBase {
 
 	protected KubernetesTaskManagerParameters kubernetesTaskManagerParameters;
 
-	protected FlinkPod baseFlinkPod = new FlinkPodBuilder().build();
+	protected FlinkPod baseFlinkPod = new FlinkPod.Builder().build();
 
 	@Before
 	public void setup() throws Exception {

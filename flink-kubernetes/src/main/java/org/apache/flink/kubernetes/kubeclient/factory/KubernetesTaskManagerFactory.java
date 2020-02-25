@@ -19,7 +19,6 @@
 package org.apache.flink.kubernetes.kubeclient.factory;
 
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.decorators.FlinkConfMountDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.InitTaskManagerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.JavaCmdTaskManagerDecorator;
@@ -36,7 +35,7 @@ import io.fabric8.kubernetes.api.model.PodBuilder;
 public class KubernetesTaskManagerFactory {
 
 	public static KubernetesPod createKubernetesTaskManagerComponent(KubernetesTaskManagerParameters kubernetesTaskManagerParameters) {
-		FlinkPod flinkPod = new FlinkPodBuilder().build();
+		FlinkPod flinkPod = new FlinkPod.Builder().build();
 
 		final KubernetesStepDecorator[] stepDecorators = new KubernetesStepDecorator[] {
 			new InitTaskManagerDecorator(kubernetesTaskManagerParameters),

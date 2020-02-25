@@ -19,7 +19,6 @@
 package org.apache.flink.kubernetes.kubeclient.factory;
 
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
-import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerSpecification;
 import org.apache.flink.kubernetes.kubeclient.decorators.ExternalServiceDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.FlinkConfMountDecorator;
@@ -54,7 +53,7 @@ public class KubernetesJobManagerFactory {
 
 	public static KubernetesJobManagerSpecification createKubernetesJobManagerComponent(
 			KubernetesJobManagerParameters kubernetesJobManagerParameters) throws IOException {
-		FlinkPod flinkPod = new FlinkPodBuilder().build();
+		FlinkPod flinkPod = new FlinkPod.Builder().build();
 		List<ConfigMap> accompanyingConfigMaps = new ArrayList<>();
 		List<Service> accompanyingServices = new ArrayList<>();
 
