@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.builder;
+package org.apache.flink.kubernetes.kubeclient.factory;
 
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
@@ -46,9 +46,9 @@ import java.util.Map;
  * Utility class for constructing all the Kubernetes components on the client-side. This can
  * include the Deployment, the ConfigMap(s), and the Service(s).
  */
-public class KubernetesJobManagerBuilder {
+public class KubernetesJobManagerFactory {
 
-	public static KubernetesJobManagerSpecification buildJobManagerComponent(
+	public static KubernetesJobManagerSpecification createKubernetesJobManagerComponent(
 			KubernetesJobManagerParameters kubernetesJobManagerParameters) throws IOException {
 		FlinkPod flinkPod = new FlinkPodBuilder().build();
 		List<HasMetadata> accompanyingResources = new ArrayList<>();
@@ -65,12 +65,12 @@ public class KubernetesJobManagerBuilder {
 			accompanyingResources.addAll(stepDecorator.buildAccompanyingKubernetesResources());
 		}
 
-		final Deployment deployment = buildJobManagerDeployment(flinkPod, kubernetesJobManagerParameters);
+		final Deployment deployment = createJobManagerDeployment(flinkPod, kubernetesJobManagerParameters);
 
 		return new KubernetesJobManagerSpecification(deployment, accompanyingResources);
 	}
 
-	private static Deployment buildJobManagerDeployment(
+	private static Deployment createJobManagerDeployment(
 			FlinkPod flinkPod,
 			KubernetesJobManagerParameters kubernetesJobManagerParameters) {
 		final Container resolvedMainContainer = flinkPod.getMainContainer();

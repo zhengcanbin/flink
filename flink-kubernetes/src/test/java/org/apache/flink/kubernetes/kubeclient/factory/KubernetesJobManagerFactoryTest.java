@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.builder;
+package org.apache.flink.kubernetes.kubeclient.factory;
 
 import org.apache.flink.configuration.ResourceManagerOptions;
 import org.apache.flink.kubernetes.KubernetesTestUtils;
@@ -51,9 +51,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * General tests for the {@link KubernetesJobManagerBuilder}.
+ * General tests for the {@link KubernetesJobManagerFactory}.
  */
-public class KubernetesJobManagerBuilderTest extends KubernetesJobManagerTestBase {
+public class KubernetesJobManagerFactoryTest extends KubernetesJobManagerTestBase {
 
 	private static final String SERVICE_ACCOUNT_NAME = "service-test";
 	private static final String ENTRY_POINT_CLASS = KubernetesSessionClusterEntrypoint.class.getCanonicalName();
@@ -80,7 +80,7 @@ public class KubernetesJobManagerBuilderTest extends KubernetesJobManagerTestBas
 			flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX + k, v));
 
 		this.kubernetesJobManagerSpecification =
-			KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesJobManagerParameters);
+			KubernetesJobManagerFactory.createKubernetesJobManagerComponent(kubernetesJobManagerParameters);
 	}
 
 	@Test

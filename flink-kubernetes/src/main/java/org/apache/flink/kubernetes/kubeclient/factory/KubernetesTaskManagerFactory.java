@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.builder;
+package org.apache.flink.kubernetes.kubeclient.factory;
 
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
@@ -33,9 +33,9 @@ import io.fabric8.kubernetes.api.model.PodBuilder;
 /**
  * Utility class for constructing the TaskManager Pod on the JobManager.
  */
-public class KubernetesTaskManagerBuilder {
+public class KubernetesTaskManagerFactory {
 
-	public static KubernetesPod buildTaskManagerComponent(KubernetesTaskManagerParameters kubernetesTaskManagerParameters) {
+	public static KubernetesPod createKubernetesTaskManagerComponent(KubernetesTaskManagerParameters kubernetesTaskManagerParameters) {
 		FlinkPod flinkPod = new FlinkPodBuilder().build();
 
 		final KubernetesStepDecorator[] stepDecorators = new KubernetesStepDecorator[] {
@@ -55,5 +55,4 @@ public class KubernetesTaskManagerBuilder {
 
 		return new KubernetesPod(resolvedPod);
 	}
-
 }

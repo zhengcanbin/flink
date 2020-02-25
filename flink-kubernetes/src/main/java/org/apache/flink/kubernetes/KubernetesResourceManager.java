@@ -24,7 +24,7 @@ import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkKubeClient;
 import org.apache.flink.kubernetes.kubeclient.KubeClientFactory;
-import org.apache.flink.kubernetes.kubeclient.builder.KubernetesTaskManagerBuilder;
+import org.apache.flink.kubernetes.kubeclient.factory.KubernetesTaskManagerFactory;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesTaskManagerParameters;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
@@ -261,7 +261,7 @@ public class KubernetesResourceManager extends ActiveResourceManager<KubernetesW
 			taskManagerParameters);
 
 		final KubernetesPod taskManagerPod =
-			KubernetesTaskManagerBuilder.buildTaskManagerComponent(kubernetesTaskManagerParameters);
+			KubernetesTaskManagerFactory.createKubernetesTaskManagerComponent(kubernetesTaskManagerParameters);
 
 		log.info("TaskManager {} will be started with {}.", podName, taskExecutorProcessSpec);
 		kubeClient.createTaskManagerPod(taskManagerPod);

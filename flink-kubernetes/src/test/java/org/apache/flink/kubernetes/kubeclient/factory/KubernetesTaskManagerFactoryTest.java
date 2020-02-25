@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.kubernetes.kubeclient.builder;
+package org.apache.flink.kubernetes.kubeclient.factory;
 
 import org.apache.flink.kubernetes.KubernetesTestUtils;
 import org.apache.flink.kubernetes.kubeclient.KubernetesTaskManagerTestBase;
@@ -32,9 +32,9 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 /**
- * General tests for the {@link KubernetesTaskManagerBuilder}.
+ * General tests for the {@link KubernetesTaskManagerFactory}.
  */
-public class KubernetesTaskManagerBuilderTest extends KubernetesTaskManagerTestBase {
+public class KubernetesTaskManagerFactoryTest extends KubernetesTaskManagerTestBase {
 
 	private Pod resultPod;
 
@@ -46,7 +46,7 @@ public class KubernetesTaskManagerBuilderTest extends KubernetesTaskManagerTestB
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
 
 		this.resultPod =
-			KubernetesTaskManagerBuilder.buildTaskManagerComponent(kubernetesTaskManagerParameters).getInternalResource();
+			KubernetesTaskManagerFactory.createKubernetesTaskManagerComponent(kubernetesTaskManagerParameters).getInternalResource();
 	}
 
 	@Test

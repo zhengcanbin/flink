@@ -28,7 +28,7 @@ import org.apache.flink.kubernetes.KubernetesTestUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
 import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint;
-import org.apache.flink.kubernetes.kubeclient.builder.KubernetesJobManagerBuilder;
+import org.apache.flink.kubernetes.kubeclient.factory.KubernetesJobManagerFactory;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
@@ -109,7 +109,7 @@ public class Fabric8FlinkKubeClientTest extends KubernetesTestBase {
 		final KubernetesJobManagerParameters kubernetesJobManagerParameters =
 			new KubernetesJobManagerParameters(flinkConfig, clusterSpecification);
 		this.kubernetesJobManagerSpecification =
-			KubernetesJobManagerBuilder.buildJobManagerComponent(kubernetesJobManagerParameters);
+			KubernetesJobManagerFactory.createKubernetesJobManagerComponent(kubernetesJobManagerParameters);
 
 		mockServiceAddEvent(KubernetesUtils.getRestServiceName(CLUSTER_ID));
 		mockServiceAddEvent(KubernetesUtils.getInternalServiceName(CLUSTER_ID));
