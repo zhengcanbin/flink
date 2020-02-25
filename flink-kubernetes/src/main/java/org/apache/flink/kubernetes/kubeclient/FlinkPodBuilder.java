@@ -23,41 +23,44 @@ import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 
+import static org.apache.flink.util.Preconditions.checkNotNull;
+
 /**
  * Utility class for constructing the {@link FlinkPod}.
  */
 public class FlinkPodBuilder {
 
-	private FlinkPod flinkPod;
+	private Pod pod;
+	private Container mainContainer;
 
 	public FlinkPodBuilder() {
-		final Pod pod = new PodBuilder()
+		this.pod = new PodBuilder()
 			.withNewMetadata()
 				.endMetadata()
 			.withNewSpec()
 				.endSpec()
 			.build();
 
-		final Container mainContainer = new ContainerBuilder().build();
-
-		this.flinkPod = new FlinkPod(pod, mainContainer);
+		this.mainContainer = new ContainerBuilder().build();
 	}
 
 	public FlinkPodBuilder(FlinkPod flinkPod) {
-		this.flinkPod = flinkPod;
+		checkNotNull(flinkPod);
+		this.pod = checkNotNull(flinkPod.getPod());
+		this.mainContainer = checkNotNull(flinkPod.getMainContainer());
 	}
 
 	public FlinkPodBuilder withPod(Pod pod) {
-		this.flinkPod = new FlinkPod(pod, this.flinkPod.getMainContainer());
+		this.pod = checkNotNull(pod);
 		return this;
 	}
 
 	public FlinkPodBuilder withMainContainer(Container mainContainer) {
-		this.flinkPod = new FlinkPod(this.flinkPod.getPod(), mainContainer);
+		this.mainContainer = checkNotNull(mainContainer);
 		return this;
 	}
 
 	public FlinkPod build() {
-		return this.flinkPod;
+		return new FlinkPod(this.pod, this.mainContainer);
 	}
 }
