@@ -23,13 +23,11 @@ import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,7 +46,7 @@ public abstract class AbstractServiceDecorator extends AbstractKubernetesStepDec
 	}
 
 	@Override
-	public List<HasMetadata> buildAccompanyingKubernetesResources() throws IOException {
+	public List<Service> buildAccompanyingServices() {
 		final String serviceName = getServiceName();
 
 		if (isInternalService()) {

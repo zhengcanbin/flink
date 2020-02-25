@@ -31,7 +31,6 @@ import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.PodSpec;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.Service;
@@ -136,30 +135,8 @@ public class KubernetesJobManagerFactoryTest extends KubernetesJobManagerTestBas
 	}
 
 	@Test
-	public void testAdditionalResourcesSize() {
-		final List<HasMetadata> resultAdditionalResources = this.kubernetesJobManagerSpecification.getAccompanyingResources();
-		assertEquals(3, resultAdditionalResources.size());
-
-		final List<HasMetadata> resultServices = resultAdditionalResources
-			.stream()
-			.filter(x -> x instanceof Service)
-			.collect(Collectors.toList());
-		assertEquals(2, resultServices.size());
-
-		final List<HasMetadata> resultConfigMaps = resultAdditionalResources
-			.stream()
-			.filter(x -> x instanceof ConfigMap)
-			.collect(Collectors.toList());
-		assertEquals(1, resultConfigMaps.size());
-	}
-
-	@Test
 	public void testServices() {
-		final List<Service> resultServices = this.kubernetesJobManagerSpecification.getAccompanyingResources()
-			.stream()
-			.filter(x -> x instanceof Service)
-			.map(x -> (Service) x)
-			.collect(Collectors.toList());
+		final List<Service> resultServices = this.kubernetesJobManagerSpecification.getAccompanyingServices();
 
 		assertEquals(2, resultServices.size());
 
@@ -192,12 +169,11 @@ public class KubernetesJobManagerFactoryTest extends KubernetesJobManagerTestBas
 
 	@Test
 	public void testFlinkConfConfigMap() {
-		final ConfigMap resultConfigMap = (ConfigMap) this.kubernetesJobManagerSpecification.getAccompanyingResources()
-			.stream()
-			.filter(x -> x instanceof ConfigMap)
-			.collect(Collectors.toList())
-			.get(0);
+		final List<ConfigMap> resultConfigMaps =
+			this.kubernetesJobManagerSpecification.getAccompanyingConfigMaps();
+		assertEquals(1, resultConfigMaps.size());
 
+		final ConfigMap resultConfigMap = resultConfigMaps.get(0);
 		assertEquals(2, resultConfigMap.getMetadata().getLabels().size());
 
 		final Map<String, String> resultDatas = resultConfigMap.getData();

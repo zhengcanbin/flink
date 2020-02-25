@@ -23,14 +23,12 @@ import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerTestBase;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -51,11 +49,11 @@ public class ExternalServiceDecoratorTest extends KubernetesJobManagerTestBase {
 	}
 
 	@Test
-	public void testBuildAccompanyingKubernetesResources() throws IOException {
-		final List<HasMetadata> resources = this.externalServiceDecorator.buildAccompanyingKubernetesResources();
-		assertEquals(1, resources.size());
+	public void testBuildAccompanyingServices() {
+		final List<Service> services = this.externalServiceDecorator.buildAccompanyingServices();
+		assertEquals(1, services.size());
 
-		final Service restService = (Service) resources.get(0);
+		final Service restService = services.get(0);
 
 		assertEquals(KubernetesUtils.getRestServiceName(CLUSTER_ID), restService.getMetadata().getName());
 
@@ -76,13 +74,13 @@ public class ExternalServiceDecoratorTest extends KubernetesJobManagerTestBase {
 	}
 
 	@Test
-	public void testSetServiceExposedType() throws IOException {
+	public void testSetServiceExposedType() {
 		this.flinkConfig.set(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE, "NodePort");
-		List<HasMetadata> resources = this.externalServiceDecorator.buildAccompanyingKubernetesResources();
-		assertEquals("NodePort", ((Service) resources.get(0)).getSpec().getType());
+		List<Service> services = this.externalServiceDecorator.buildAccompanyingServices();
+		assertEquals("NodePort", services.get(0).getSpec().getType());
 
 		this.flinkConfig.set(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE, "ClusterIP");
-		resources = this.externalServiceDecorator.buildAccompanyingKubernetesResources();
-		assertEquals("ClusterIP", ((Service) resources.get(0)).getSpec().getType());
+		services = this.externalServiceDecorator.buildAccompanyingServices();
+		assertEquals("ClusterIP", services.get(0).getSpec().getType());
 	}
 }

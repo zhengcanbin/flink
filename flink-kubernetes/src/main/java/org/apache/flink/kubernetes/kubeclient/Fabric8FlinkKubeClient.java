@@ -79,30 +79,24 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 
 	@Override
 	public void createFlinkJobManagerComponent(KubernetesJobManagerSpecification kubernetesJMSpec) throws Exception {
+		final List<ConfigMap> accompanyingConfigMaps = kubernetesJMSpec.getAccompanyingConfigMaps();
+		final List<Service> accompanyingServices = kubernetesJMSpec.getAccompanyingServices();
 		final Deployment deployment = kubernetesJMSpec.getDeployment();
-		final List<HasMetadata> accompanyingResources = kubernetesJMSpec.getAccompanyingResources();
 
 		// create Deployment
 		LOG.debug("Start to create deployment with spec {}", deployment.getSpec().toString());
-		final Deployment createdDeployment = this.internalClient
+		this.internalClient
 			.apps()
 			.deployments()
 			.inNamespace(this.nameSpace)
 			.create(deployment);
 
-		// set Deployment as the OwnerReference of all other Resources, including the ConfigMaps and the Services.
-		setOwnerReference(createdDeployment, accompanyingResources);
+		// create ConfigMap(s)
+		createConfigMapInternal(accompanyingConfigMaps);
 
-		// create other Resources, including ConfigMaps, Services.
-		for (HasMetadata resource: accompanyingResources) {
-			if (resource instanceof ConfigMap) {
-				this.internalClient.configMaps().inNamespace(this.nameSpace).create((ConfigMap) resource);
-			} else if (resource instanceof Service) {
-				createServiceInternal((Service) resource).get();
-			} else {
-				throw new UnsupportedOperationException(
-					"Do not support accompanying resources other than ConfigMap/Service");
-			}
+		// create Service(s)
+		for (Service service: accompanyingServices) {
+			createServiceInternal(service).get();
 		}
 	}
 
@@ -262,6 +256,10 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 			.build();
 		resources.forEach(resource ->
 			resource.getMetadata().setOwnerReferences(Collections.singletonList(deploymentOwnerReference)));
+	}
+
+	private void createConfigMapInternal(List<ConfigMap> configMaps) {
+		configMaps.forEach(configMap -> this.internalClient.configMaps().inNamespace(this.nameSpace).create(configMap));
 	}
 
 	private CompletableFuture<Service> createServiceInternal(Service service) {

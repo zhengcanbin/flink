@@ -30,15 +30,19 @@ import org.apache.flink.kubernetes.kubeclient.decorators.KubernetesStepDecorator
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.Constants;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.OwnerReference;
+import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
+import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -51,7 +55,8 @@ public class KubernetesJobManagerFactory {
 	public static KubernetesJobManagerSpecification createKubernetesJobManagerComponent(
 			KubernetesJobManagerParameters kubernetesJobManagerParameters) throws IOException {
 		FlinkPod flinkPod = new FlinkPodBuilder().build();
-		List<HasMetadata> accompanyingResources = new ArrayList<>();
+		List<ConfigMap> accompanyingConfigMaps = new ArrayList<>();
+		List<Service> accompanyingServices = new ArrayList<>();
 
 		final KubernetesStepDecorator[] stepDecorators = new KubernetesStepDecorator[] {
 			new InitJobManagerDecorator(kubernetesJobManagerParameters),
@@ -62,12 +67,15 @@ public class KubernetesJobManagerFactory {
 
 		for (KubernetesStepDecorator stepDecorator: stepDecorators) {
 			flinkPod = stepDecorator.decorateFlinkPod(flinkPod);
-			accompanyingResources.addAll(stepDecorator.buildAccompanyingKubernetesResources());
+			accompanyingConfigMaps.addAll(stepDecorator.buildAccompanyingConfigMaps());
+			accompanyingServices.addAll(stepDecorator.buildAccompanyingServices());
 		}
 
 		final Deployment deployment = createJobManagerDeployment(flinkPod, kubernetesJobManagerParameters);
 
-		return new KubernetesJobManagerSpecification(deployment, accompanyingResources);
+		setOwnerReference(deployment, accompanyingConfigMaps, accompanyingServices);
+
+		return new KubernetesJobManagerSpecification(deployment, accompanyingConfigMaps, accompanyingServices);
 	}
 
 	private static Deployment createJobManagerDeployment(
@@ -103,5 +111,20 @@ public class KubernetesJobManagerFactory {
 					.endSelector()
 				.endSpec()
 			.build();
+	}
+
+	private static void setOwnerReference(Deployment deployment, List<ConfigMap> configMaps, List<Service> services) {
+		final OwnerReference deploymentOwnerReference = new OwnerReferenceBuilder()
+			.withName(deployment.getMetadata().getName())
+			.withApiVersion(deployment.getApiVersion())
+			.withUid(deployment.getMetadata().getUid())
+			.withKind(deployment.getKind())
+			.withController(true)
+			.withBlockOwnerDeletion(true)
+			.build();
+		configMaps.forEach(resource ->
+			resource.getMetadata().setOwnerReferences(Collections.singletonList(deploymentOwnerReference)));
+		services.forEach(resource ->
+			resource.getMetadata().setOwnerReferences(Collections.singletonList(deploymentOwnerReference)));
 	}
 }

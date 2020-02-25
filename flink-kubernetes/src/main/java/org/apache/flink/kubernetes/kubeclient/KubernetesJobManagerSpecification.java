@@ -18,7 +18,8 @@
 
 package org.apache.flink.kubernetes.kubeclient;
 
-import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 
 import java.util.List;
@@ -30,18 +31,27 @@ public class KubernetesJobManagerSpecification {
 
 	private Deployment deployment;
 
-	private List<HasMetadata> accompanyingResources;
+	private List<ConfigMap> accompanyingConfigMaps;
 
-	public KubernetesJobManagerSpecification(Deployment deployment, List<HasMetadata> accompanyingResources) {
+	private List<Service> accompanyingServices;
+
+	public KubernetesJobManagerSpecification(Deployment deployment,
+			List<ConfigMap> accompanyingConfigMaps,
+			List<Service> accompanyingServices) {
 		this.deployment = deployment;
-		this.accompanyingResources = accompanyingResources;
+		this.accompanyingConfigMaps = accompanyingConfigMaps;
+		this.accompanyingServices = accompanyingServices;
 	}
 
 	public Deployment getDeployment() {
 		return deployment;
 	}
 
-	public List<HasMetadata> getAccompanyingResources() {
-		return accompanyingResources;
+	public List<ConfigMap> getAccompanyingConfigMaps() {
+		return accompanyingConfigMaps;
+	}
+
+	public List<Service> getAccompanyingServices() {
+		return accompanyingServices;
 	}
 }

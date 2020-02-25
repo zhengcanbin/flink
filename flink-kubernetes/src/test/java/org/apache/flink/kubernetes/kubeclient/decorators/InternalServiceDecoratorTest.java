@@ -23,14 +23,12 @@ import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerTestBase;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -51,15 +49,15 @@ public class InternalServiceDecoratorTest extends KubernetesJobManagerTestBase {
 	}
 
 	@Test
-	public void testBuildAccompanyingKubernetesResources() throws IOException {
-		final List<HasMetadata> resources = this.internalServiceDecorator.buildAccompanyingKubernetesResources();
+	public void testBuildAccompanyingServices() {
+		final List<Service> resources = this.internalServiceDecorator.buildAccompanyingServices();
 		assertEquals(1, resources.size());
 
 		assertEquals(
 			KubernetesUtils.getInternalServiceName(CLUSTER_ID) + "." + NAMESPACE,
 			this.flinkConfig.getString(JobManagerOptions.ADDRESS));
 
-		final Service internalService = (Service) resources.get(0);
+		final Service internalService = resources.get(0);
 
 		assertEquals(KubernetesUtils.getInternalServiceName(CLUSTER_ID), internalService.getMetadata().getName());
 

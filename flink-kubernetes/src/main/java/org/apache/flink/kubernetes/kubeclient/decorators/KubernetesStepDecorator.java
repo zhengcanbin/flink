@@ -20,7 +20,8 @@ package org.apache.flink.kubernetes.kubeclient.decorators;
 
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 
-import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.Service;
 
 import java.io.IOException;
 import java.util.List;
@@ -39,9 +40,14 @@ public interface KubernetesStepDecorator {
 	FlinkPod decorateFlinkPod(FlinkPod flinkPod);
 
 	/**
-	 * Build the accompanying Kubernetes resources that should be introduced to support this feature. This could
-	 * only applicable on the client-side submission process.
+	 * Build the accompanying Kubernetes ConfigMap(s) that should be introduced to support this feature. This could
+	 * be only applicable on the client-side submission process.
 	 */
-	List<HasMetadata> buildAccompanyingKubernetesResources() throws IOException;
+	List<ConfigMap> buildAccompanyingConfigMaps() throws IOException;
 
+	/**
+	 * Build the accompanying Kubernetes Service(s) that should be introduced to support this feature. This could
+	 * be only applicable on the client-side submission process.
+	 */
+	List<Service> buildAccompanyingServices();
 }

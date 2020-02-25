@@ -21,9 +21,10 @@ package org.apache.flink.kubernetes.kubeclient.decorators;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Service;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -118,12 +119,17 @@ public abstract class AbstractKubernetesStepDecorator implements KubernetesStepD
 		return container;
 	}
 
+	@Override
+	public List<ConfigMap> buildAccompanyingConfigMaps() throws IOException {
+		return Collections.emptyList();
+	}
+
 	/**
 	 * Note that the method could have a side effect of modifying the Flink Configuration object, such as
 	 * update the JobManager address.
 	 */
 	@Override
-	public List<HasMetadata> buildAccompanyingKubernetesResources() throws IOException {
+	public List<Service> buildAccompanyingServices() {
 		return Collections.emptyList();
 	}
 }

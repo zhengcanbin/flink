@@ -25,7 +25,6 @@ import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerTestBase;
 import org.apache.flink.kubernetes.utils.Constants;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KeyToPath;
 import io.fabric8.kubernetes.api.model.KeyToPathBuilder;
 import io.fabric8.kubernetes.api.model.Volume;
@@ -77,10 +76,10 @@ public class FlinkConfMountDecoratorTest extends KubernetesJobManagerTestBase {
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "log4j.properties");
 		KubernetesTestUtils.createTemporyFile("some data", flinkConfDir, "logback.xml");
 
-		final List<HasMetadata> additionalResources = flinkConfMountDecorator.buildAccompanyingKubernetesResources();
-		assertEquals(1, additionalResources.size());
+		final List<ConfigMap> resultConfigMaps = flinkConfMountDecorator.buildAccompanyingConfigMaps();
+		assertEquals(1, resultConfigMaps.size());
 
-		final ConfigMap resultConfigMap = (ConfigMap) additionalResources.get(0);
+		final ConfigMap resultConfigMap = resultConfigMaps.get(0);
 
 		assertEquals(flinkConfMountDecorator.getFlinkConfConfigMapName(CLUSTER_ID),
 				resultConfigMap.getMetadata().getName());

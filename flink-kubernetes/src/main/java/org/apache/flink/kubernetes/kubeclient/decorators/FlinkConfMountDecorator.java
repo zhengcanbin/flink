@@ -29,7 +29,6 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
-import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KeyToPath;
 import io.fabric8.kubernetes.api.model.KeyToPathBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -107,7 +106,7 @@ public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 	}
 
 	@Override
-	public List<HasMetadata> buildAccompanyingKubernetesResources() throws IOException {
+	public List<ConfigMap> buildAccompanyingConfigMaps() throws IOException {
 		final String clusterId = kubernetesComponentConf.getClusterId();
 
 		final Map<String, String> data = new HashMap<>();
