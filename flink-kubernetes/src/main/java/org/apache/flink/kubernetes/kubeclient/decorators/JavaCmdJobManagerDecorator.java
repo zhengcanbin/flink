@@ -38,14 +38,13 @@ public class JavaCmdJobManagerDecorator extends AbstractKubernetesStepDecorator 
 	private final KubernetesJobManagerParameters kubernetesJobManagerParameters;
 
 	public JavaCmdJobManagerDecorator(KubernetesJobManagerParameters kubernetesJobManagerParameters) {
-		super(kubernetesJobManagerParameters.getFlinkConfiguration());
 		this.kubernetesJobManagerParameters = checkNotNull(kubernetesJobManagerParameters);
 	}
 
 	@Override
 	protected Container decorateMainContainer(Container container) {
 		final String startCommand = getJobManagerStartCommand(
-				configuration,
+				kubernetesJobManagerParameters.getFlinkConfiguration(),
 				kubernetesJobManagerParameters.getJobManagerMemoryMB(),
 				kubernetesJobManagerParameters.getFlinkConfDirInPod(),
 				kubernetesJobManagerParameters.getFlinkLogDirInPod(),

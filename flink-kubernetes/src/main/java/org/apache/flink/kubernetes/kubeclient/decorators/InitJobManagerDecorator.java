@@ -49,7 +49,6 @@ public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 	private final KubernetesJobManagerParameters kubernetesJobManagerParameters;
 
 	public InitJobManagerDecorator(KubernetesJobManagerParameters kubernetesJobManagerParameters) {
-		super(kubernetesJobManagerParameters.getFlinkConfiguration());
 		this.kubernetesJobManagerParameters = checkNotNull(kubernetesJobManagerParameters);
 	}
 

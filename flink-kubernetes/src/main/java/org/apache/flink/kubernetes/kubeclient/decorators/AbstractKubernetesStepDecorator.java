@@ -18,7 +18,6 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.FlinkPodBuilder;
 
@@ -30,19 +29,11 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import static org.apache.flink.util.Preconditions.checkNotNull;
-
 /**
  * An abstract {@link KubernetesStepDecorator} contains common implementations for different plug-in features
  * while providing two additional methods.
  */
 public abstract class AbstractKubernetesStepDecorator implements KubernetesStepDecorator {
-
-	protected final Configuration configuration;
-
-	public AbstractKubernetesStepDecorator(Configuration configuration) {
-		this.configuration = checkNotNull(configuration);
-	}
 
 	/**
 	 * Apply transformations on the given FlinkPod in accordance to this feature.

@@ -64,7 +64,6 @@ public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 	private final AbstractKubernetesParameters kubernetesComponentConf;
 
 	public FlinkConfMountDecorator(AbstractKubernetesParameters kubernetesComponentConf) {
-		super(kubernetesComponentConf.getFlinkConfiguration());
 		this.kubernetesComponentConf = checkNotNull(kubernetesComponentConf);
 	}
 
@@ -117,7 +116,7 @@ public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 		for (File file : localLogFiles) {
 			data.put(file.getName(), Files.toString(file, StandardCharsets.UTF_8));
 		}
-		data.put(FLINK_CONF_FILENAME, getFlinkConfData(this.configuration));
+		data.put(FLINK_CONF_FILENAME, getFlinkConfData(this.kubernetesComponentConf.getFlinkConfiguration()));
 
 		final ConfigMap flinkConfConfigMap = new ConfigMapBuilder()
 			.withNewMetadata()

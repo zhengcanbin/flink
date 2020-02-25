@@ -44,7 +44,6 @@ public class JavaCmdTaskManagerDecorator extends AbstractKubernetesStepDecorator
 	private final KubernetesTaskManagerParameters kubernetesTaskManagerParameters;
 
 	public JavaCmdTaskManagerDecorator(KubernetesTaskManagerParameters kubernetesTaskManagerParameters) {
-		super(kubernetesTaskManagerParameters.getFlinkConfiguration());
 		this.kubernetesTaskManagerParameters = checkNotNull(kubernetesTaskManagerParameters);
 	}
 

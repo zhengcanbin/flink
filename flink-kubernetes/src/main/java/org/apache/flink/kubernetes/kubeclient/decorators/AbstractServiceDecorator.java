@@ -44,7 +44,6 @@ public abstract class AbstractServiceDecorator extends AbstractKubernetesStepDec
 	protected final KubernetesJobManagerParameters kubernetesJobManagerParameters;
 
 	public AbstractServiceDecorator(KubernetesJobManagerParameters kubernetesJobManagerParameters) {
-		super(kubernetesJobManagerParameters.getFlinkConfiguration());
 		this.kubernetesJobManagerParameters = checkNotNull(kubernetesJobManagerParameters);
 	}
 
@@ -55,7 +54,8 @@ public abstract class AbstractServiceDecorator extends AbstractKubernetesStepDec
 		if (isInternalService()) {
 			// Set jobmanager address to namespaced service name
 			final String namespace = kubernetesJobManagerParameters.getNamespace();
-			configuration.setString(JobManagerOptions.ADDRESS, serviceName + "." + namespace);
+			this.kubernetesJobManagerParameters.getFlinkConfiguration()
+				.setString(JobManagerOptions.ADDRESS, serviceName + "." + namespace);
 		}
 
 		final Service service = new ServiceBuilder()
