@@ -86,7 +86,7 @@ public class KubernetesJobManagerFactory {
 			.withApiVersion(Constants.APPS_API_VERSION)
 			.editOrNewMetadata()
 				.withName(kubernetesJobManagerParameters.getClusterId())
-				.withLabels(kubernetesJobManagerParameters.getCommonLabels())
+				.withLabels(kubernetesJobManagerParameters.getLabels())
 				.endMetadata()
 			.editOrNewSpec()
 				.withReplicas(1)
