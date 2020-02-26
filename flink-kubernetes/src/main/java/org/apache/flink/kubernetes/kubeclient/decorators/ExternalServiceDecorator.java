@@ -18,8 +18,15 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
+import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
+
+import io.fabric8.kubernetes.api.model.HasMetadata;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Creates an external Service to expose the ports of the Flink JobManager(s).
@@ -29,6 +36,15 @@ public class ExternalServiceDecorator extends AbstractServiceDecorator {
 
 	public ExternalServiceDecorator(KubernetesJobManagerParameters kubernetesJobManagerParameters) {
 		super(kubernetesJobManagerParameters);
+	}
+
+	@Override
+	public List<HasMetadata> buildAccompanyingKubernetesResources() throws IOException {
+		if (kubernetesJobManagerParameters.getRestServiceExposedType().equals(
+			KubernetesConfigOptions.ServiceExposedType.ClusterIP.name())) {
+			return Collections.emptyList();
+		}
+		return super.buildAccompanyingKubernetesResources();
 	}
 
 	@Override
