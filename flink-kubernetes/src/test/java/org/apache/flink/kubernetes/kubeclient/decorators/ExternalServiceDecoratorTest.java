@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -82,7 +83,6 @@ public class ExternalServiceDecoratorTest extends KubernetesJobManagerTestBase {
 		assertEquals("NodePort", ((Service) resources.get(0)).getSpec().getType());
 
 		this.flinkConfig.set(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE, "ClusterIP");
-		resources = this.externalServiceDecorator.buildAccompanyingKubernetesResources();
-		assertEquals("ClusterIP", ((Service) resources.get(0)).getSpec().getType());
+		assertTrue(this.externalServiceDecorator.buildAccompanyingKubernetesResources().isEmpty());
 	}
 }
