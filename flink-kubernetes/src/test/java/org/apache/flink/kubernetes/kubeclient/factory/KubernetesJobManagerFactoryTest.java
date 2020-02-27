@@ -18,7 +18,6 @@
 
 package org.apache.flink.kubernetes.kubeclient.factory;
 
-import org.apache.flink.configuration.ResourceManagerOptions;
 import org.apache.flink.kubernetes.KubernetesTestUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
@@ -58,13 +57,6 @@ public class KubernetesJobManagerFactoryTest extends KubernetesJobManagerTestBas
 	private static final String SERVICE_ACCOUNT_NAME = "service-test";
 	private static final String ENTRY_POINT_CLASS = KubernetesSessionClusterEntrypoint.class.getCanonicalName();
 
-	private final Map<String, String> customizedEnvs = new HashMap<String, String>() {
-		{
-			put("key1", "value1");
-			put("key2", "value2");
-		}
-	};
-
 	private KubernetesJobManagerSpecification kubernetesJobManagerSpecification;
 
 	@Before
@@ -76,8 +68,6 @@ public class KubernetesJobManagerFactoryTest extends KubernetesJobManagerTestBas
 
 		flinkConfig.set(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS, ENTRY_POINT_CLASS);
 		flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_SERVICE_ACCOUNT, SERVICE_ACCOUNT_NAME);
-		customizedEnvs.forEach((k, v) ->
-			flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX + k, v));
 
 		this.kubernetesJobManagerSpecification =
 			KubernetesJobManagerFactory.createJobManagerComponent(kubernetesJobManagerParameters);
