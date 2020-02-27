@@ -76,7 +76,7 @@ public class KubernetesJobManagerFactoryTest extends KubernetesJobManagerTestBas
 	@Test
 	public void testDeploymentMetadata() {
 		final Deployment resultDeployment = this.kubernetesJobManagerSpecification.getDeployment();
-		assertEquals(CLUSTER_ID, resultDeployment.getMetadata().getName());
+		assertEquals(KubernetesUtils.getDeploymentName(CLUSTER_ID), resultDeployment.getMetadata().getName());
 		final Map<String, String> expectedLabels = getCommonLabels();
 		expectedLabels.put(Constants.LABEL_COMPONENT_KEY, Constants.LABEL_COMPONENT_JOB_MANAGER);
 		assertEquals(expectedLabels, resultDeployment.getMetadata().getLabels());
