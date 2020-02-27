@@ -25,6 +25,7 @@ import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerTestBase;
 import org.apache.flink.kubernetes.utils.Constants;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KeyToPath;
 import io.fabric8.kubernetes.api.model.KeyToPathBuilder;
@@ -51,7 +52,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class FlinkConfMountDecoratorTest extends KubernetesJobManagerTestBase {
 
-	private static final String INTERNAL_FLINK_CONF_DIR = "/opt/flink/flink-conf-";
+	private static final String FLINK_CONF_DIR_IN_POD = "/opt/flink/flink-conf-";
 
 	private FlinkConfMountDecorator flinkConfMountDecorator;
 
@@ -59,8 +60,7 @@ public class FlinkConfMountDecoratorTest extends KubernetesJobManagerTestBase {
 	public void setup() throws Exception {
 		super.setup();
 
-		this.flinkConfig.set(KubernetesConfigOptions.FLINK_CONF_DIR, INTERNAL_FLINK_CONF_DIR);
-		writeFlinkConfiguration();
+		this.flinkConfig.set(KubernetesConfigOptions.FLINK_CONF_DIR, FLINK_CONF_DIR_IN_POD);
 
 		this.flinkConfMountDecorator = new FlinkConfMountDecorator(kubernetesJobManagerParameters);
 	}
@@ -90,7 +90,7 @@ public class FlinkConfMountDecoratorTest extends KubernetesJobManagerTestBase {
 		assertEquals("some data", resultDatas.get("logback.xml"));
 		assertEquals("some data", resultDatas.get("log4j.properties"));
 		assertTrue(resultDatas.get(FLINK_CONF_FILENAME).contains(KubernetesConfigOptions.FLINK_CONF_DIR.key() +
-				": " + INTERNAL_FLINK_CONF_DIR));
+				": " + FLINK_CONF_DIR_IN_POD));
 	}
 
 	@Test
@@ -115,7 +115,7 @@ public class FlinkConfMountDecoratorTest extends KubernetesJobManagerTestBase {
 		final List<VolumeMount> expectedVolumeMounts = Collections.singletonList(
 			new VolumeMountBuilder()
 				.withName(Constants.FLINK_CONF_VOLUME)
-				.withMountPath(INTERNAL_FLINK_CONF_DIR)
+				.withMountPath(FLINK_CONF_DIR_IN_POD)
 			.build());
 		assertEquals(expectedVolumeMounts, resultFlinkPod.getMainContainer().getVolumeMounts());
 	}
@@ -201,5 +201,15 @@ public class FlinkConfMountDecoratorTest extends KubernetesJobManagerTestBase {
 				.endConfigMap()
 				.build());
 		assertEquals(expectedVolumes, resultFlinkPod.getPod().getSpec().getVolumes());
+	}
+
+	@Test
+	public void testDecoratedFlinkContainer() {
+		final Container resultMainContainer = flinkConfMountDecorator.decorateFlinkPod(baseFlinkPod).getMainContainer();
+		assertEquals(1, resultMainContainer.getVolumeMounts().size());
+
+		final VolumeMount volumeMount = resultMainContainer.getVolumeMounts().get(0);
+		assertEquals(Constants.FLINK_CONF_VOLUME, volumeMount.getName());
+		assertEquals(FLINK_CONF_DIR_IN_POD, volumeMount.getMountPath());
 	}
 }
