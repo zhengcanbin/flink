@@ -58,6 +58,8 @@ public class ExternalServiceDecoratorTest extends KubernetesJobManagerTestBase {
 
 		final Service restService = (Service) resources.get(0);
 
+		assertEquals(Constants.API_VERSION, restService.getApiVersion());
+
 		assertEquals(KubernetesUtils.getRestServiceName(CLUSTER_ID), restService.getMetadata().getName());
 
 		final Map<String, String> expectedLabels = getCommonLabels();

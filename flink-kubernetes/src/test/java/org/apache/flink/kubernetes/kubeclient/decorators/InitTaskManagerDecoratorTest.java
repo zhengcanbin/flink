@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.apache.flink.kubernetes.utils.Constants.API_VERSION;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -64,6 +65,11 @@ public class InitTaskManagerDecoratorTest extends KubernetesTaskManagerTestBase 
 		final FlinkPod resultFlinkPod = initTaskManagerDecorator.decorateFlinkPod(this.baseFlinkPod);
 		this.resultPod = resultFlinkPod.getPod();
 		this.resultMainContainer = resultFlinkPod.getMainContainer();
+	}
+
+	@Test
+	public void testApiVersion() {
+		assertEquals(API_VERSION, this.resultPod.getApiVersion());
 	}
 
 	@Test
