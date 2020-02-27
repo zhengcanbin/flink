@@ -73,6 +73,11 @@ public class InitJobManagerDecoratorTest extends KubernetesJobManagerTestBase {
 	}
 
 	@Test
+	public void testApiVersion() {
+		assertEquals(API_VERSION, this.resultPod.getApiVersion());
+	}
+
+	@Test
 	public void testMainContainerName() {
 		assertEquals(KubernetesJobManagerParameters.JOB_MANAGER_MAIN_CONTAINER_NAME, this.resultMainContainer.getName());
 	}

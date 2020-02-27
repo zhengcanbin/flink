@@ -82,6 +82,8 @@ public class FlinkConfMountDecoratorTest extends KubernetesJobManagerTestBase {
 
 		final ConfigMap resultConfigMap = (ConfigMap) additionalResources.get(0);
 
+		assertEquals(Constants.API_VERSION, resultConfigMap.getApiVersion());
+
 		assertEquals(flinkConfMountDecorator.getFlinkConfConfigMapName(CLUSTER_ID),
 				resultConfigMap.getMetadata().getName());
 		assertEquals(getCommonLabels(), resultConfigMap.getMetadata().getLabels());

@@ -22,6 +22,7 @@ import org.apache.flink.configuration.BlobServerOptions;
 import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
+import org.apache.flink.kubernetes.utils.Constants;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Service;
@@ -59,6 +60,7 @@ public abstract class AbstractServiceDecorator extends AbstractKubernetesStepDec
 		}
 
 		final Service service = new ServiceBuilder()
+			.withApiVersion(Constants.API_VERSION)
 			.withNewMetadata()
 				.withName(getServiceName())
 				.withLabels(kubernetesJobManagerParameters.getCommonLabels())

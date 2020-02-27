@@ -23,6 +23,7 @@ import org.apache.flink.client.cli.CliFrontend;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.parameters.AbstractKubernetesParameters;
+import org.apache.flink.kubernetes.utils.Constants;
 
 import org.apache.flink.shaded.guava18.com.google.common.io.Files;
 
@@ -126,6 +127,7 @@ public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 		data.put(FLINK_CONF_FILENAME, getFlinkConfData(kubernetesComponentConf.getFlinkConfiguration()));
 
 		final ConfigMap flinkConfConfigMap = new ConfigMapBuilder()
+			.withApiVersion(Constants.API_VERSION)
 			.withNewMetadata()
 				.withName(getFlinkConfConfigMapName(clusterId))
 				.withLabels(kubernetesComponentConf.getCommonLabels())

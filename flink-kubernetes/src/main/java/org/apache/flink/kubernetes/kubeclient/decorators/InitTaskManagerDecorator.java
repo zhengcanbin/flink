@@ -33,6 +33,7 @@ import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.apache.flink.kubernetes.utils.Constants.API_VERSION;
 import static org.apache.flink.kubernetes.utils.Constants.ENV_FLINK_POD_NAME;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
@@ -50,6 +51,7 @@ public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 	@Override
 	public FlinkPod decorateFlinkPod(FlinkPod flinkPod) {
 		final Pod basicPod = new PodBuilder(flinkPod.getPod())
+			.withApiVersion(API_VERSION)
 			.editOrNewMetadata()
 				.withName(kubernetesTaskManagerParameters.getPodName())
 				.withLabels(kubernetesTaskManagerParameters.getLabels())
