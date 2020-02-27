@@ -31,7 +31,6 @@ import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -69,7 +68,7 @@ public class InitTaskManagerDecoratorTest extends KubernetesTaskManagerTestBase 
 
 	@Test
 	public void testMainContainerName() {
-		Assert.assertEquals(
+		assertEquals(
 			kubernetesTaskManagerParameters.getTaskManagerMainContainerName(),
 			this.resultMainContainer.getName());
 	}
@@ -77,10 +76,6 @@ public class InitTaskManagerDecoratorTest extends KubernetesTaskManagerTestBase 
 	@Test
 	public void testMainContainerImage() {
 		assertEquals(CONTAINER_IMAGE, this.resultMainContainer.getImage());
-	}
-
-	@Test
-	public void testMainContainerImagePullPolicy() {
 		assertEquals(CONTAINER_IMAGE_PULL_POLICY, this.resultMainContainer.getImagePullPolicy());
 	}
 
