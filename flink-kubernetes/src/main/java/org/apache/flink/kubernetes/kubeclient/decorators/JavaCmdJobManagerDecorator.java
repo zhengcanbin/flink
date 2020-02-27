@@ -22,7 +22,6 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
-import org.apache.flink.runtime.clusterframework.BootstrapTools;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
@@ -83,8 +82,7 @@ public class JavaCmdJobManagerDecorator extends AbstractKubernetesStepDecorator 
 			boolean hasLogback,
 			boolean hasLog4j,
 			String mainClass) {
-		final int heapSize = BootstrapTools.calculateHeapSize(jobManagerMemoryMb, flinkConfig);
-		final String jvmMemOpts = String.format("-Xms%sm -Xmx%sm", heapSize, heapSize);
+		final String jvmMemOpts = String.format("-Xms%sm -Xmx%sm", jobManagerMemoryMb, jobManagerMemoryMb);
 		return KubernetesUtils.getCommonStartCommand(
 			flinkConfig,
 			KubernetesUtils.ClusterComponent.JOB_MANAGER,

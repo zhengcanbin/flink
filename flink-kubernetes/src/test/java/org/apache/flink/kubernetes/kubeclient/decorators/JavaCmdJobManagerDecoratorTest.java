@@ -63,8 +63,7 @@ public class JavaCmdJobManagerDecoratorTest extends KubernetesJobManagerTestBase
 					FLINK_LOG_DIR_IN_POD, FLINK_LOG_DIR_IN_POD);
 
 	// Memory variables
-	private static final String jmJvmMem = String.format("-Xms%dm -Xmx%dm",
-			JOB_MANAGER_MEMORY - 600, JOB_MANAGER_MEMORY - 600);
+	private String jmJvmMem;
 
 	private JavaCmdJobManagerDecorator javaCmdJobManagerDecorator;
 
@@ -76,7 +75,7 @@ public class JavaCmdJobManagerDecoratorTest extends KubernetesJobManagerTestBase
 		flinkConfig.set(KubernetesConfigOptions.FLINK_LOG_DIR, FLINK_LOG_DIR_IN_POD);
 		flinkConfig.set(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS, ENTRY_POINT_CLASS);
 		flinkConfig.set(KubernetesConfigOptions.KUBERNETES_ENTRY_PATH, KUBERNETES_ENTRY_PATH);
-
+		this.jmJvmMem = String.format("-Xms%dm -Xmx%dm", jobManagerMemoryWithCutoff, jobManagerMemoryWithCutoff);
 		this.javaCmdJobManagerDecorator = new JavaCmdJobManagerDecorator(kubernetesJobManagerParameters);
 	}
 

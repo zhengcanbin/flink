@@ -26,6 +26,7 @@ import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.kubernetes.KubernetesTestBase;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
+import org.apache.flink.runtime.clusterframework.BootstrapTools;
 
 import org.junit.Before;
 
@@ -38,7 +39,8 @@ import java.util.Map;
 public class KubernetesJobManagerTestBase extends KubernetesTestBase {
 
 	protected static final double JOB_MANAGER_CPU = 2.0;
-	protected static final int JOB_MANAGER_MEMORY = 768;
+
+	private static final int JOB_MANAGER_MEMORY = 1024;
 
 	protected static final int REST_PORT = 9081;
 	protected static final int RPC_PORT = 7123;
@@ -50,6 +52,8 @@ public class KubernetesJobManagerTestBase extends KubernetesTestBase {
 			put("key2", "value2");
 		}
 	};
+
+	protected int jobManagerMemoryWithCutoff;
 
 	protected KubernetesJobManagerParameters kubernetesJobManagerParameters;
 
@@ -66,8 +70,10 @@ public class KubernetesJobManagerTestBase extends KubernetesTestBase {
 		this.customizedEnvs.forEach((k, v) ->
 				this.flinkConfig.setString(ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX + k, v));
 
+		this.jobManagerMemoryWithCutoff = BootstrapTools.calculateHeapSize(JOB_MANAGER_MEMORY, flinkConfig);
+
 		final ClusterSpecification clusterSpecification = new ClusterSpecification.ClusterSpecificationBuilder()
-			.setMasterMemoryMB(JOB_MANAGER_MEMORY)
+			.setMasterMemoryMB(this.jobManagerMemoryWithCutoff)
 			.setTaskManagerMemoryMB(1024)
 			.setSlotsPerTaskManager(3)
 			.createClusterSpecification();

@@ -67,6 +67,9 @@ public class KubernetesJobManagerParameters extends AbstractKubernetesParameters
 		return JOB_MANAGER_MAIN_CONTAINER_NAME;
 	}
 
+	/**
+	 * Get the JobManager memory that has been cut off.
+	 */
 	public int getJobManagerMemoryMB() {
 		return clusterSpecification.getMasterMemoryMB();
 	}
