@@ -44,6 +44,7 @@ public class ExternalServiceDecorator extends AbstractServiceDecorator {
 			KubernetesConfigOptions.ServiceExposedType.ClusterIP.name())) {
 			return Collections.emptyList();
 		}
+
 		return super.buildAccompanyingKubernetesResources();
 	}
 
@@ -53,17 +54,7 @@ public class ExternalServiceDecorator extends AbstractServiceDecorator {
 	}
 
 	@Override
-	protected boolean isRestPortOnly() {
-		return true;
-	}
-
-	@Override
 	protected String getServiceName() {
 		return KubernetesUtils.getRestServiceName(kubernetesJobManagerParameters.getClusterId());
-	}
-
-	@Override
-	protected boolean isInternalService() {
-		return false;
 	}
 }
