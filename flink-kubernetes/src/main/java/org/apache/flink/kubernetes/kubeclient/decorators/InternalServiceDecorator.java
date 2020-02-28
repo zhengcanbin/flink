@@ -18,9 +18,17 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
+import org.apache.flink.configuration.BlobServerOptions;
+import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
+
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.ServicePort;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Creates an internal Service which forwards the requests from the TaskManager(s) to the
@@ -35,23 +43,39 @@ public class InternalServiceDecorator extends AbstractServiceDecorator {
 	}
 
 	@Override
+	public List<HasMetadata> buildAccompanyingKubernetesResources() throws IOException {
+		final String serviceName = getServiceName();
+
+		// Set job manager address to namespaced service name
+		final String namespace = kubernetesJobManagerParameters.getNamespace();
+		kubernetesJobManagerParameters.getFlinkConfiguration()
+			.setString(JobManagerOptions.ADDRESS, serviceName + "." + namespace);
+
+		return super.buildAccompanyingKubernetesResources();
+	}
+
+	@Override
+	protected List<ServicePort> getServicePorts() {
+		final List<ServicePort> servicePorts = super.getServicePorts();
+
+		servicePorts.add(getServicePort(
+			getPortName(JobManagerOptions.PORT.key()),
+			kubernetesJobManagerParameters.getRPCPort()));
+		servicePorts.add(getServicePort(
+			getPortName(BlobServerOptions.PORT.key()),
+			kubernetesJobManagerParameters.getBlobServerPort()));
+
+		return servicePorts;
+	}
+
+	@Override
 	protected String getServiceType() {
 		return KubernetesConfigOptions.ServiceExposedType.ClusterIP.name();
 	}
 
 	@Override
-	protected boolean isRestPortOnly() {
-		return false;
-	}
-
-	@Override
 	protected String getServiceName() {
 		return KubernetesUtils.getInternalServiceName(kubernetesJobManagerParameters.getClusterId());
-	}
-
-	@Override
-	protected boolean isInternalService() {
-		return true;
 	}
 }
 

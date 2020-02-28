@@ -18,8 +18,6 @@
 
 package org.apache.flink.kubernetes.kubeclient.decorators;
 
-import org.apache.flink.configuration.BlobServerOptions;
-import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.Constants;
@@ -50,15 +48,6 @@ public abstract class AbstractServiceDecorator extends AbstractKubernetesStepDec
 
 	@Override
 	public List<HasMetadata> buildAccompanyingKubernetesResources() throws IOException {
-		final String serviceName = getServiceName();
-
-		if (isInternalService()) {
-			// Set jobmanager address to namespaced service name
-			final String namespace = kubernetesJobManagerParameters.getNamespace();
-			kubernetesJobManagerParameters.getFlinkConfiguration()
-				.setString(JobManagerOptions.ADDRESS, serviceName + "." + namespace);
-		}
-
 		final Service service = new ServiceBuilder()
 			.withApiVersion(Constants.API_VERSION)
 			.withNewMetadata()
@@ -77,38 +66,26 @@ public abstract class AbstractServiceDecorator extends AbstractKubernetesStepDec
 
 	protected abstract String getServiceType();
 
-	protected abstract boolean isRestPortOnly();
-
 	protected abstract String getServiceName();
 
-	protected abstract boolean isInternalService();
-
-	private List<ServicePort> getServicePorts() {
+	protected List<ServicePort> getServicePorts() {
 		final List<ServicePort> servicePorts = new ArrayList<>();
+
 		servicePorts.add(getServicePort(
 			getPortName(RestOptions.PORT.key()),
 			kubernetesJobManagerParameters.getRestPort()));
 
-		if (!isRestPortOnly()) {
-			servicePorts.add(getServicePort(
-				getPortName(JobManagerOptions.PORT.key()),
-				kubernetesJobManagerParameters.getRPCPort()));
-			servicePorts.add(getServicePort(
-				getPortName(BlobServerOptions.PORT.key()),
-				kubernetesJobManagerParameters.getBlobServerPort()));
-		}
-
 		return servicePorts;
 	}
 
-	private ServicePort getServicePort(String name, int port) {
+	protected static ServicePort getServicePort(String name, int port) {
 		return new ServicePortBuilder()
 			.withName(name)
 			.withPort(port)
 			.build();
 	}
 
-	private String getPortName(String portName){
+	protected static String getPortName(String portName){
 		return portName.replace('.', '-');
 	}
 }
