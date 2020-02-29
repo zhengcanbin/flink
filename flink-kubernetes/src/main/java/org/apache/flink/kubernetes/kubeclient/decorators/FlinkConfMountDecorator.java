@@ -21,6 +21,7 @@ package org.apache.flink.kubernetes.kubeclient.decorators;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.client.cli.CliFrontend;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.parameters.AbstractKubernetesParameters;
 import org.apache.flink.kubernetes.utils.Constants;
@@ -124,7 +125,9 @@ public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 		for (File file : localLogFiles) {
 			data.put(file.getName(), Files.toString(file, StandardCharsets.UTF_8));
 		}
-		data.put(FLINK_CONF_FILENAME, getFlinkConfData(kubernetesComponentConf.getFlinkConfiguration()));
+
+		final Map<String, String> propertiesMap = getClusterSidePropertiesMap(kubernetesComponentConf.getFlinkConfiguration());
+		data.put(FLINK_CONF_FILENAME, getFlinkConfData(propertiesMap));
 
 		final ConfigMap flinkConfConfigMap = new ConfigMapBuilder()
 			.withApiVersion(Constants.API_VERSION)
@@ -138,16 +141,26 @@ public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 		return Collections.singletonList(flinkConfConfigMap);
 	}
 
+	/**
+	 * Get properties map for the cluster-side after removal of some keys.
+	 */
+	private Map<String, String> getClusterSidePropertiesMap(Configuration flinkConfig) {
+		final Map<String, String> propertiesMap = flinkConfig.toMap();
+
+		// remove kubernetes.config.file
+		propertiesMap.remove(KubernetesConfigOptions.KUBE_CONFIG_FILE.key());
+		return propertiesMap;
+	}
+
 	@VisibleForTesting
-	String getFlinkConfData(Configuration configuration) throws IOException {
+	String getFlinkConfData(Map<String, String> propertiesMap) throws IOException {
 		try (StringWriter sw = new StringWriter();
 			PrintWriter out = new PrintWriter(sw)) {
-			for (String key : configuration.keySet()) {
-				String value = configuration.getString(key, null);
-				out.print(key);
+			propertiesMap.forEach((k, v) -> {
+				out.print(k);
 				out.print(": ");
-				out.println(value);
-			}
+				out.println(v);
+			});
 
 			return sw.toString();
 		}
