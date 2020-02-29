@@ -62,7 +62,7 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 	public void setup() throws Exception {
 		super.setup();
 
-		mockRestServiceWithLoadBalancer(MOCK_SERVICE_HOST_NAME, MOCK_SERVICE_IP);
+		mockGetRestServiceWithLoadBalancer(MOCK_SERVICE_HOST_NAME, MOCK_SERVICE_IP);
 	}
 
 	@Test
@@ -136,17 +136,14 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 
 		final KubernetesClient kubeClient = server.getClient();
 
-		// we could list only the internal Service since we mock the external Service
-		// but the MixedDispatcher do not return that mock Service.
-		assertEquals(1, kubeClient.services().list().getItems().size());
-
+		assertEquals(2, kubeClient.services().list().getItems().size());
 		assertEquals(1, kubeClient.configMaps().list().getItems().size());
 
 		descriptor.killCluster(CLUSTER_ID);
 
 		// Mock kubernetes server do not delete the accompanying resources by gc.
 		assertTrue(kubeClient.apps().deployments().list().getItems().isEmpty());
-		assertEquals(1, kubeClient.services().list().getItems().size());
+		assertEquals(2, kubeClient.services().list().getItems().size());
 		assertEquals(1, kubeClient.configMaps().list().getItems().size());
 	}
 
@@ -164,11 +161,12 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 		return clusterClient;
 	}
 
-	private void mockRestServiceWithLoadBalancer(String hostname, String ip) {
+	private void mockGetRestServiceWithLoadBalancer(String hostname, String ip) {
 		final String restServiceName = KubernetesUtils.getRestServiceName(CLUSTER_ID);
 
 		final String path = String.format("/api/v1/namespaces/%s/services/%s", NAMESPACE, restServiceName);
 		server.expect()
+			.get()
 			.withPath(path)
 			.andReturn(200, buildMockRestService(hostname, ip))
 			.always();
