@@ -25,7 +25,6 @@ import org.apache.flink.configuration.BlobServerOptions;
 import org.apache.flink.configuration.HighAvailabilityOptions;
 import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.TaskManagerOptions;
-import org.apache.flink.kubernetes.kubeclient.FlinkKubeClient;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.jobmanager.HighAvailabilityMode;
@@ -41,8 +40,6 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.junit.Before;
 import org.junit.Test;
-
-import javax.annotation.Nullable;
 
 import java.util.Collections;
 import java.util.stream.Collectors;
@@ -70,8 +67,6 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 
 	@Test
 	public void testDeploySessionCluster() throws Exception {
-		mockRestServiceWithLoadBalancer(MOCK_SERVICE_HOST_NAME, MOCK_SERVICE_IP);
-
 		final ClusterClient<String> clusterClient = deploySessionCluster();
 		// Check updated flink config options
 		assertEquals(String.valueOf(Constants.BLOB_SERVER_PORT), flinkConfig.getString(BlobServerOptions.PORT));
@@ -105,7 +100,6 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 
 	@Test
 	public void testDeployHighAvailabilitySessionCluster() throws ClusterDeploymentException {
-		mockRestServiceWithLoadBalancer(MOCK_SERVICE_HOST_NAME, MOCK_SERVICE_IP);
 		flinkConfig.setString(HighAvailabilityOptions.HA_MODE, HighAvailabilityMode.ZOOKEEPER.toString());
 		final ClusterClient<String> clusterClient = deploySessionCluster();
 
@@ -133,9 +127,6 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 
 	@Test
 	public void testKillCluster() throws Exception {
-		mockRestServiceWithLoadBalancer(MOCK_SERVICE_HOST_NAME, MOCK_SERVICE_IP);
-
-		final FlinkKubeClient flinkKubeClient = getFabric8FlinkKubeClient();
 		final KubernetesClusterDescriptor descriptor = new KubernetesClusterDescriptor(flinkConfig, flinkKubeClient);
 
 		final ClusterSpecification clusterSpecification = new ClusterSpecification.ClusterSpecificationBuilder()
@@ -160,7 +151,6 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 	}
 
 	private ClusterClient<String> deploySessionCluster() throws ClusterDeploymentException {
-		final FlinkKubeClient flinkKubeClient = getFabric8FlinkKubeClient();
 		final KubernetesClusterDescriptor descriptor = new KubernetesClusterDescriptor(flinkConfig, flinkKubeClient);
 
 		final ClusterClient<String> clusterClient = descriptor
@@ -174,7 +164,7 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 		return clusterClient;
 	}
 
-	private void mockRestServiceWithLoadBalancer(@Nullable String hostname, @Nullable String ip) {
+	private void mockRestServiceWithLoadBalancer(String hostname, String ip) {
 		final String restServiceName = KubernetesUtils.getRestServiceName(CLUSTER_ID);
 
 		final String path = String.format("/api/v1/namespaces/%s/services/%s", NAMESPACE, restServiceName);
@@ -184,7 +174,7 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 			.always();
 	}
 
-	private Service buildMockRestService(@Nullable String hostname, @Nullable String ip) {
+	private Service buildMockRestService(String hostname, String ip) {
 		final Service service = new ServiceBuilder()
 			.editOrNewMetadata()
 				.withName(KubernetesUtils.getRestServiceName(CLUSTER_ID))

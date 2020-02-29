@@ -80,19 +80,7 @@ public class KubernetesTestBase extends TestLogger {
 		flinkKubeClient = new Fabric8FlinkKubeClient(flinkConfig, kubeClient);
 	}
 
-	protected FlinkKubeClient getFabric8FlinkKubeClient(){
-		return getFabric8FlinkKubeClient(flinkConfig);
-	}
-
-	protected FlinkKubeClient getFabric8FlinkKubeClient(Configuration flinkConfig){
-		return new Fabric8FlinkKubeClient(flinkConfig, server.getClient().inNamespace(NAMESPACE));
-	}
-
-	protected KubernetesClient getKubeClient() {
-		return server.getClient().inNamespace(NAMESPACE);
-	}
-
-	protected void writeFlinkConfiguration() throws IOException {
+	private void writeFlinkConfiguration() throws IOException {
 		BootstrapTools.writeConfiguration(this.flinkConfig, new File(flinkConfDir, "flink-conf.yaml"));
 	}
 
