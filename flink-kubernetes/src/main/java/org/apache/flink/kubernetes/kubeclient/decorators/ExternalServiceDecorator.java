@@ -29,8 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Creates an external Service to expose the ports of the Flink JobManager(s).
- * This can include the rest port, and the blob server port.
+ * Creates an external Service to expose the rest port of the Flink JobManager(s).
  */
 public class ExternalServiceDecorator extends AbstractServiceDecorator {
 
