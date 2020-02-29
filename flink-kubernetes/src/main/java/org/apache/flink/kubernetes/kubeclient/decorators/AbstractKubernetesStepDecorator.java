@@ -27,8 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * An abstract {@link KubernetesStepDecorator} contains common implementations for different plug-in features
- * while providing two additional methods.
+ * An abstract {@link KubernetesStepDecorator} contains common implementations for different plug-in features.
  */
 public abstract class AbstractKubernetesStepDecorator implements KubernetesStepDecorator {
 
