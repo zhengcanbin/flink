@@ -127,7 +127,7 @@ public class KubernetesUtils {
 	}
 
 	/**
-	 * Generate name of the external Service.
+	 * Generate name of the Deployment.
 	 */
 	public static String getDeploymentName(String clusterId) {
 		return clusterId;

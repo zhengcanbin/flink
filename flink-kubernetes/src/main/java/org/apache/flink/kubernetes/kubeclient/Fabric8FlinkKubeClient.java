@@ -82,7 +82,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 			.inNamespace(this.nameSpace)
 			.create(deployment);
 
-		// Note, we should use the server-side uid of the created Deployment for the OwnerReference.
+		// Note that we should use the server-side uid of the created Deployment for the OwnerReference.
 		setOwnerReference(createdDeployment, accompanyingResources);
 
 		this.internalClient
@@ -97,15 +97,16 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 			.apps()
 			.deployments()
 			.inNamespace(this.nameSpace)
-			.withName(clusterId)
+			.withName(KubernetesUtils.getDeploymentName(clusterId))
 			.get();
 
 		if (masterDeployment == null) {
 			throw new RuntimeException(
-				"Failed to find Deployment named " + clusterId + " in namespace " + this.nameSpace);
+				"Failed to find Deployment named " + KubernetesUtils.getDeploymentName(clusterId) +
+					" in namespace " + this.nameSpace);
 		}
 
-		// Note, we should use the uid of the master Deployment for the OwnerReference.
+		// Note that we should use the uid of the Deployment for the OwnerReference.
 		setOwnerReference(masterDeployment, Collections.singletonList(kubernetesPod.getInternalResource()));
 
 		LOG.debug("Start to create pod with metadata {}, spec {}",
@@ -178,8 +179,13 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 
 	@Override
 	public void stopAndCleanupCluster(String clusterId) {
-		this.internalClient.apps().deployments().inNamespace(this.nameSpace)
-			.withName(clusterId).cascading(true).delete();
+		this.internalClient
+			.apps()
+			.deployments()
+			.inNamespace(this.nameSpace)
+			.withName(KubernetesUtils.getDeploymentName(clusterId))
+			.cascading(true)
+			.delete();
 	}
 
 	@Override

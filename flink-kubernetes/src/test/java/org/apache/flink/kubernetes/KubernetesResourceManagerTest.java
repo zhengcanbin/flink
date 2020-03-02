@@ -109,8 +109,7 @@ public class KubernetesResourceManagerTest extends KubernetesTestBase {
 
 		final Deployment mockDeployment = new DeploymentBuilder()
 			.editOrNewMetadata()
-				.withName(CLUSTER_ID)
-				.withUid(CLUSTER_ID)
+				.withName(KubernetesUtils.getDeploymentName(CLUSTER_ID))
 				.endMetadata()
 			.build();
 		kubeClient.apps().deployments().inNamespace(NAMESPACE).create(mockDeployment);
