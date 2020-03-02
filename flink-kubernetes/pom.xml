@@ -119,6 +119,7 @@ under the License.
 							<artifactSet>
 								<includes combine.children="append">
 									<include>io.fabric8:kubernetes-client</include>
+									<include>io.fabric8:zjsonpatch</include>
 									<include>io.fabric8:kubernetes-model</include>
 									<include>io.fabric8:kubernetes-model-common</include>
 

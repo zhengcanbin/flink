@@ -31,8 +31,6 @@ import org.apache.flink.runtime.entrypoint.parser.CommandLineOptions;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 
-import javax.annotation.Nullable;
-
 import java.util.Arrays;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
@@ -87,7 +85,7 @@ public class JavaCmdTaskManagerDecorator extends AbstractKubernetesStepDecorator
 			boolean hasLogback,
 			boolean hasLog4j,
 			String mainClass,
-			@Nullable String mainArgs) {
+			String mainArgs) {
 		final TaskExecutorProcessSpec taskExecutorProcessSpec = tmParams.getTaskExecutorProcessSpec();
 		final String jvmMemOpts = TaskExecutorProcessUtils.generateJvmParametersStr(taskExecutorProcessSpec);
 		String args = TaskExecutorProcessUtils.generateDynamicConfigsStr(taskExecutorProcessSpec);
