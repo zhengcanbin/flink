@@ -28,6 +28,7 @@ import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
+import org.apache.flink.runtime.jobmanager.HighAvailabilityMode;
 
 import java.util.Map;
 
@@ -103,5 +104,9 @@ public class KubernetesJobManagerParameters extends AbstractKubernetesParameters
 	public String getRestServiceExposedType() {
 		final String exposedType = flinkConfig.getString(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE);
 		return KubernetesConfigOptions.ServiceExposedType.valueOf(exposedType).name();
+	}
+
+	public boolean enableInternalService() {
+		return !HighAvailabilityMode.isHighAvailabilityModeActivated(flinkConfig);
 	}
 }

@@ -47,6 +47,10 @@ public class Constants {
 	public static final String LABEL_COMPONENT_JOB_MANAGER = "jobmanager";
 	public static final String LABEL_COMPONENT_TASK_MANAGER = "taskmanager";
 
+	public static final String JOB_MANAGER_RPC_PORT_NAME = "jobmanager-rpc-port";
+	public static final String BLOB_SERVER_PORT_NAME = "blob-server-port";
+	public static final String REST_PORT_NAME = "rest-port";
+
 	// Use fixed port in kubernetes, it needs to be exposed.
 	public static final int BLOB_SERVER_PORT = 6124;
 	public static final int TASK_MANAGER_RPC_PORT = 6122;

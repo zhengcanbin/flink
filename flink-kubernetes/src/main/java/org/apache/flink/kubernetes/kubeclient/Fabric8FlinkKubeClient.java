@@ -132,7 +132,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 
 		// Return the service.namespace directly when use ClusterIP.
 		if (serviceExposedType.equals(KubernetesConfigOptions.ServiceExposedType.ClusterIP.toString())) {
-			return new Endpoint(KubernetesUtils.getInternalServiceName(clusterId) + "." + nameSpace, restPort);
+			return new Endpoint(KubernetesUtils.getRestServiceName(clusterId) + "." + nameSpace, restPort);
 		}
 
 		KubernetesService restService = getRestService(clusterId);
@@ -193,16 +193,24 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 		LOG.error("A Kubernetes exception occurred.", e);
 	}
 
-	@Nullable
-	@Override
-	public KubernetesService getInternalService(String clusterId) {
-		return getService(KubernetesUtils.getInternalServiceName(clusterId));
-	}
-
 	@Override
 	@Nullable
 	public KubernetesService getRestService(String clusterId) {
-		return getService(KubernetesUtils.getRestServiceName(clusterId));
+		final String serviceName = KubernetesUtils.getRestServiceName(clusterId);
+
+		final Service service = this.internalClient
+			.services()
+			.inNamespace(nameSpace)
+			.withName(serviceName)
+			.fromServer()
+			.get();
+
+		if (service == null) {
+			LOG.error("Service {} does not exist", serviceName);
+			return null;
+		}
+
+		return new KubernetesService(service);
 	}
 
 	@Override
@@ -254,23 +262,6 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 			.build();
 		resources.forEach(resource ->
 			resource.getMetadata().setOwnerReferences(Collections.singletonList(deploymentOwnerReference)));
-	}
-
-	private KubernetesService getService(String serviceName) {
-		final Service service = this
-			.internalClient
-			.services()
-			.inNamespace(nameSpace)
-			.withName(serviceName)
-			.fromServer()
-			.get();
-
-		if (service == null) {
-			LOG.debug("Service {} does not exist", serviceName);
-			return null;
-		}
-
-		return new KubernetesService(service);
 	}
 
 	/**

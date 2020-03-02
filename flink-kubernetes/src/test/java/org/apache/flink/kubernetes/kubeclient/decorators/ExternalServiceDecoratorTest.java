@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -69,7 +68,7 @@ public class ExternalServiceDecoratorTest extends KubernetesJobManagerTestBase {
 
 		List<ServicePort> expectedServicePorts = Collections.singletonList(
 			new ServicePortBuilder()
-				.withName("rest-port")
+				.withName(Constants.REST_PORT_NAME)
 				.withPort(REST_PORT)
 				.build());
 		assertEquals(expectedServicePorts, restService.getSpec().getPorts());
@@ -81,10 +80,11 @@ public class ExternalServiceDecoratorTest extends KubernetesJobManagerTestBase {
 	@Test
 	public void testSetServiceExposedType() throws IOException {
 		this.flinkConfig.set(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE, "NodePort");
-		List<HasMetadata> resources = this.externalServiceDecorator.buildAccompanyingKubernetesResources();
-		assertEquals("NodePort", ((Service) resources.get(0)).getSpec().getType());
+		List<HasMetadata> servicesWithNodePort = this.externalServiceDecorator.buildAccompanyingKubernetesResources();
+		assertEquals("NodePort", ((Service) servicesWithNodePort.get(0)).getSpec().getType());
 
 		this.flinkConfig.set(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE, "ClusterIP");
-		assertTrue(this.externalServiceDecorator.buildAccompanyingKubernetesResources().isEmpty());
+		List<HasMetadata> servicesWithClusterIP = this.externalServiceDecorator.buildAccompanyingKubernetesResources();
+		assertEquals("ClusterIP", ((Service) servicesWithClusterIP.get(0)).getSpec().getType());
 	}
 }
