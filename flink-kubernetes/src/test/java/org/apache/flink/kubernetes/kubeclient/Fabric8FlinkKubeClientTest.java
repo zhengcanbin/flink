@@ -31,6 +31,7 @@ import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint
 import org.apache.flink.kubernetes.kubeclient.factory.KubernetesJobManagerFactory;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
+import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -254,6 +255,13 @@ public class Fabric8FlinkKubeClientTest extends KubernetesTestBase {
 
 	private Service buildMockRestServiceWithLB(@Nullable String hostname, @Nullable String ip) {
 		final Service service = new ServiceBuilder()
+			.editOrNewSpec()
+				.addNewPort()
+					.withName(Constants.REST_PORT_NAME)
+					.withPort(8081)
+					.withNodePort(31234)
+					.endPort()
+				.endSpec()
 			.build();
 
 		service.setStatus(new ServiceStatusBuilder()
