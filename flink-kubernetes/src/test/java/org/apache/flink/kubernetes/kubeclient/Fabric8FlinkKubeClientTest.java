@@ -30,6 +30,7 @@ import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint
 import org.apache.flink.kubernetes.kubeclient.factory.KubernetesJobManagerFactory;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
+import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -50,8 +51,10 @@ import javax.annotation.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -68,6 +71,7 @@ public class Fabric8FlinkKubeClientTest extends KubernetesTestBase {
 	private static final int JOB_MANAGER_MEMORY = 768;
 
 	private static final String SERVICE_ACCOUNT_NAME = "service-test";
+	private static final String SERVICE_CREATE_TIMEOUT = "10s";
 
 	private static final String ENTRY_POINT_CLASS = KubernetesSessionClusterEntrypoint.class.getCanonicalName();
 
@@ -87,6 +91,7 @@ public class Fabric8FlinkKubeClientTest extends KubernetesTestBase {
 		flinkConfig.set(BlobServerOptions.PORT, Integer.toString(BLOB_SERVER_PORT));
 		flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_CPU, JOB_MANAGER_CPU);
 		flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_SERVICE_ACCOUNT, SERVICE_ACCOUNT_NAME);
+		flinkConfig.set(KubernetesConfigOptions.SERVICE_CREATE_TIMEOUT, SERVICE_CREATE_TIMEOUT);
 
 		final ClusterSpecification clusterSpecification = new ClusterSpecification.ClusterSpecificationBuilder()
 			.setMasterMemoryMB(JOB_MANAGER_MEMORY)
@@ -180,26 +185,27 @@ public class Fabric8FlinkKubeClientTest extends KubernetesTestBase {
 		final String hostName = "test-host-name";
 		mockRestServiceWithLB(hostName, "");
 
-		final Endpoint resultEndpoint = flinkKubeClient.getRestEndpoint(CLUSTER_ID);
+		final Optional<Endpoint> resultEndpoint = flinkKubeClient.getRestEndpoint(CLUSTER_ID).join();
 
-		assertEquals(hostName, resultEndpoint.getAddress());
-		assertEquals(REST_PORT, resultEndpoint.getPort());
+		assertTrue(resultEndpoint.isPresent());
+		assertEquals(hostName, resultEndpoint.get().getAddress());
+		assertEquals(REST_PORT, resultEndpoint.get().getPort());
 	}
 
 	@Test
 	public void testServiceLoadBalancerEmptyHostAndIP() {
 		mockRestServiceWithLB("", "");
 
-		final Endpoint resultEndpoint1 = flinkKubeClient.getRestEndpoint(CLUSTER_ID);
-		assertNull(resultEndpoint1);
+		final Optional<Endpoint> resultEndpoint1 = flinkKubeClient.getRestEndpoint(CLUSTER_ID).join();
+		assertFalse(resultEndpoint1.isPresent());
 	}
 
 	@Test
 	public void testServiceLoadBalancerNullHostAndIP() {
 		mockRestServiceWithLB(null, null);
 
-		final Endpoint resultEndpoint2 = flinkKubeClient.getRestEndpoint(CLUSTER_ID);
-		assertNull(resultEndpoint2);
+		final Optional<Endpoint> resultEndpoint2 = flinkKubeClient.getRestEndpoint(CLUSTER_ID).join();
+		assertFalse(resultEndpoint2.isPresent());
 	}
 
 	@Test
@@ -242,6 +248,14 @@ public class Fabric8FlinkKubeClientTest extends KubernetesTestBase {
 
 	private Service buildMockRestServiceWithLB(@Nullable String hostname, @Nullable String ip) {
 		final Service service = new ServiceBuilder()
+			.editOrNewSpec()
+				.withType("LoadBalancer")
+				.addNewPort()
+					.withName(Constants.REST_PORT_NAME)
+					.withPort(REST_PORT)
+					.withNodePort(31234)
+					.endPort()
+				.endSpec()
 			.build();
 
 		service.setStatus(new ServiceStatusBuilder()

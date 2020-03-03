@@ -18,15 +18,19 @@
 
 package org.apache.flink.kubernetes.kubeclient;
 
-import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesService;
+import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
+import org.apache.flink.util.StringUtils;
+import org.apache.flink.util.TimeUtils;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.LoadBalancerIngress;
+import io.fabric8.kubernetes.api.model.Node;
+import io.fabric8.kubernetes.api.model.NodeAddress;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -41,10 +45,14 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
@@ -125,41 +133,90 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 
 	@Override
 	@Nullable
-	public Endpoint getRestEndpoint(String clusterId) {
-		int restPort = this.flinkConfig.getInteger(RestOptions.PORT);
-		String serviceExposedType = flinkConfig.getString(KubernetesConfigOptions.REST_SERVICE_EXPOSED_TYPE);
+	public CompletableFuture<Optional<Endpoint>> getRestEndpoint(String clusterId) {
+		return CompletableFuture.supplyAsync(() -> {
+				Optional<Endpoint> endpoint = getRestEndpointInternal(clusterId);
 
-		// Return the service.namespace directly when use ClusterIP.
-		if (serviceExposedType.equals(KubernetesConfigOptions.ServiceExposedType.ClusterIP.toString())) {
-			return new Endpoint(KubernetesUtils.getRestServiceName(clusterId) + "." + nameSpace, restPort);
-		}
+				final Duration timeout =
+					TimeUtils.parseDuration(flinkConfig.get(KubernetesConfigOptions.SERVICE_CREATE_TIMEOUT));
+				final long endTime = timeout.toMillis() + System.currentTimeMillis();
 
-		KubernetesService restService = getRestService(clusterId);
-		if (restService == null) {
-			return null;
+				while (!endpoint.isPresent() && System.currentTimeMillis() <= endTime) {
+					endpoint = getRestEndpointInternal(clusterId);
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException e) {
+						// do nothing
+					}
+					LOG.debug("endpoint = " + endpoint.toString());
+				}
+
+				return endpoint;
+			});
+	}
+
+	private Optional<Endpoint> getRestEndpointInternal(String clusterId) {
+		final KubernetesService wrapRestService = getRestService(clusterId);
+		if (wrapRestService == null) {
+			throw new RuntimeException("Failed to find Service via clusterId " + clusterId);
 		}
-		Service service = restService.getInternalResource();
+		final Service restService = wrapRestService.getInternalResource();
+
+		final KubernetesConfigOptions.ServiceExposedType restServiceType =
+			KubernetesConfigOptions.ServiceExposedType.valueOf(restService.getSpec().getType());
+
+		final List<ServicePort> restServicePortCandidates = restService.getSpec().getPorts()
+			.stream()
+			.filter(x -> x.getName().equals(Constants.REST_PORT_NAME))
+			.collect(Collectors.toList());
+
+		if (restServicePortCandidates.isEmpty()) {
+			throw new RuntimeException("Failed to find port " + Constants.REST_PORT_NAME + " in Service " +
+				KubernetesUtils.getRestServiceName(this.clusterId));
+		}
+		final ServicePort restServicePort = restServicePortCandidates.get(0);
 
 		String address = null;
-
-		if (service.getStatus() != null && (service.getStatus().getLoadBalancer() != null ||
-			service.getStatus().getLoadBalancer().getIngress() != null)) {
-			if (service.getStatus().getLoadBalancer().getIngress().size() > 0) {
-				address = service.getStatus().getLoadBalancer().getIngress().get(0).getIp();
-				if (address == null || address.isEmpty()) {
-					address = service.getStatus().getLoadBalancer().getIngress().get(0).getHostname();
+		int restPort = restServicePort.getPort();
+		switch (restServiceType) {
+			case ClusterIP:
+				address = KubernetesUtils.getRestServiceName(clusterId) + "." + nameSpace;
+				break;
+			case NodePort:
+				final List<Node> nodes = this.internalClient.nodes().list().getItems();
+				final int randomNodeIndex = new Random().nextInt(nodes.size());
+				final List<NodeAddress> nodeAddresses = nodes.get(randomNodeIndex).getStatus().getAddresses();
+				for (NodeAddress nodeAddress: nodeAddresses) {
+					if (nodeAddress.getType().equals("InternalIP")) {
+						address = nodeAddress.getAddress();
+						break;
+					}
 				}
-			} else {
-				address = this.internalClient.getMasterUrl().getHost();
-				restPort = getServiceNodePort(service, RestOptions.PORT);
-			}
-		} else if (service.getSpec().getExternalIPs() != null && service.getSpec().getExternalIPs().size() > 0) {
-			address = service.getSpec().getExternalIPs().get(0);
+				restPort = restServicePort.getNodePort();
+				break;
+			case LoadBalancer:
+				final List<LoadBalancerIngress> ingresses = restService.getStatus().getLoadBalancer().getIngress();
+				if (!ingresses.isEmpty()) {
+					address = ingresses.get(0).getIp();
+					if (StringUtils.isNullOrWhitespaceOnly(address)) {
+						address = ingresses.get(0).getHostname();
+					}
+					if (StringUtils.isNullOrWhitespaceOnly(address)) {
+						address = null;
+					}
+				} else {
+					LOG.debug("LoadBalancerIngress is not found");
+				}
+				break;
+			default:
+				throw new RuntimeException("Unrecognized Service type: " + restServiceType);
 		}
-		if (address == null || address.isEmpty()) {
-			return null;
+
+		if (address == null) {
+			return Optional.empty();
 		}
-		return new Endpoint(address, restPort);
+
+		return Optional.of(new Endpoint(address, restPort));
 	}
 
 	@Override
@@ -205,7 +262,7 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 			.get();
 
 		if (service == null) {
-			LOG.error("Service {} does not exist", serviceName);
+			LOG.debug("Service {} does not exist", serviceName);
 			return null;
 		}
 
@@ -261,20 +318,5 @@ public class Fabric8FlinkKubeClient implements FlinkKubeClient {
 			.build();
 		resources.forEach(resource ->
 			resource.getMetadata().setOwnerReferences(Collections.singletonList(deploymentOwnerReference)));
-	}
-
-	/**
-	 * To get nodePort of configured ports.
-	 */
-	private int getServiceNodePort(Service service, ConfigOption<Integer> configPort) {
-		final int port = this.flinkConfig.getInteger(configPort);
-		if (service.getSpec() != null && service.getSpec().getPorts() != null) {
-			for (ServicePort p : service.getSpec().getPorts()) {
-				if (p.getPort() == port) {
-					return p.getNodePort();
-				}
-			}
-		}
-		return port;
 	}
 }

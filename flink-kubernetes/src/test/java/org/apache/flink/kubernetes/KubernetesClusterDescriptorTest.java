@@ -176,6 +176,12 @@ public class KubernetesClusterDescriptorTest extends KubernetesTestBase {
 				.withName(KubernetesUtils.getRestServiceName(CLUSTER_ID))
 				.endMetadata()
 			.editOrNewSpec()
+				.withType("LoadBalancer")
+				.addNewPort()
+					.withName(Constants.REST_PORT_NAME)
+					.withPort(8081)
+					.withNodePort(32145)
+					.endPort()
 				.endSpec()
 			.build();
 

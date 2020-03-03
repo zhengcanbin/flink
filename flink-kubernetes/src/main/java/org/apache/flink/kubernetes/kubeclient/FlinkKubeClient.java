@@ -25,6 +25,8 @@ import javax.annotation.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * The client to talk with kubernetes.
@@ -72,7 +74,7 @@ public interface FlinkKubeClient extends AutoCloseable {
 	 * @return Return null if the service does not exist or could not extract the Endpoint from the service.
 	 */
 	@Nullable
-	Endpoint getRestEndpoint(String clusterId);
+	CompletableFuture<Optional<Endpoint>> getRestEndpoint(String clusterId);
 
 	/**
 	 * List the pods with specified labels.
