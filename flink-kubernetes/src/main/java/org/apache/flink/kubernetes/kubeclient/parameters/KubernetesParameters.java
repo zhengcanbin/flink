@@ -21,6 +21,7 @@ package org.apache.flink.kubernetes.kubeclient.parameters;
 import io.fabric8.kubernetes.api.model.LocalObjectReference;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A common collection of parameters that is used to construct the JobManager/TaskManager Pods,
@@ -78,4 +79,6 @@ public interface KubernetesParameters {
 	 * Whether the log4j.properties is located.
 	 */
 	boolean hasLog4j();
+
+	Optional<String> getLocalHadoopConfigurationDirectory();
 }

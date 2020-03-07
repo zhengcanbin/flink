@@ -24,6 +24,8 @@ import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal
 import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint;
 import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerSpecification;
 import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerTestBase;
+import org.apache.flink.kubernetes.kubeclient.decorators.FlinkConfMountDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.HadoopConfMountDecorator;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesJobManagerParameters;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
@@ -70,6 +72,9 @@ public class KubernetesJobManagerFactoryTest extends KubernetesJobManagerTestBas
 		flinkConfig.set(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS, ENTRY_POINT_CLASS);
 		flinkConfig.set(KubernetesConfigOptions.JOB_MANAGER_SERVICE_ACCOUNT, SERVICE_ACCOUNT_NAME);
 
+		setHadoopConfDirEnv();
+		generateHadoopConfFileItems();
+
 		this.kubernetesJobManagerSpecification =
 			KubernetesJobManagerFactory.createJobManagerComponent(kubernetesJobManagerParameters);
 	}
@@ -105,14 +110,14 @@ public class KubernetesJobManagerFactoryTest extends KubernetesJobManagerTestBas
 
 		assertEquals(1, resultPodSpec.getContainers().size());
 		assertEquals(SERVICE_ACCOUNT_NAME, resultPodSpec.getServiceAccountName());
-		assertEquals(1, resultPodSpec.getVolumes().size());
+		assertEquals(2, resultPodSpec.getVolumes().size());
 
 		final Container resultedMainContainer = resultPodSpec.getContainers().get(0);
 		assertEquals(KubernetesJobManagerParameters.JOB_MANAGER_MAIN_CONTAINER_NAME, resultedMainContainer.getName());
 		assertEquals(CONTAINER_IMAGE, resultedMainContainer.getImage());
 		assertEquals(CONTAINER_IMAGE_PULL_POLICY, resultedMainContainer.getImagePullPolicy());
 
-		assertEquals(3, resultedMainContainer.getEnv().size());
+		assertEquals(4, resultedMainContainer.getEnv().size());
 		assertTrue(resultedMainContainer.getEnv()
 				.stream()
 				.anyMatch(envVar -> envVar.getName().equals("key1")));
@@ -126,13 +131,13 @@ public class KubernetesJobManagerFactoryTest extends KubernetesJobManagerTestBas
 		assertEquals(1, resultedMainContainer.getCommand().size());
 		assertEquals(3, resultedMainContainer.getArgs().size());
 
-		assertEquals(1, resultedMainContainer.getVolumeMounts().size());
+		assertEquals(2, resultedMainContainer.getVolumeMounts().size());
 	}
 
 	@Test
 	public void testAdditionalResourcesSize() {
 		final List<HasMetadata> resultAdditionalResources = this.kubernetesJobManagerSpecification.getAccompanyingResources();
-		assertEquals(3, resultAdditionalResources.size());
+		assertEquals(4, resultAdditionalResources.size());
 
 		final List<HasMetadata> resultServices = resultAdditionalResources
 			.stream()
@@ -144,7 +149,7 @@ public class KubernetesJobManagerFactoryTest extends KubernetesJobManagerTestBas
 			.stream()
 			.filter(x -> x instanceof ConfigMap)
 			.collect(Collectors.toList());
-		assertEquals(1, resultConfigMaps.size());
+		assertEquals(2, resultConfigMaps.size());
 	}
 
 	@Test
@@ -189,7 +194,8 @@ public class KubernetesJobManagerFactoryTest extends KubernetesJobManagerTestBas
 	public void testFlinkConfConfigMap() {
 		final ConfigMap resultConfigMap = (ConfigMap) this.kubernetesJobManagerSpecification.getAccompanyingResources()
 			.stream()
-			.filter(x -> x instanceof ConfigMap)
+			.filter(x -> x instanceof ConfigMap &&
+				x.getMetadata().getName().equals(FlinkConfMountDecorator.getFlinkConfConfigMapName(CLUSTER_ID)))
 			.collect(Collectors.toList())
 			.get(0);
 
@@ -201,5 +207,22 @@ public class KubernetesJobManagerFactoryTest extends KubernetesJobManagerTestBas
 		assertEquals("some data", resultDatas.get("logback.xml"));
 		assertTrue(resultDatas.get(FLINK_CONF_FILENAME)
 			.contains(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS.key() + ": " + ENTRY_POINT_CLASS));
+	}
+
+	@Test
+	public void testHadoopConfConfigMap() {
+		final ConfigMap resultConfigMap = (ConfigMap) this.kubernetesJobManagerSpecification.getAccompanyingResources()
+			.stream()
+			.filter(x -> x instanceof ConfigMap &&
+				x.getMetadata().getName().equals(HadoopConfMountDecorator.getHadoopConfConfigMapName(CLUSTER_ID)))
+			.collect(Collectors.toList())
+			.get(0);
+
+		assertEquals(2, resultConfigMap.getMetadata().getLabels().size());
+
+		final Map<String, String> resultDatas = resultConfigMap.getData();
+		assertEquals(2, resultDatas.size());
+		assertEquals("some data", resultDatas.get("core-site.xml"));
+		assertEquals("some data", resultDatas.get("hdfs-site.xml"));
 	}
 }

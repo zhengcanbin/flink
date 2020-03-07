@@ -20,6 +20,7 @@ package org.apache.flink.kubernetes;
 
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.core.testutils.CommonTestUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.kubeclient.Fabric8FlinkKubeClient;
 import org.apache.flink.kubernetes.kubeclient.FlinkKubeClient;
@@ -56,6 +57,8 @@ public class KubernetesTestBase extends TestLogger {
 
 	protected File flinkConfDir;
 
+	protected File hadoopConfDir;
+
 	protected final Configuration flinkConfig = new Configuration();
 
 	protected KubernetesClient kubeClient;
@@ -70,6 +73,8 @@ public class KubernetesTestBase extends TestLogger {
 		flinkConfig.setString(KubernetesConfigOptions.CONTAINER_IMAGE_PULL_POLICY, CONTAINER_IMAGE_PULL_POLICY);
 
 		flinkConfDir = temporaryFolder.newFolder().getAbsoluteFile();
+		hadoopConfDir = temporaryFolder.newFolder().getAbsoluteFile();
+
 		writeFlinkConfiguration();
 
 		Map<String, String> map = new HashMap<>();
@@ -89,5 +94,16 @@ public class KubernetesTestBase extends TestLogger {
 		labels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
 		labels.put(Constants.LABEL_APP_KEY, CLUSTER_ID);
 		return labels;
+	}
+
+	protected void setHadoopConfDirEnv() {
+		Map<String, String> map = new HashMap<>();
+		map.put(Constants.ENV_HADOOP_CONF_DIR, hadoopConfDir.toString());
+		CommonTestUtils.setEnv(map, false);
+	}
+
+	protected void generateHadoopConfFileItems() throws IOException {
+		KubernetesTestUtils.createTemporyFile("some data", hadoopConfDir, "core-site.xml");
+		KubernetesTestUtils.createTemporyFile("some data", hadoopConfDir, "hdfs-site.xml");
 	}
 }

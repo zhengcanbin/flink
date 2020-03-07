@@ -30,6 +30,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.apache.flink.kubernetes.configuration.KubernetesConfigOptions.CONTAINER_IMAGE_PULL_SECRETS;
 import static org.apache.flink.kubernetes.utils.Constants.CONFIG_FILE_LOG4J_NAME;
@@ -132,6 +133,11 @@ public abstract class AbstractKubernetesParameters implements KubernetesParamete
 		final String confDir = CliFrontend.getConfigurationDirectoryFromEnv();
 		final File log4jFile = new File(confDir, CONFIG_FILE_LOG4J_NAME);
 		return log4jFile.exists();
+	}
+
+	@Override
+	public Optional<String> getLocalHadoopConfigurationDirectory() {
+		return Optional.ofNullable(System.getenv(Constants.ENV_HADOOP_CONF_DIR));
 	}
 
 	/**
