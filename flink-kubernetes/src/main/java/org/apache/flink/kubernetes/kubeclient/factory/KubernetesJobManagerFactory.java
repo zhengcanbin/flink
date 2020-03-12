@@ -20,11 +20,13 @@ package org.apache.flink.kubernetes.kubeclient.factory;
 
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
 import org.apache.flink.kubernetes.kubeclient.KubernetesJobManagerSpecification;
+import org.apache.flink.kubernetes.kubeclient.decorators.BasicInitContainerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.ExternalServiceDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.FlinkConfMountDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.HadoopConfMountDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.InitJobManagerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.InternalServiceDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.JavaCmdInitContainerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.JavaCmdJobManagerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.KubernetesStepDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.LogDirMountDecorator;
@@ -58,6 +60,8 @@ public class KubernetesJobManagerFactory {
 		final KubernetesStepDecorator[] stepDecorators = new KubernetesStepDecorator[] {
 			new InitJobManagerDecorator(kubernetesJobManagerParameters),
 			new JavaCmdJobManagerDecorator(kubernetesJobManagerParameters),
+			new BasicInitContainerDecorator(kubernetesJobManagerParameters),
+			new JavaCmdInitContainerDecorator(kubernetesJobManagerParameters),
 			new InternalServiceDecorator(kubernetesJobManagerParameters),
 			new ExternalServiceDecorator(kubernetesJobManagerParameters),
 			new HadoopConfMountDecorator(kubernetesJobManagerParameters),
@@ -79,11 +83,21 @@ public class KubernetesJobManagerFactory {
 			KubernetesJobManagerParameters kubernetesJobManagerParameters) {
 		final Container resolvedMainContainer = flinkPod.getMainContainer();
 
-		final Pod resolvedPod = new PodBuilder(flinkPod.getPod())
-			.editOrNewSpec()
-				.addToContainers(resolvedMainContainer)
-				.endSpec()
-			.build();
+		Pod resolvedPod;
+		if (kubernetesJobManagerParameters.runInitContainer()) {
+			resolvedPod	= new PodBuilder(flinkPod.getPod())
+				.editOrNewSpec()
+					.addToInitContainers(flinkPod.getInitContainer())
+					.addToContainers(resolvedMainContainer)
+					.endSpec()
+				.build();
+		} else {
+			resolvedPod	= new PodBuilder(flinkPod.getPod())
+				.editOrNewSpec()
+					.addToContainers(resolvedMainContainer)
+					.endSpec()
+				.build();
+		}
 
 		final Map<String, String> labels = resolvedPod.getMetadata().getLabels();
 

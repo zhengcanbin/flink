@@ -19,9 +19,11 @@
 package org.apache.flink.kubernetes.kubeclient.factory;
 
 import org.apache.flink.kubernetes.kubeclient.FlinkPod;
+import org.apache.flink.kubernetes.kubeclient.decorators.BasicInitContainerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.FlinkConfMountDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.HadoopConfMountDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.InitTaskManagerDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.JavaCmdInitContainerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.JavaCmdTaskManagerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.KubernetesStepDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.LogDirMountDecorator;
@@ -42,6 +44,8 @@ public class KubernetesTaskManagerFactory {
 		final KubernetesStepDecorator[] stepDecorators = new KubernetesStepDecorator[] {
 			new InitTaskManagerDecorator(kubernetesTaskManagerParameters),
 			new JavaCmdTaskManagerDecorator(kubernetesTaskManagerParameters),
+			new BasicInitContainerDecorator(kubernetesTaskManagerParameters),
+			new JavaCmdInitContainerDecorator(kubernetesTaskManagerParameters),
 			new HadoopConfMountDecorator(kubernetesTaskManagerParameters),
 			new LogDirMountDecorator(),
 			new FlinkConfMountDecorator(kubernetesTaskManagerParameters)};
@@ -50,11 +54,21 @@ public class KubernetesTaskManagerFactory {
 			flinkPod = stepDecorator.decorateFlinkPod(flinkPod);
 		}
 
-		final Pod resolvedPod = new PodBuilder(flinkPod.getPod())
-			.editOrNewSpec()
-				.addToContainers(flinkPod.getMainContainer())
-				.endSpec()
-			.build();
+		Pod resolvedPod;
+		if (kubernetesTaskManagerParameters.runInitContainer()) {
+			resolvedPod = new PodBuilder(flinkPod.getPod())
+				.editOrNewSpec()
+					.addToInitContainers(flinkPod.getInitContainer())
+					.addToContainers(flinkPod.getMainContainer())
+					.endSpec()
+				.build();
+		} else {
+			resolvedPod = new PodBuilder(flinkPod.getPod())
+				.editOrNewSpec()
+					.addToContainers(flinkPod.getMainContainer())
+					.endSpec()
+				.build();
+		}
 
 		return new KubernetesPod(resolvedPod);
 	}

@@ -31,8 +31,10 @@ import org.apache.flink.configuration.HighAvailabilityOptions;
 import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.configuration.TaskManagerOptions;
+import org.apache.flink.core.plugin.PluginUtils;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
+import org.apache.flink.kubernetes.entrypoint.KubernetesJobClusterEntrypoint;
 import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint;
 import org.apache.flink.kubernetes.kubeclient.Endpoint;
 import org.apache.flink.kubernetes.kubeclient.FlinkKubeClient;
@@ -48,11 +50,25 @@ import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.flink.runtime.jobmanager.HighAvailabilityMode;
 import org.apache.flink.util.FlinkException;
 
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
+import static org.apache.flink.runtime.entrypoint.component.FileJobGraphRetriever.JOB_GRAPH_FILE_PATH;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
@@ -131,6 +147,7 @@ public class KubernetesClusterDescriptor implements ClusterDescriptor<String> {
 		final ClusterClientProvider<String> clusterClientProvider = deployClusterInternal(
 			KubernetesSessionClusterEntrypoint.class.getName(),
 			clusterSpecification,
+			null,
 			false);
 
 		try (ClusterClient<String> clusterClient = clusterClientProvider.getClusterClient()) {
@@ -147,12 +164,21 @@ public class KubernetesClusterDescriptor implements ClusterDescriptor<String> {
 			ClusterSpecification clusterSpecification,
 			JobGraph jobGraph,
 			boolean detached) throws ClusterDeploymentException {
-		throw new ClusterDeploymentException("Per job could not be supported now.");
+		try {
+			return deployClusterInternal(
+				KubernetesJobClusterEntrypoint.class.getName(),
+				clusterSpecification,
+				jobGraph,
+				detached);
+		} catch (Exception e) {
+			throw new ClusterDeploymentException("Could not deploy Kubernetes job cluster.", e);
+		}
 	}
 
 	private ClusterClientProvider<String> deployClusterInternal(
 			String entryPoint,
 			ClusterSpecification clusterSpecification,
+			@Nullable JobGraph jobGraph,
 			boolean detached) throws ClusterDeploymentException {
 		final ClusterEntrypoint.ExecutionMode executionMode = detached ?
 			ClusterEntrypoint.ExecutionMode.DETACHED
@@ -160,6 +186,8 @@ public class KubernetesClusterDescriptor implements ClusterDescriptor<String> {
 		flinkConfig.setString(ClusterEntrypoint.EXECUTION_MODE, executionMode.toString());
 
 		flinkConfig.setString(KubernetesConfigOptionsInternal.ENTRY_POINT_CLASS, entryPoint);
+
+		flinkConfig.setBoolean(KubernetesConfigOptionsInternal.RUN_INIT_CONTAINER, jobGraph != null);
 
 		// Rpc, blob, rest, taskManagerRpc ports need to be exposed, so update them to fixed values.
 		KubernetesUtils.checkAndUpdatePortConfigOption(flinkConfig, BlobServerOptions.PORT, Constants.BLOB_SERVER_PORT);
@@ -180,6 +208,11 @@ public class KubernetesClusterDescriptor implements ClusterDescriptor<String> {
 			final KubernetesJobManagerParameters kubernetesJobManagerParameters =
 				new KubernetesJobManagerParameters(flinkConfig, clusterSpecification);
 
+			// only for the per job mode
+			if (jobGraph != null) {
+				uploadLocalDependencies(jobGraph, kubernetesJobManagerParameters);
+			}
+
 			final KubernetesJobManagerSpecification kubernetesJobManagerSpec =
 				KubernetesJobManagerFactory.createJobManagerComponent(kubernetesJobManagerParameters);
 
@@ -189,6 +222,69 @@ public class KubernetesClusterDescriptor implements ClusterDescriptor<String> {
 		} catch (Exception e) {
 			client.handleException(e);
 			throw new ClusterDeploymentException("Could not create Kubernetes cluster " + clusterId, e);
+		}
+	}
+
+	private void uploadLocalDependencies(
+			JobGraph jobGraph,
+			KubernetesJobManagerParameters kubernetesJobManagerParameters) throws IOException {
+		final String jarsDownloadDir = kubernetesJobManagerParameters.getJarsDownloadDir();
+		final String filesDownloadDir = kubernetesJobManagerParameters.getFilesDownloadDir();
+
+		// ------------------ Initialize the file systems -------------------------
+		org.apache.flink.core.fs.FileSystem.initialize(
+			flinkConfig,
+			PluginUtils.createPluginManagerFromRootFolder(flinkConfig));
+
+		// initialize file system
+		// Copy the application master jar to the filesystem
+		// Create a local resource to point to the destination jar path
+		final HdfsConfiguration hdfsConfiguration = new HdfsConfiguration();
+		final FileSystem fs = FileSystem.get(hdfsConfiguration);
+		final Path homeDir = fs.getHomeDirectory();
+
+		final List<String> userJarDst = new ArrayList<>();
+		final List<URL> classPaths = new ArrayList<>(jobGraph.getClasspaths());
+
+		final long currentTimeMillis = System.currentTimeMillis();
+		for (org.apache.flink.core.fs.Path path: jobGraph.getUserJars()) {
+			final String suffix = ".flink/" + clusterId + "/" + currentTimeMillis + "/" + path.getName();
+			final Path dst = new Path(homeDir, suffix);
+			final Path localSrcPath = new Path(path.getPath());
+			LOG.debug("Copying from {} to {} ", localSrcPath, dst);
+			fs.copyFromLocalFile(false, true, localSrcPath, dst);
+			userJarDst.add(dst.toUri().getRawPath());
+			classPaths.add(new URL("file://" + jarsDownloadDir + "/" + path.getName()));
+		}
+		flinkConfig.set(KubernetesConfigOptionsInternal.REMOTE_JAR_DEPENDENCIES, userJarDst);
+		jobGraph.setClasspaths(classPaths);
+
+		// write job graph to tmp file and upload it to remote DFS
+		File tmpJobGraphFile = null;
+		try {
+			tmpJobGraphFile = File.createTempFile(clusterId, null);
+			try (FileOutputStream output = new FileOutputStream(tmpJobGraphFile);
+				ObjectOutputStream obOutput = new ObjectOutputStream(output)) {
+				obOutput.writeObject(jobGraph);
+			}
+
+			final String jobGraphFilename = "job.graph";
+			final String suffix = ".flink/" + clusterId + "/" + currentTimeMillis + "/" + jobGraphFilename;
+			final Path dst = new Path(homeDir, suffix);
+			final Path localSrcPath = new Path(tmpJobGraphFile.toURI());
+			LOG.debug("Copying from {} to {} ", localSrcPath, dst);
+			fs.copyFromLocalFile(false, true, localSrcPath, dst);
+
+			flinkConfig.setString(JOB_GRAPH_FILE_PATH, filesDownloadDir + "/" + jobGraphFilename);
+			flinkConfig.set(KubernetesConfigOptionsInternal.REMOTE_FILE_DEPENDENCIES,
+				Collections.singletonList(dst.toUri().getRawPath()));
+		} catch (Exception e) {
+			LOG.warn("Failed to upload job graph file");
+			throw e;
+		} finally {
+			if (tmpJobGraphFile != null && !tmpJobGraphFile.delete()) {
+				LOG.warn("Fail to delete temporary JobGraph file {}.", tmpJobGraphFile.toPath());
+			}
 		}
 	}
 

@@ -39,6 +39,8 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,15 +76,23 @@ public class FlinkConfMountDecorator extends AbstractKubernetesStepDecorator {
 	public FlinkPod decorateFlinkPod(FlinkPod flinkPod) {
 		final Pod mountedPod = decoratePod(flinkPod.getPod());
 
+		final VolumeMount sharedVolumeMount = new VolumeMountBuilder()
+			.withName(FLINK_CONF_VOLUME)
+			.withMountPath(kubernetesComponentConf.getFlinkConfDirInPod())
+			.build();
+
+		final Container mountedInitContainer = !kubernetesComponentConf.runInitContainer() ? flinkPod.getInitContainer() :
+			new ContainerBuilder(flinkPod.getInitContainer())
+				.addToVolumeMounts(sharedVolumeMount)
+				.build();
+
 		final Container mountedMainContainer = new ContainerBuilder(flinkPod.getMainContainer())
-			.addNewVolumeMount()
-				.withName(FLINK_CONF_VOLUME)
-				.withMountPath(kubernetesComponentConf.getFlinkConfDirInPod())
-				.endVolumeMount()
+			.addToVolumeMounts(sharedVolumeMount)
 			.build();
 
 		return new FlinkPod.Builder(flinkPod)
 			.withPod(mountedPod)
+			.withInitContainer(mountedInitContainer)
 			.withMainContainer(mountedMainContainer)
 			.build();
 	}

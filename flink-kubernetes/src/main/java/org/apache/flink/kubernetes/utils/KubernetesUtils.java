@@ -186,9 +186,12 @@ public class KubernetesUtils {
 		if (mode == ClusterComponent.JOB_MANAGER) {
 			opts = getJavaOpts(flinkConfig, CoreOptions.FLINK_JM_JVM_OPTIONS);
 			logFileName = "jobmanager";
-		} else {
+		} else if (mode == ClusterComponent.TASK_MANAGER) {
 			opts = getJavaOpts(flinkConfig, CoreOptions.FLINK_TM_JVM_OPTIONS);
 			logFileName = "taskmanager";
+		} else {
+			opts = ""; // todo
+			logFileName = "initcontainer";
 		}
 		startCommandValues.put("jvmopts", opts);
 
@@ -236,7 +239,8 @@ public class KubernetesUtils {
 	 */
 	public enum ClusterComponent {
 		JOB_MANAGER,
-		TASK_MANAGER
+		TASK_MANAGER,
+		INIT_CONTAINER
 	}
 
 	private KubernetesUtils() {}

@@ -71,4 +71,8 @@ public class Constants {
 	public static final String ENV_FLINK_POD_IP_ADDRESS = "_POD_IP_ADDRESS";
 
 	public static final String POD_IP_FIELD_PATH = "status.podIP";
+
+	// for init-container
+	public static final String DOWNLOAD_JARS_VOLUME_NAME = "download-jars-volume";
+	public static final String DOWNLOAD_FILES_VOLUME_NAME = "download-files-volume";
 }

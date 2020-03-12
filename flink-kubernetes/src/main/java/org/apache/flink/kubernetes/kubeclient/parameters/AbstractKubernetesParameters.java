@@ -21,6 +21,7 @@ package org.apache.flink.kubernetes.kubeclient.parameters;
 import org.apache.flink.client.cli.CliFrontend;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
+import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.runtime.clusterframework.BootstrapTools;
 
@@ -42,6 +43,8 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * Abstract class for the {@link KubernetesParameters}.
  */
 public abstract class AbstractKubernetesParameters implements KubernetesParameters {
+
+	public static final String INIT_CONTAINER_NAME = "flink-initializer";
 
 	protected final Configuration flinkConfig;
 
@@ -138,6 +141,26 @@ public abstract class AbstractKubernetesParameters implements KubernetesParamete
 	@Override
 	public Optional<String> getLocalHadoopConfigurationDirectory() {
 		return Optional.ofNullable(System.getenv(Constants.ENV_HADOOP_CONF_DIR));
+	}
+
+	@Override
+	public Boolean runInitContainer() {
+		return flinkConfig.getBoolean(KubernetesConfigOptionsInternal.RUN_INIT_CONTAINER);
+	}
+
+	@Override
+	public String getInitContainerName() {
+		return INIT_CONTAINER_NAME;
+	}
+
+	@Override
+	public String getJarsDownloadDir() {
+		return checkNotNull(flinkConfig.get(KubernetesConfigOptions.JARS_DOWNLOAD_DIR));
+	}
+
+	@Override
+	public String getFilesDownloadDir() {
+		return checkNotNull(flinkConfig.get(KubernetesConfigOptions.FILES_DOWNLOAD_DIR));
 	}
 
 	/**

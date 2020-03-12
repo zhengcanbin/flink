@@ -27,16 +27,19 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * A collection of variables that composes a JobManager/TaskManager Pod. This can include
- * the Pod, the main Container, and the InitContainer, etc.
+ * the Pod, the main Container, and the init Container, etc.
  */
 public class FlinkPod {
 
 	private Pod pod;
 
+	private Container initContainer;
+
 	private Container mainContainer;
 
-	public FlinkPod(Pod pod, Container mainContainer) {
+	public FlinkPod(Pod pod, Container initContainer, Container mainContainer) {
 		this.pod = pod;
+		this.initContainer = initContainer;
 		this.mainContainer = mainContainer;
 	}
 
@@ -46,6 +49,14 @@ public class FlinkPod {
 
 	public void setPod(Pod pod) {
 		this.pod = pod;
+	}
+
+	public Container getInitContainer() {
+		return initContainer;
+	}
+
+	public void setInitContainer(Container initContainer) {
+		this.initContainer = initContainer;
 	}
 
 	public Container getMainContainer() {
@@ -62,6 +73,7 @@ public class FlinkPod {
 	public static class Builder {
 
 		private Pod pod;
+		private Container initContainer;
 		private Container mainContainer;
 
 		public Builder() {
@@ -72,17 +84,24 @@ public class FlinkPod {
 				.endSpec()
 				.build();
 
+			this.initContainer = new ContainerBuilder().build();
 			this.mainContainer = new ContainerBuilder().build();
 		}
 
 		public Builder(FlinkPod flinkPod) {
 			checkNotNull(flinkPod);
 			this.pod = checkNotNull(flinkPod.getPod());
+			this.initContainer = flinkPod.getInitContainer();
 			this.mainContainer = checkNotNull(flinkPod.getMainContainer());
 		}
 
 		public Builder withPod(Pod pod) {
 			this.pod = checkNotNull(pod);
+			return this;
+		}
+
+		public Builder withInitContainer(Container initContainer) {
+			this.initContainer = checkNotNull(initContainer);
 			return this;
 		}
 
@@ -92,7 +111,7 @@ public class FlinkPod {
 		}
 
 		public FlinkPod build() {
-			return new FlinkPod(this.pod, this.mainContainer);
+			return new FlinkPod(this.pod, this.initContainer, this.mainContainer);
 		}
 	}
 }

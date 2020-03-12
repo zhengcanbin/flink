@@ -56,13 +56,18 @@ public class LogDirMountDecorator extends AbstractKubernetesStepDecorator {
 				.endSpec()
 			.build();
 
-		final Container mainContainerWithLogVolumeMount = new ContainerBuilder(flinkPod.getMainContainer())
+		final Container initContainerWithLogVM = new ContainerBuilder(flinkPod.getInitContainer())
+			.addToVolumeMounts(volumeMount)
+			.build();
+
+		final Container mainContainerWithLogVM = new ContainerBuilder(flinkPod.getMainContainer())
 			.addToVolumeMounts(volumeMount)
 			.build();
 
 		return new FlinkPod.Builder(flinkPod)
 			.withPod(podWithLogVolume)
-			.withMainContainer(mainContainerWithLogVolumeMount)
+			.withInitContainer(initContainerWithLogVM)
+			.withMainContainer(mainContainerWithLogVM)
 			.build();
 	}
 }

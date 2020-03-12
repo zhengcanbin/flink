@@ -81,4 +81,12 @@ public interface KubernetesParameters {
 	boolean hasLog4j();
 
 	Optional<String> getLocalHadoopConfigurationDirectory();
+
+	Boolean runInitContainer();
+
+	String getInitContainerName();
+
+	String getJarsDownloadDir();
+
+	String getFilesDownloadDir();
 }

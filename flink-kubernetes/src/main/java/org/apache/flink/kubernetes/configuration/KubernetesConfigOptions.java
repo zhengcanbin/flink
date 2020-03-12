@@ -147,6 +147,20 @@ public class KubernetesConfigOptions {
 		.defaultValue("/opt/flink/log")
 		.withDescription("The directory that logs of jobmanager and taskmanager be saved in the pod.");
 
+	public static final ConfigOption<String> JARS_DOWNLOAD_DIR =
+		key("kubernetes.init-container.jarsDownloadDir")
+		.stringType()
+		.defaultValue("/var/flink-data/flink-jars")
+		.withDescription("Location to download remote jars into in the JobManagers and TaskManagers pods.\n" +
+			"This directory must be empty and will be mounted as an empty directory volume on the JobManager and TaskManager pods.");
+
+	public static final ConfigOption<String> FILES_DOWNLOAD_DIR =
+		key("kubernetes.init-container.filesDownloadDir")
+		.stringType()
+		.defaultValue("/var/flink-data/flink-files")
+			.withDescription("Location to download remote files into in the JobManagers and TaskManagers pods.\n" +
+				"This directory must be empty and will be mounted as an empty directory volume on the JobManager and TaskManager pods.");
+
 	/**
 	 * The flink rest service exposed type.
 	 */

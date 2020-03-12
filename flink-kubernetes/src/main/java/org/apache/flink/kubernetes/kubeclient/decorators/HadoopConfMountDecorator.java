@@ -10,6 +10,8 @@ import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KeyToPath;
 import io.fabric8.kubernetes.api.model.KeyToPathBuilder;
@@ -17,6 +19,8 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,20 +87,30 @@ public class HadoopConfMountDecorator extends AbstractKubernetesStepDecorator {
 				.endSpec()
 			.build();
 
-		final Container containerWithHadoopConf = new ContainerBuilder(flinkPod.getMainContainer())
-			.addNewVolumeMount()
-				.withName(Constants.HADOOP_CONF_VOLUME)
-				.withMountPath(Constants.HADOOP_CONF_DIR_IN_POD)
-				.endVolumeMount()
-			.addNewEnv()
-				.withName(Constants.ENV_HADOOP_CONF_DIR)
-				.withValue(Constants.HADOOP_CONF_DIR_IN_POD)
-				.endEnv()
+		final VolumeMount sharedVolumeMount = new VolumeMountBuilder()
+			.withName(Constants.HADOOP_CONF_VOLUME)
+			.withMountPath(Constants.HADOOP_CONF_DIR_IN_POD)
+			.build();
+		final EnvVar sharedEnvHadoopConfDir = new EnvVarBuilder()
+			.withName(Constants.ENV_HADOOP_CONF_DIR)
+			.withValue(Constants.HADOOP_CONF_DIR_IN_POD)
+			.build();
+
+		final Container initContainerWithHadoopConf = !kubernetesParameters.runInitContainer() ? flinkPod.getInitContainer() :
+			new ContainerBuilder(flinkPod.getInitContainer())
+			.addToVolumeMounts(sharedVolumeMount)
+			.addToEnv(sharedEnvHadoopConfDir)
+			.build();
+
+		final Container mainContainerWithHadoopConf = new ContainerBuilder(flinkPod.getMainContainer())
+			.addToVolumeMounts(sharedVolumeMount)
+			.addToEnv(sharedEnvHadoopConfDir)
 			.build();
 
 		return new FlinkPod.Builder(flinkPod)
 			.withPod(podWithHadoopConf)
-			.withMainContainer(containerWithHadoopConf)
+			.withInitContainer(initContainerWithHadoopConf)
+			.withMainContainer(mainContainerWithHadoopConf)
 			.build();
 	}
 
