@@ -166,7 +166,7 @@ public class KubernetesConfigOptions {
 			.intType()
 			.defaultValue(1)
 			.withDeprecatedKeys("Set the number of instances for JobManager in high availability mode.\n" +
-				"This value does not takes effect in the non high availability case.");
+				"This value does not take effect in the non high availability case.");
 	/**
 	 * The flink rest service exposed type.
 	 */
