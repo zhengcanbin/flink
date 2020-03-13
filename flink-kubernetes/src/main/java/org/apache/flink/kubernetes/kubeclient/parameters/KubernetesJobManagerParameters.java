@@ -109,4 +109,13 @@ public class KubernetesJobManagerParameters extends AbstractKubernetesParameters
 	public boolean enableInternalService() {
 		return !HighAvailabilityMode.isHighAvailabilityModeActivated(flinkConfig);
 	}
+
+	public int getJobManagerInstances() {
+		if (HighAvailabilityMode.isHighAvailabilityModeActivated(flinkConfig)) {
+			int instances = flinkConfig.getInteger(KubernetesConfigOptions.JOB_MANAGER_INSTANCES);
+			return instances > 0 ? instances : 1;
+		} else {
+			return 1;
+		}
+	}
 }

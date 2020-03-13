@@ -161,6 +161,12 @@ public class KubernetesConfigOptions {
 			.withDescription("Location to download remote files into in the JobManagers and TaskManagers pods.\n" +
 				"This directory must be empty and will be mounted as an empty directory volume on the JobManager and TaskManager pods.");
 
+	public static final ConfigOption<Integer> JOB_MANAGER_INSTANCES =
+		key("kubernetes.jobmanager.instances")
+			.intType()
+			.defaultValue(1)
+			.withDeprecatedKeys("Set the number of instances for JobManager in high availability mode.\n" +
+				"This value does not takes effect in the non high availability case.");
 	/**
 	 * The flink rest service exposed type.
 	 */

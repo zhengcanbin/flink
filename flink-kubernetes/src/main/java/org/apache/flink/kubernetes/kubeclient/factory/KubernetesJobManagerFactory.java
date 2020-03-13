@@ -108,7 +108,7 @@ public class KubernetesJobManagerFactory {
 				.withLabels(kubernetesJobManagerParameters.getLabels())
 				.endMetadata()
 			.editOrNewSpec()
-				.withReplicas(1)
+				.withReplicas(kubernetesJobManagerParameters.getJobManagerInstances())
 				.editOrNewTemplate()
 					.editOrNewMetadata()
 						.withLabels(labels)
