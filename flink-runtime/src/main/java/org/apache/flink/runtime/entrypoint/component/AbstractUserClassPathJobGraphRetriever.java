@@ -46,6 +46,7 @@ public abstract class AbstractUserClassPathJobGraphRetriever implements JobGraph
 			userClassPaths = Collections.emptyList();
 		} else {
 			final Path workingDirectory = FileUtils.getCurrentWorkingDirectory();
+			System.out.println("working directory: " + System.getProperty("user.dir"));
 			final Collection<URL> relativeJarURLs = FileUtils.listFilesInDirectory(jobDir.toPath(), FileUtils::isJarFile)
 				.stream()
 				.map(path -> FileUtils.relativizePath(workingDirectory, path))

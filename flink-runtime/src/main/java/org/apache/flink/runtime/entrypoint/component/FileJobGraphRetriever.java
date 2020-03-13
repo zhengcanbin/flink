@@ -60,6 +60,8 @@ public class FileJobGraphRetriever extends AbstractUserClassPathJobGraphRetrieve
 	public JobGraph retrieveJobGraph(Configuration configuration) throws FlinkException {
 		final File fp = new File(jobGraphFile);
 
+		System.out.println("Felix: Job Graph path: " + fp.getAbsolutePath());
+
 		try (FileInputStream input = new FileInputStream(fp);
 			ObjectInputStream obInput = new ObjectInputStream(input)) {
 			final JobGraph jobGraph = (JobGraph) obInput.readObject();
