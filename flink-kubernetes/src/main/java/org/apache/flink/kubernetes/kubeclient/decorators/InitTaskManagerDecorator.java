@@ -54,10 +54,12 @@ public class InitTaskManagerDecorator extends AbstractKubernetesStepDecorator {
 			.withApiVersion(Constants.API_VERSION)
 			.editOrNewMetadata()
 				.withName(kubernetesTaskManagerParameters.getPodName())
+				.withAnnotations(kubernetesTaskManagerParameters.getAnnotations())
 				.withLabels(kubernetesTaskManagerParameters.getLabels())
 				.endMetadata()
 			.editOrNewSpec()
 				.withImagePullSecrets(kubernetesTaskManagerParameters.getImagePullSecrets())
+				.withNodeSelector(kubernetesTaskManagerParameters.getNodeSelectors())
 				.endSpec()
 			.build();
 

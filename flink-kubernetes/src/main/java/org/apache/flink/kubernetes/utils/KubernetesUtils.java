@@ -23,6 +23,7 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.CoreOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.runtime.clusterframework.BootstrapTools;
+import org.apache.flink.util.ConfigurationUtil;
 import org.apache.flink.util.FlinkRuntimeException;
 
 import io.fabric8.kubernetes.api.model.Quantity;
@@ -138,8 +139,15 @@ public class KubernetesUtils {
 	 *
 	 * @return Task manager labels.
 	 */
-	public static Map<String, String> getTaskManagerLabels(String clusterId) {
+	public static Map<String, String> getTaskManagerLabels(Configuration flinkConfig, String clusterId) {
+		Map<String, String> customizedCommonLabels =
+			ConfigurationUtil.getPrefixedKeyValuePairs(flinkConfig, KubernetesConfigOptions.KUBERNETES_LABEL_PREFIX);
+		Map<String, String> customizedTaskManagerLabels =
+			ConfigurationUtil.getPrefixedKeyValuePairs(flinkConfig, KubernetesConfigOptions.KUBERNETES_TASK_MANAGER_LABEL_PREFIX);
+
 		final Map<String, String> labels = new HashMap<>();
+		labels.putAll(customizedCommonLabels);
+		labels.putAll(customizedTaskManagerLabels);
 		labels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
 		labels.put(Constants.LABEL_APP_KEY, clusterId);
 		labels.put(Constants.LABEL_COMPONENT_KEY, Constants.LABEL_COMPONENT_TASK_MANAGER);

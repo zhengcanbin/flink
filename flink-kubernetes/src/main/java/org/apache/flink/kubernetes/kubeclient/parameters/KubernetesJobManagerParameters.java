@@ -29,7 +29,9 @@ import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.jobmanager.HighAvailabilityMode;
+import org.apache.flink.util.ConfigurationUtil;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.apache.flink.util.Preconditions.checkArgument;
@@ -52,8 +54,30 @@ public class KubernetesJobManagerParameters extends AbstractKubernetesParameters
 	}
 
 	@Override
+	public Map<String, String> getAnnotations() {
+		Map<String, String> annotations = new HashMap<>();
+		annotations.putAll(ConfigurationUtil.getPrefixedKeyValuePairs(flinkConfig, KubernetesConfigOptions.KUBERNETES_ANNOTATION_PREFIX));
+		annotations.putAll(ConfigurationUtil.getPrefixedKeyValuePairs(flinkConfig, KubernetesConfigOptions.KUBERNETES_JOB_MANAGER_ANNOTATION_PREFIX));
+
+		return annotations;
+	}
+
+	public Map<String, String> getRestServiceAnnotations() {
+		return ConfigurationUtil.getPrefixedKeyValuePairs(flinkConfig, KubernetesConfigOptions.KUBERNETES_REST_SERVICE_ANNOTATION_PREFIX);
+	}
+
+	@Override
 	public Map<String, String> getLabels() {
-		Map<String, String> labels = getCommonLabels();
+		Map<String, String> customizedCommonLabels =
+			ConfigurationUtil.getPrefixedKeyValuePairs(flinkConfig, KubernetesConfigOptions.KUBERNETES_LABEL_PREFIX);
+		Map<String, String> customizedJobManagerLabels =
+			ConfigurationUtil.getPrefixedKeyValuePairs(flinkConfig, KubernetesConfigOptions.KUBERNETES_JOB_MANAGER_LABEL_PREFIX);
+
+		Map<String, String> labels = new HashMap<>();
+		labels.putAll(customizedCommonLabels);
+		labels.putAll(customizedJobManagerLabels);
+		labels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
+		labels.put(Constants.LABEL_APP_KEY, getClusterId());
 		labels.put(Constants.LABEL_COMPONENT_KEY, Constants.LABEL_COMPONENT_JOB_MANAGER);
 
 		return labels;
@@ -61,7 +85,7 @@ public class KubernetesJobManagerParameters extends AbstractKubernetesParameters
 
 	@Override
 	public Map<String, String> getEnvironments() {
-		return getPrefixedEnvironments(ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX);
+		return ConfigurationUtil.getPrefixedKeyValuePairs(flinkConfig, ResourceManagerOptions.CONTAINERIZED_MASTER_ENV_PREFIX);
 	}
 
 	public String getJobManagerMainContainerName() {

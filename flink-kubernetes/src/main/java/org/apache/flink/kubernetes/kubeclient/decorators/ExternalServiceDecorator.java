@@ -52,6 +52,7 @@ public class ExternalServiceDecorator extends AbstractKubernetesStepDecorator {
 			.withApiVersion(Constants.API_VERSION)
 			.withNewMetadata()
 				.withName(serviceName)
+				.withAnnotations(kubernetesJobManagerParameters.getRestServiceAnnotations())
 				.withLabels(kubernetesJobManagerParameters.getCommonLabels())
 				.endMetadata()
 			.withNewSpec()

@@ -131,7 +131,7 @@ public class KubernetesResourceManager extends ActiveResourceManager<KubernetesW
 	protected void initialize() throws ResourceManagerException {
 		recoverWorkerNodesFromPreviousAttempts();
 
-		kubeClient.watchPodsAndDoCallback(KubernetesUtils.getTaskManagerLabels(clusterId), this);
+		kubeClient.watchPodsAndDoCallback(KubernetesUtils.getTaskManagerLabels(flinkConfig, clusterId), this);
 	}
 
 	@Override
@@ -222,7 +222,7 @@ public class KubernetesResourceManager extends ActiveResourceManager<KubernetesW
 	}
 
 	private void recoverWorkerNodesFromPreviousAttempts() throws ResourceManagerException {
-		final List<KubernetesPod> podList = kubeClient.getPodsWithLabels(KubernetesUtils.getTaskManagerLabels(clusterId));
+		final List<KubernetesPod> podList = kubeClient.getPodsWithLabels(KubernetesUtils.getTaskManagerLabels(flinkConfig, clusterId));
 		for (KubernetesPod pod : podList) {
 			final KubernetesWorkerNode worker = new KubernetesWorkerNode(new ResourceID(pod.getName()));
 			workerNodes.put(worker.getResourceID(), worker);

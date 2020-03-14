@@ -167,6 +167,22 @@ public class KubernetesConfigOptions {
 			.defaultValue(1)
 			.withDeprecatedKeys("Set the number of instances for JobManager in high availability mode.\n" +
 				"This value does not take effect in the non high availability case.");
+
+	public static final String KUBERNETES_NODE_SELECTOR_PREFIX = "kubernetes.node.selector.";
+
+	// applied to the jobmanager/taskmanager pod
+	public static final String KUBERNETES_ANNOTATION_PREFIX = "kubernetes.annotation.";
+	public static final String KUBERNETES_JOB_MANAGER_ANNOTATION_PREFIX = "kubernetes.jobmanager.annotation.";
+	public static final String KUBERNETES_TASK_MANAGER_ANNOTATION_PREFIX = "kubernetes.taskmanager.annotation.";
+	// applied to the rest-service
+	public static final String KUBERNETES_REST_SERVICE_ANNOTATION_PREFIX = "kubernetes.rest-service.annotation.";
+
+	// applied to the configmap, jobmanager, taskmanager and the service
+	public static final String KUBERNETES_LABEL_PREFIX = "kubernetes.label.";
+	// applied to the jobmanager component, including the deployment and the jobmanager pod
+	public static final String KUBERNETES_JOB_MANAGER_LABEL_PREFIX = "kubernetes.jobmanager.label.";
+	public static final String KUBERNETES_TASK_MANAGER_LABEL_PREFIX = "kubernetes.taskmanager.label.";
+
 	/**
 	 * The flink rest service exposed type.
 	 */

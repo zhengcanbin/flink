@@ -23,7 +23,7 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptionsInternal;
 import org.apache.flink.kubernetes.utils.Constants;
-import org.apache.flink.runtime.clusterframework.BootstrapTools;
+import org.apache.flink.util.ConfigurationUtil;
 
 import io.fabric8.kubernetes.api.model.LocalObjectReference;
 
@@ -101,8 +101,16 @@ public abstract class AbstractKubernetesParameters implements KubernetesParamete
 	}
 
 	@Override
+	public Map<String, String> getNodeSelectors() {
+		return ConfigurationUtil.getPrefixedKeyValuePairs(flinkConfig, KubernetesConfigOptions.KUBERNETES_NODE_SELECTOR_PREFIX);
+	}
+
+	@Override
 	public Map<String, String> getCommonLabels() {
-		Map<String, String> commonLabels = new HashMap<>();
+		Map<String, String> customizedLabels =
+			ConfigurationUtil.getPrefixedKeyValuePairs(flinkConfig, KubernetesConfigOptions.KUBERNETES_LABEL_PREFIX);
+
+		Map<String, String> commonLabels = new HashMap<>(customizedLabels);
 		commonLabels.put(Constants.LABEL_TYPE_KEY, Constants.LABEL_TYPE_NATIVE_TYPE);
 		commonLabels.put(Constants.LABEL_APP_KEY, getClusterId());
 
@@ -161,14 +169,5 @@ public abstract class AbstractKubernetesParameters implements KubernetesParamete
 	@Override
 	public String getFilesDownloadDir() {
 		return checkNotNull(flinkConfig.get(KubernetesConfigOptions.FILES_DOWNLOAD_DIR));
-	}
-
-	/**
-	 * Extract container customized environment variable properties with a given name prefix.
-	 * @param envPrefix the given property name prefix
-	 * @return a Map storing with customized environment variable key/value pairs.
-	 */
-	protected Map<String, String> getPrefixedEnvironments(String envPrefix) {
-		return BootstrapTools.getEnvironmentVariables(envPrefix, flinkConfig);
 	}
 }

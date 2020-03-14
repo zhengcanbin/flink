@@ -58,11 +58,13 @@ public class InitJobManagerDecorator extends AbstractKubernetesStepDecorator {
 		final Pod basicPod = new PodBuilder(flinkPod.getPod())
 			.withApiVersion(API_VERSION)
 			.editOrNewMetadata()
+				.withAnnotations(kubernetesJobManagerParameters.getAnnotations())
 				.withLabels(kubernetesJobManagerParameters.getLabels())
 				.endMetadata()
 			.editOrNewSpec()
 				.withServiceAccountName(kubernetesJobManagerParameters.getServiceAccount())
 				.withImagePullSecrets(kubernetesJobManagerParameters.getImagePullSecrets())
+				.withNodeSelector(kubernetesJobManagerParameters.getNodeSelectors())
 				.endSpec()
 			.build();
 

@@ -267,7 +267,7 @@ public class KubernetesResourceManagerTest extends KubernetesTestBase {
 		final Pod mockTaskManagerPod = new PodBuilder()
 			.editOrNewMetadata()
 				.withName(previewPodName)
-				.withLabels(KubernetesUtils.getTaskManagerLabels(CLUSTER_ID))
+				.withLabels(KubernetesUtils.getTaskManagerLabels(flinkConfig, CLUSTER_ID))
 				.endMetadata()
 			.editOrNewSpec()
 				.endSpec()

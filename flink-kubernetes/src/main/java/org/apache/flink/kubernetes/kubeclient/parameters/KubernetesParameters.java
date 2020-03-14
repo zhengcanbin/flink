@@ -39,6 +39,10 @@ public interface KubernetesParameters {
 
 	LocalObjectReference[] getImagePullSecrets();
 
+	Map<String, String> getNodeSelectors();
+
+	Map<String, String> getAnnotations();
+
 	/**
 	 * A common collection of labels that are attached to every created Kubernetes resources.
 	 * This can include the Deployment, the Pod(s), the ConfigMap(s), and the Service(s), etc.
