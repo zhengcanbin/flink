@@ -24,6 +24,7 @@ import org.apache.flink.kubernetes.kubeclient.decorators.HadoopConfMountDecorato
 import org.apache.flink.kubernetes.kubeclient.decorators.InitTaskManagerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.JavaCmdTaskManagerDecorator;
 import org.apache.flink.kubernetes.kubeclient.decorators.KubernetesStepDecorator;
+import org.apache.flink.kubernetes.kubeclient.decorators.LogDirMountDecorator;
 import org.apache.flink.kubernetes.kubeclient.parameters.KubernetesTaskManagerParameters;
 import org.apache.flink.kubernetes.kubeclient.resources.KubernetesPod;
 
@@ -42,6 +43,7 @@ public class KubernetesTaskManagerFactory {
 			new InitTaskManagerDecorator(kubernetesTaskManagerParameters),
 			new JavaCmdTaskManagerDecorator(kubernetesTaskManagerParameters),
 			new HadoopConfMountDecorator(kubernetesTaskManagerParameters),
+			new LogDirMountDecorator(),
 			new FlinkConfMountDecorator(kubernetesTaskManagerParameters)};
 
 		for (KubernetesStepDecorator stepDecorator: stepDecorators) {
