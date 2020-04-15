@@ -205,16 +205,19 @@ public class KubernetesResourceManager extends ActiveResourceManager<KubernetesW
 
 	@Override
 	public void onModified(List<KubernetesPod> pods) {
+		LOG.info("felix: onModified");
 		runAsync(() -> pods.forEach(this::removePodIfTerminated));
 	}
 
 	@Override
 	public void onDeleted(List<KubernetesPod> pods) {
+		LOG.info("felix: onDeleted");
 		runAsync(() -> pods.forEach(this::removePodIfTerminated));
 	}
 
 	@Override
 	public void onError(List<KubernetesPod> pods) {
+		LOG.info("felix: onError");
 		runAsync(() -> pods.forEach(this::removePodIfTerminated));
 	}
 
