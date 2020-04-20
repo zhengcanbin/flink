@@ -202,6 +202,7 @@ public class SlotManagerImpl implements SlotManager {
 
 	@Override
 	public Map<WorkerResourceSpec, Integer> getRequiredResources() {
+		pendingSlots.forEach((tmSlotId, pendingSlot) -> LOG.info("Felix333: tmSlotId={}, pendingSlot=", pendingSlot));
 		final int pendingWorkerNum = MathUtils.divideRoundUp(pendingSlots.size(), numSlotsPerWorker);
 		return pendingWorkerNum > 0 ?
 			Collections.singletonMap(defaultWorkerResourceSpec, pendingWorkerNum) :
@@ -921,7 +922,9 @@ public class SlotManagerImpl implements SlotManager {
 		if (pendingTaskManagerSlot != null) {
 			pendingTaskManagerSlot.unassignPendingSlotRequest();
 			pendingSlotRequest.unassignPendingTaskManagerSlot();
+			LOG.info("before: size={}", pendingSlots.size());
 			pendingSlots.remove(pendingTaskManagerSlot.getTaskManagerSlotId());
+			LOG.info("after: size={}", pendingSlots.size());
 		}
 	}
 
