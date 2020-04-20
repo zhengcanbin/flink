@@ -295,6 +295,8 @@ public class KubernetesResourceManager extends ActiveResourceManager<KubernetesW
 	private void requestKubernetesPodIfRequired() {
 		final int requiredTaskManagers = getNumberRequiredTaskManagers();
 
+		LOG.info("Felix: requiredTaskManagers={}, numPendingPodRequests={}", requiredTaskManagers, numPendingPodRequests);
+
 		while (requiredTaskManagers > numPendingPodRequests) {
 			requestKubernetesPod();
 		}

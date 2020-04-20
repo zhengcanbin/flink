@@ -921,6 +921,7 @@ public class SlotManagerImpl implements SlotManager {
 		if (pendingTaskManagerSlot != null) {
 			pendingTaskManagerSlot.unassignPendingSlotRequest();
 			pendingSlotRequest.unassignPendingTaskManagerSlot();
+			pendingSlots.remove(pendingTaskManagerSlot.getTaskManagerSlotId());
 		}
 	}
 
