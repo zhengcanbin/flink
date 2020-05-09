@@ -36,6 +36,7 @@ import org.apache.flink.configuration.HighAvailabilityOptions;
 public enum HighAvailabilityMode {
 	NONE(false),
 	ZOOKEEPER(true),
+	FILESYSTEM(true),
 	FACTORY_CLASS(true);
 
 	private final boolean haActive;
@@ -77,5 +78,16 @@ public enum HighAvailabilityMode {
 	public static boolean isHighAvailabilityModeActivated(Configuration configuration) {
 		HighAvailabilityMode mode = fromConfig(configuration);
 		return mode.haActive;
+	}
+
+	/**
+	 * Returns true if the defined recovery mode is FileSystem.
+	 *
+	 * @param configuration Configuration which contains the recovery mode
+	 * @return true if high availability mode is FILESYSTEM, otherwise false
+	 */
+	public static boolean isFileSystemHighAvailabilityModeActivated(Configuration configuration) {
+		HighAvailabilityMode mode = fromConfig(configuration);
+		return mode == FILESYSTEM;
 	}
 }

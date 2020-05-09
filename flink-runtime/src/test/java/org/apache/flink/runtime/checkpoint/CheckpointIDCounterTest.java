@@ -18,16 +18,23 @@
 
 package org.apache.flink.runtime.checkpoint;
 
+import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.JobStatus;
+import org.apache.flink.core.fs.FileSystem;
+import org.apache.flink.core.fs.Path;
 import org.apache.flink.runtime.zookeeper.ZooKeeperTestEnvironment;
 import org.apache.flink.util.TestLogger;
 
 import org.apache.flink.shaded.curator4.org.apache.curator.framework.CuratorFramework;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +48,7 @@ import java.util.concurrent.Future;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 
 public abstract class CheckpointIDCounterTest extends TestLogger {
 
@@ -104,6 +112,72 @@ public abstract class CheckpointIDCounterTest extends TestLogger {
 				ZooKeeper.getClient(),
 				"/checkpoint-id-counter",
 				new DefaultLastStateConnectionStateListener());
+		}
+	}
+
+	public static class FileSystemCheckpointIDCounterTest extends CheckpointIDCounterTest {
+
+		@ClassRule
+		public final static TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
+
+		private JobID jobID;
+		private Path fileSystemHARootPath;
+		private FileSystem fs;
+
+		@Before
+		public void before() throws IOException {
+			jobID = new JobID();
+			fileSystemHARootPath = new Path(TEMPORARY_FOLDER.getRoot().toURI());
+			fs = FileSystem.get(fileSystemHARootPath.toUri());
+		}
+
+		/**
+		 * Tests that counter node is removed from ZooKeeper after shutdown.
+		 */
+		@Test
+		public void testShutdownRemovesState() throws Exception {
+			CheckpointIDCounter counter = createCompletedCheckpoints();
+			counter.start();
+			assertThat(
+				fs.listStatus(FileSystemCheckpointIDCounter.getCheckoutIDCounterFilePath(jobID, fileSystemHARootPath)),
+				CoreMatchers.nullValue());
+
+			counter.getAndIncrement();
+			assertThat(
+				fs.listStatus(FileSystemCheckpointIDCounter.getCheckoutIDCounterFilePath(jobID, fileSystemHARootPath)),
+				CoreMatchers.notNullValue());
+
+			counter.shutdown(JobStatus.FINISHED);
+			assertThat(
+				fs.listStatus(FileSystemCheckpointIDCounter.getCheckoutIDCounterFilePath(jobID, fileSystemHARootPath)),
+				CoreMatchers.nullValue());
+		}
+
+		/**
+		 * Tests that counter node is NOT removed from FileSystem after suspend.
+		 */
+		@Test
+		public void testSuspendKeepsState() throws Exception {
+			CheckpointIDCounter counter = createCompletedCheckpoints();
+			counter.start();
+			assertThat(
+				fs.listStatus(FileSystemCheckpointIDCounter.getCheckoutIDCounterFilePath(jobID, fileSystemHARootPath)),
+				CoreMatchers.nullValue());
+
+			counter.getAndIncrement();
+			assertThat(
+				fs.listStatus(FileSystemCheckpointIDCounter.getCheckoutIDCounterFilePath(jobID, fileSystemHARootPath)),
+				CoreMatchers.notNullValue());
+
+			counter.shutdown(JobStatus.SUSPENDED);
+			assertThat(
+				fs.listStatus(FileSystemCheckpointIDCounter.getCheckoutIDCounterFilePath(jobID, fileSystemHARootPath)),
+				CoreMatchers.notNullValue());
+		}
+
+		@Override
+		protected CheckpointIDCounter createCompletedCheckpoints() throws Exception {
+			return new FileSystemCheckpointIDCounter(jobID, fileSystemHARootPath, fs);
 		}
 	}
 

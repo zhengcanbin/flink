@@ -28,6 +28,7 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.runtime.blob.BlobStoreService;
 import org.apache.flink.runtime.blob.BlobUtils;
 import org.apache.flink.runtime.dispatcher.Dispatcher;
+import org.apache.flink.runtime.highavailability.filesystem.FileSystemHaServices;
 import org.apache.flink.runtime.highavailability.nonha.embedded.EmbeddedHaServices;
 import org.apache.flink.runtime.highavailability.nonha.standalone.StandaloneClientHAServices;
 import org.apache.flink.runtime.highavailability.nonha.standalone.StandaloneHaServices;
@@ -37,6 +38,7 @@ import org.apache.flink.runtime.jobmanager.HighAvailabilityMode;
 import org.apache.flink.runtime.net.SSLUtils;
 import org.apache.flink.runtime.resourcemanager.ResourceManager;
 import org.apache.flink.runtime.rpc.akka.AkkaRpcServiceUtils;
+import org.apache.flink.runtime.util.FileSystemHAUtils;
 import org.apache.flink.runtime.util.ZooKeeperUtils;
 import org.apache.flink.util.ConfigurationException;
 import org.apache.flink.util.FlinkException;
@@ -65,6 +67,9 @@ public class HighAvailabilityServicesUtils {
 			case NONE:
 				return new EmbeddedHaServices(executor);
 
+			case FILESYSTEM:
+				throw new UnsupportedOperationException("Not supported yet!");
+
 			case ZOOKEEPER:
 				BlobStoreService blobStoreService = BlobUtils.createBlobStoreFromConfig(config);
 
@@ -87,10 +92,12 @@ public class HighAvailabilityServicesUtils {
 		Executor executor,
 		AddressResolution addressResolution) throws Exception {
 
-		HighAvailabilityMode highAvailabilityMode = HighAvailabilityMode.fromConfig(configuration);
+		final BlobStoreService blobStoreService = BlobUtils.createBlobStoreFromConfig(configuration);
+		final HighAvailabilityMode highAvailabilityMode = HighAvailabilityMode.fromConfig(configuration);
 
 		switch (highAvailabilityMode) {
 			case NONE:
+			case FILESYSTEM:
 				final Tuple2<String, Integer> hostnamePort = getJobManagerAddress(configuration);
 
 				final String resourceManagerRpcUrl = AkkaRpcServiceUtils.getRpcUrl(
@@ -109,13 +116,23 @@ public class HighAvailabilityServicesUtils {
 					configuration,
 					addressResolution);
 
-				return new StandaloneHaServices(
-					resourceManagerRpcUrl,
-					dispatcherRpcUrl,
-					webMonitorAddress);
-			case ZOOKEEPER:
-				BlobStoreService blobStoreService = BlobUtils.createBlobStoreFromConfig(configuration);
+				if (highAvailabilityMode == HighAvailabilityMode.NONE) {
+					return new StandaloneHaServices(
+						resourceManagerRpcUrl,
+						dispatcherRpcUrl,
+						webMonitorAddress);
+				} else {
+					final Path fileSystemHARootPath = FileSystemHAUtils.getFileSystemHANamespacedRootPath(configuration);
+					return new FileSystemHaServices(
+						resourceManagerRpcUrl,
+						dispatcherRpcUrl,
+						webMonitorAddress,
+						fileSystemHARootPath,
+						executor,
+						blobStoreService);
+				}
 
+			case ZOOKEEPER:
 				return new ZooKeeperHaServices(
 					ZooKeeperUtils.startCuratorFramework(configuration),
 					executor,
@@ -135,6 +152,7 @@ public class HighAvailabilityServicesUtils {
 
 		switch (highAvailabilityMode) {
 			case NONE:
+			case FILESYSTEM:
 				final String webMonitorAddress = getWebMonitorAddress(configuration, AddressResolution.TRY_ADDRESS_RESOLUTION);
 				return new StandaloneClientHAServices(webMonitorAddress);
 			case ZOOKEEPER:

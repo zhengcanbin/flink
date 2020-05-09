@@ -209,6 +209,19 @@ public class HighAvailabilityOptions {
 				" SASLAuthenticationProvider and the cluster is configured to run in secure mode (Kerberos).");
 
 	// ------------------------------------------------------------------------
+	//  FileSystem Options
+	// ------------------------------------------------------------------------
+	/**
+	 * The root path under which Flink stores its entries in FileSystem.
+	 */
+	@Documentation.Section(Documentation.Sections.COMMON_HIGH_AVAILABILITY_FILESYSTEM)
+	public static final ConfigOption<String> HA_FILESYSTEM_ROOT =
+		key("high-availability.filesystem.path.root")
+			.stringType()
+			.noDefaultValue()
+			.withDescription("The root path under which Flink stores its entries in FileSystem.");
+
+	// ------------------------------------------------------------------------
 	//  Deprecated options
 	// ------------------------------------------------------------------------
 
