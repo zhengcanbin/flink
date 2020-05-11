@@ -246,7 +246,7 @@ public abstract class CompletedCheckpointStoreTest extends TestLogger {
 	/**
 	 * A test {@link CompletedCheckpoint}. We want to verify that the correct class loader is
 	 * used when discarding. Spying on a regular {@link CompletedCheckpoint} instance with
-	 * Mockito doesn't work, because it it breaks serializability.
+	 * Mockito doesn't work, because it breaks serializability.
 	 */
 	protected static class TestCompletedCheckpoint extends CompletedCheckpoint {
 
